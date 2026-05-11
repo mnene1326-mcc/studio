@@ -87,7 +87,7 @@ function ChatsContent() {
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
   const [showAi, setShowAi] = useState(false)
 
-  // List View Query
+  // List View Query - Simplified to avoid index requirements for initial load if needed
   const chatListQuery = useMemo(() => {
     if (!currentUser) return null
     return query(
@@ -114,39 +114,48 @@ function ChatsContent() {
     }
 
     const findOrCreateChat = async () => {
-      const chatsQ = query(
-        collection(db, "chats"),
-        where("participants", "array-contains", currentUser.uid)
-      )
-      const chatsSnap = await getDocs(chatsQ)
-      let existingChatId = null
-      chatsSnap.forEach((doc) => {
-        const data = doc.data()
-        if (data.participants.includes(startWithId)) {
-          existingChatId = doc.id
-        }
-      })
+      try {
+        const chatsQ = query(
+          collection(db, "chats"),
+          where("participants", "array-contains", currentUser.uid)
+        )
+        const chatsSnap = await getDocs(chatsQ)
+        let existingChatId = null
+        chatsSnap.forEach((doc) => {
+          const data = doc.data()
+          if (data.participants.includes(startWithId)) {
+            existingChatId = doc.id
+          }
+        })
 
-      if (existingChatId) {
-        setChatId(existingChatId)
-      } else {
-        const chatData = {
-          participants: [currentUser.uid, startWithId],
-          createdAt: serverTimestamp(),
-          lastMessage: "",
-          lastMessageAt: serverTimestamp(),
+        if (existingChatId) {
+          setChatId(existingChatId)
+        } else {
+          const chatData = {
+            participants: [currentUser.uid, startWithId],
+            createdAt: serverTimestamp(),
+            lastMessage: "",
+            lastMessageAt: serverTimestamp(),
+          }
+          const chatsRef = collection(db, "chats")
+          addDoc(chatsRef, chatData)
+            .then(newChatDoc => setChatId(newChatDoc.id))
+            .catch(async () => {
+              const permissionError = new FirestorePermissionError({
+                path: chatsRef.path,
+                operation: 'create',
+                requestResourceData: chatData,
+              } satisfies SecurityRuleContext)
+              errorEmitter.emit('permission-error', permissionError)
+            })
         }
-        const chatsRef = collection(db, "chats")
-        addDoc(chatsRef, chatData)
-          .then(newChatDoc => setChatId(newChatDoc.id))
-          .catch(async () => {
-            const permissionError = new FirestorePermissionError({
-              path: chatsRef.path,
-              operation: 'create',
-              requestResourceData: chatData,
-            } satisfies SecurityRuleContext)
-            errorEmitter.emit('permission-error', permissionError)
-          })
+      } catch (err: any) {
+        // Handle search query failure
+        const permissionError = new FirestorePermissionError({
+          path: 'chats',
+          operation: 'list',
+        } satisfies SecurityRuleContext)
+        errorEmitter.emit('permission-error', permissionError)
       }
     }
     findOrCreateChat()

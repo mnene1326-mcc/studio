@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Development rules: Allow all authenticated users to read and write to any document.
-    // Triggering redeployment to resolve persistent permission errors.
+    // Triggering a fresh redeployment to resolve persistent 'list' permission errors on collections.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
