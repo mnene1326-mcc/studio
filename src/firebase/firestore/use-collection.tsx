@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Query, onSnapshot } from 'firebase/firestore';
+import { Query, onSnapshot, CollectionReference } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
@@ -28,10 +27,11 @@ export function useCollection<T = any>(q: Query | null) {
         setLoading(false);
       },
       (err) => {
-        // We can't easily get the path from a Query in the same way as a DocRef
-        // but we can at least emit the error.
+        // Attempt to extract path if it's a collection reference
+        const path = (q as any).path || (q as any)._query?.path?.segments?.join('/') || 'collection';
+        
         const permissionError = new FirestorePermissionError({
-          path: 'collection',
+          path: path,
           operation: 'list',
         });
         errorEmitter.emit('permission-error', permissionError);

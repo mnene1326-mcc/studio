@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc } from "firebase/firestore"
-import { useAuth, useFirestore, useUser, useCollection, useDoc } from "@/firebase"
+import { useAuth, useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -42,7 +42,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
   const db = useFirestore()
   const partnerId = chat.participants.find(id => id !== currentUserUid)
   
-  const partnerRef = useMemo(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
+  const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   const { data: partner } = useDoc<UserProfile>(partnerRef)
 
   if (!partner) return null
@@ -59,7 +59,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-baseline">
           <h4 className="font-headline text-primary truncate">{partner.name}</h4>
-          {chat.lastMessageAt && (
+          {chat.lastMessageAt && chat.lastMessageAt.toDate && (
             <span className="text-[10px] text-muted-foreground">
               {format(chat.lastMessageAt.toDate(), "MMM d")}
             </span>
@@ -84,42 +84,56 @@ function ChatsContent() {
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
 
-  // List View Query
-  const chatListQuery = useMemo(() => {
-    if (!currentUser) return null
+  // List View Query - Simplified to avoid composite index requirements for now
+  const chatListQuery = useMemoFirebase(() => {
+    if (!currentUser?.uid) return null
     return query(
       collection(db, "chats"),
-      where("participants", "array-contains", currentUser.uid),
-      orderBy("lastMessageAt", "desc")
+      where("participants", "array-contains", currentUser.uid)
     )
-  }, [db, currentUser])
+  }, [db, currentUser?.uid])
 
-  const { data: userChats, loading: listLoading } = useCollection<Chat>(chatListQuery)
+  const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
+
+  // Sort chats locally since we removed orderBy to rule out permission issues
+  const userChats = useMemo(() => {
+    return [...userChatsRaw].sort((a, b) => {
+      const timeA = a.lastMessageAt?.toMillis?.() || 0
+      const timeB = b.lastMessageAt?.toMillis?.() || 0
+      return timeB - timeA
+    })
+  }, [userChatsRaw])
 
   // Active Chat Partner details
-  const partnerRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
+  const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
   const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
 
   useEffect(() => {
-    if (!currentUser || !startWithId) {
+    if (!currentUser?.uid || !startWithId) {
       setChatId(null)
       return
     }
 
+    let isMounted = true
+
     const findOrCreateChat = async () => {
       try {
+        const chatsRef = collection(db, "chats")
         const chatsQ = query(
-          collection(db, "chats"),
+          chatsRef,
           where("participants", "array-contains", currentUser.uid)
         )
         const chatsSnap = await getDocs(chatsQ)
         let existingChatId = null
+        
         chatsSnap.forEach((doc) => {
           const data = doc.data()
-          if (data.participants.includes(startWithId)) {
+          if (data.participants && data.participants.includes(startWithId)) {
             existingChatId = doc.id
           }
         })
+
+        if (!isMounted) return
 
         if (existingChatId) {
           setChatId(existingChatId)
@@ -130,19 +144,11 @@ function ChatsContent() {
             lastMessage: "",
             lastMessageAt: serverTimestamp(),
           }
-          const chatsRef = collection(db, "chats")
-          addDoc(chatsRef, chatData)
-            .then(newChatDoc => setChatId(newChatDoc.id))
-            .catch(async () => {
-              const permissionError = new FirestorePermissionError({
-                path: chatsRef.path,
-                operation: 'create',
-                requestResourceData: chatData,
-              } satisfies SecurityRuleContext)
-              errorEmitter.emit('permission-error', permissionError)
-            })
+          const newChatDoc = await addDoc(chatsRef, chatData)
+          if (isMounted) setChatId(newChatDoc.id)
         }
       } catch (err: any) {
+        if (!isMounted) return
         const permissionError = new FirestorePermissionError({
           path: 'chats',
           operation: 'list',
@@ -150,25 +156,30 @@ function ChatsContent() {
         errorEmitter.emit('permission-error', permissionError)
       }
     }
+    
     findOrCreateChat()
-  }, [currentUser, startWithId, db])
+    return () => { isMounted = false }
+  }, [currentUser?.uid, startWithId, db])
 
-  const messagesQuery = useMemo(() => {
+  const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
-    return query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(50))
+    return query(
+      collection(db, "chats", chatId, "messages"), 
+      orderBy("timestamp", "asc"), 
+      limit(50)
+    )
   }, [db, chatId])
 
   const { data: messages } = useCollection<Message>(messagesQuery)
 
   const handleSendMessage = (text: string) => {
-    if (!text.trim() || !chatId || !currentUser) return
+    if (!text.trim() || !chatId || !currentUser?.uid) return
     const msgData = {
       text: text.trim(),
       senderId: currentUser.uid,
       timestamp: serverTimestamp(),
     }
     
-    // Add message
     const messagesRef = collection(db, "chats", chatId, "messages")
     addDoc(messagesRef, msgData)
       .catch(async () => {
@@ -180,7 +191,6 @@ function ChatsContent() {
         errorEmitter.emit('permission-error', permissionError)
       })
 
-    // Update last message in chat doc
     const chatRef = doc(db, "chats", chatId)
     const updateData = {
       lastMessage: text.trim(),
@@ -255,7 +265,7 @@ function ChatsContent() {
         </Button>
         <Avatar className="w-10 h-10">
           <AvatarImage src={chatPartner.photoURL} />
-          <AvatarFallback>{chatPartner.name[0]}</AvatarFallback>
+          <AvatarFallback>{chatPartner.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <h3 className="font-headline text-primary leading-tight">{chatPartner.name}</h3>
@@ -279,7 +289,7 @@ function ChatsContent() {
               >
                 {msg.text}
                 <div className="text-[8px] mt-1 opacity-70 text-right">
-                  {msg.timestamp ? format(msg.timestamp.toDate(), "HH:mm") : ""}
+                  {msg.timestamp && msg.timestamp.toDate ? format(msg.timestamp.toDate(), "HH:mm") : ""}
                 </div>
               </div>
             </div>
