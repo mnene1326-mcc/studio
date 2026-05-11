@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { useAuth, useFirestore, useUser } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -72,11 +71,12 @@ export default function OnboardingPage() {
 
     const userRef = doc(db, "users", user.uid)
     
-    updateDoc(userRef, updateData)
+    // Using setDoc with merge: true is more robust than updateDoc
+    setDoc(userRef, updateData, { merge: true })
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
           path: userRef.path,
-          operation: 'update',
+          operation: 'write',
           requestResourceData: updateData,
         } satisfies SecurityRuleContext)
         errorEmitter.emit('permission-error', permissionError)
