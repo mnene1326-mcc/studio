@@ -3,6 +3,7 @@
 
 import { useMemo, useEffect } from "react"
 import { doc } from "firebase/firestore"
+import { signOut } from "firebase/auth"
 import { useFirestore, useUser, useDoc, useAuth } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -39,6 +40,15 @@ export default function MePage() {
 
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth)
+      router.push("/")
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
+  }
+
   const calculateAge = (dob: string) => {
     if (!dob) return ""
     const birthDate = new Date(dob)
@@ -64,7 +74,10 @@ export default function MePage() {
     return (
       <div className="flex-1 pb-20 bg-background flex flex-col">
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center font-body text-muted-foreground">Profile not found.</div>
+          <div className="text-center font-body text-muted-foreground flex flex-col items-center gap-4">
+            <p>Profile not found.</p>
+            <Button onClick={handleSignOut} variant="outline">Back to Home</Button>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -130,7 +143,7 @@ export default function MePage() {
           <Button 
             variant="ghost" 
             className="w-full justify-between h-14 rounded-xl hover:bg-white text-destructive border border-transparent hover:border-destructive/10"
-            onClick={() => auth.signOut()}
+            onClick={handleSignOut}
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-destructive/10 rounded-lg"><LogOut className="w-5 h-5" /></div>
