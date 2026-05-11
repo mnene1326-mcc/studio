@@ -24,6 +24,10 @@ export default function RegisterPage() {
   const auth = useAuth()
   const db = useFirestore()
 
+  const generateMatchFlowId = () => {
+    return Math.floor(1000000 + Math.random() * 998999999).toString()
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -34,6 +38,7 @@ export default function RegisterPage() {
       const userData = {
         uid: user.uid,
         email: user.email,
+        matchFlowId: generateMatchFlowId(),
         onboardingComplete: false,
         createdAt: serverTimestamp(),
       }

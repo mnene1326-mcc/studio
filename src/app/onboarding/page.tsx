@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
 import { useAuth, useFirestore, useUser } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -35,6 +36,10 @@ export default function OnboardingPage() {
   const router = useRouter()
   const { toast } = useToast()
 
+  const generateMatchFlowId = () => {
+    return Math.floor(1000000 + Math.random() * 998999999).toString()
+  }
+
   const validateAge = (dateString: string) => {
     const today = new Date()
     const birthDate = new Date(dateString)
@@ -58,7 +63,13 @@ export default function OnboardingPage() {
     }
 
     setLoading(true)
-    const updateData = {
+
+    // Check if user already has an ID, if not generate one (fallback)
+    const userRef = doc(db, "users", user.uid)
+    const userSnap = await getDoc(userRef)
+    const existingData = userSnap.data()
+
+    const updateData: any = {
       name,
       gender,
       dob,
@@ -69,9 +80,10 @@ export default function OnboardingPage() {
       updatedAt: serverTimestamp(),
     }
 
-    const userRef = doc(db, "users", user.uid)
-    
-    // Using setDoc with merge: true is more robust than updateDoc
+    if (!existingData?.matchFlowId) {
+      updateData.matchFlowId = generateMatchFlowId()
+    }
+
     setDoc(userRef, updateData, { merge: true })
       .catch(async (serverError) => {
         const permissionError = new FirestorePermissionError({
@@ -82,7 +94,6 @@ export default function OnboardingPage() {
         errorEmitter.emit('permission-error', permissionError)
       })
 
-    // Optimistically proceed
     router.push("/home")
   }
 

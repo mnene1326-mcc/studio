@@ -8,9 +8,11 @@ import { useFirestore, useUser, useDoc, useAuth } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
-import { Settings, LogOut, ChevronRight, Heart, MapPin, Calendar, Users } from "lucide-react"
+import { Settings, LogOut, ChevronRight, Heart, MapPin, Calendar, Users, Copy, Check } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 interface UserProfile {
   name: string
@@ -20,6 +22,7 @@ interface UserProfile {
   lookingFor: string
   gender: string
   dob: string
+  matchFlowId?: string
 }
 
 export default function MePage() {
@@ -27,6 +30,8 @@ export default function MePage() {
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const auth = useAuth()
+  const { toast } = useToast()
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -46,6 +51,18 @@ export default function MePage() {
       router.push("/")
     } catch (error) {
       console.error("Error signing out:", error)
+    }
+  }
+
+  const handleCopyId = () => {
+    if (profile?.matchFlowId) {
+      navigator.clipboard.writeText(profile.matchFlowId)
+      setCopied(true)
+      toast({
+        title: "Copied!",
+        description: "MatchFlow ID copied to clipboard.",
+      })
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 
@@ -100,7 +117,20 @@ export default function MePage() {
           <h2 className="text-3xl font-headline text-primary">
             {profile.name}{profile.dob ? `, ${calculateAge(profile.dob)}` : ""}
           </h2>
-          <p className="text-muted-foreground font-body">{profile.email}</p>
+          {profile.matchFlowId && (
+            <div 
+              className="flex items-center justify-center gap-2 mt-1 cursor-pointer group"
+              onClick={handleCopyId}
+            >
+              <p className="text-muted-foreground font-body text-xs tracking-widest uppercase">ID: {profile.matchFlowId}</p>
+              {copied ? (
+                <Check className="w-3 h-3 text-green-500" />
+              ) : (
+                <Copy className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              )}
+            </div>
+          )}
+          <p className="text-muted-foreground/60 font-body text-xs mt-1">{profile.email}</p>
         </div>
       </header>
 
