@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Heart } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { MapPin, Heart, MessageSquare } from "lucide-react"
 import Image from "next/image"
 
 interface UserProfile {
@@ -39,6 +40,11 @@ export default function HomePage() {
     return users.filter(u => u.uid !== currentUser?.uid)
   }, [users, currentUser])
 
+  const handleChatClick = (e: React.MouseEvent, userId: string) => {
+    e.stopPropagation()
+    router.push(`/chats?startWith=${userId}`)
+  }
+
   return (
     <div className="flex-1 pb-20 bg-background min-h-screen">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b px-6 py-4">
@@ -63,17 +69,28 @@ export default function HomePage() {
               <Card 
                 key={user.uid} 
                 className="overflow-hidden border-none shadow-md rounded-2xl group cursor-pointer active:scale-95 transition-transform"
-                onClick={() => router.push(`/chats?startWith=${user.uid}`)}
+                onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <div className="relative aspect-[3/4]">
                   <Image 
                     src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/500`} 
                     alt={user.name}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                     data-ai-hint="person portrait"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  
+                  {/* Direct Chat Button */}
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute top-2 right-2 rounded-full w-8 h-8 bg-white/20 backdrop-blur-md text-white border-none hover:bg-white/40 z-10"
+                    onClick={(e) => handleChatClick(e, user.uid)}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </Button>
+
                   <div className="absolute bottom-3 left-3 right-3 text-white space-y-1">
                     <p className="font-headline text-lg truncate">{user.name}</p>
                     <div className="flex items-center text-[10px] opacity-90">
