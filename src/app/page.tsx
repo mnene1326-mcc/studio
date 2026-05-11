@@ -1,32 +1,16 @@
 
 "use client"
 
-import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { onAuthStateChanged } from "firebase/auth"
-import { doc, getDoc } from "firebase/firestore"
-import { useAuth, useFirestore } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Heart, Mail, Zap } from "lucide-react"
 
+/**
+ * WelcomePage - The entry point for the application.
+ * Features MatchFlow branding and primary navigation to login/registration.
+ */
 export default function WelcomePage() {
   const router = useRouter()
-  const auth = useAuth()
-  const db = useFirestore()
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid))
-        if (userDoc.exists() && userDoc.data().onboardingComplete) {
-          router.push("/home")
-        } else {
-          router.push("/onboarding")
-        }
-      }
-    })
-    return () => unsubscribe()
-  }, [router, auth, db])
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-12 animate-in fade-in zoom-in duration-700 bg-gradient-to-b from-background to-secondary/20">
