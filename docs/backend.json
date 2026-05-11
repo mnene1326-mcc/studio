@@ -1,0 +1,62 @@
+
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Details about a MatchFlow user and their dating preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "dob": { "type": "string", "format": "date" },
+        "country": { "type": "string" },
+        "lookingFor": { "type": "string" },
+        "onboardingComplete": { "type": "boolean" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "interests": { "type": "string" }
+      },
+      "required": ["uid", "email", "onboardingComplete"]
+    },
+    "Chat": {
+      "title": "Chat Room",
+      "description": "A conversation between two users.",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "object" },
+        "lastMessage": { "type": "string" },
+        "lastMessageAt": { "type": "object" }
+      }
+    },
+    "Message": {
+      "title": "Chat Message",
+      "description": "An individual message within a chat room.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "timestamp": { "type": "object" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data."
+    },
+    "/chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Chat metadata."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages in a specific chat."
+    }
+  }
+}
