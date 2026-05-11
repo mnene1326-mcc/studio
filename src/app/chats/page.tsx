@@ -10,9 +10,8 @@ import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MessageSquare, Send, Sparkles, ChevronLeft, Search } from "lucide-react"
+import { MessageSquare, Send, ChevronLeft, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { suggestChatStarter } from "@/ai/flows/suggest-chat-starter"
 import { format } from "date-fns"
 
 interface Message {
@@ -84,10 +83,8 @@ function ChatsContent() {
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
-  const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
-  const [showAi, setShowAi] = useState(false)
 
-  // List View Query - Simplified to avoid index requirements for initial load if needed
+  // List View Query
   const chatListQuery = useMemo(() => {
     if (!currentUser) return null
     return query(
@@ -102,10 +99,6 @@ function ChatsContent() {
   // Active Chat Partner details
   const partnerRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
   const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
-
-  // Current user details for AI suggestions
-  const currentUserRef = useMemo(() => currentUser ? doc(db, "users", currentUser.uid) : null, [db, currentUser])
-  const { data: currentUserProfile } = useDoc<any>(currentUserRef)
 
   useEffect(() => {
     if (!currentUser || !startWithId) {
@@ -150,7 +143,6 @@ function ChatsContent() {
             })
         }
       } catch (err: any) {
-        // Handle search query failure
         const permissionError = new FirestorePermissionError({
           path: 'chats',
           operation: 'list',
@@ -205,29 +197,6 @@ function ChatsContent() {
       })
     
     setNewMessage("")
-    setShowAi(false)
-  }
-
-  const getAiSuggestions = async () => {
-    if (!currentUserProfile || !chatPartner) return
-    try {
-      const result = await suggestChatStarter({
-        currentUserProfile: {
-          name: currentUserProfile.name || "User",
-          interests: currentUserProfile.interests || "Interested in connection",
-          lookingFor: currentUserProfile.lookingFor || "Friendship",
-        },
-        otherUserProfile: {
-          name: chatPartner.name,
-          interests: chatPartner.interests || "Matched profile",
-          lookingFor: chatPartner.lookingFor || "Meaningful conversations",
-        },
-      })
-      setAiSuggestions(result.suggestions)
-      setShowAi(true)
-    } catch (e) {
-      // Errors handled by server action or global handler
-    }
   }
 
   if (!currentUser) return null
@@ -292,15 +261,6 @@ function ChatsContent() {
           <h3 className="font-headline text-primary leading-tight">{chatPartner.name}</h3>
           <p className="text-[10px] text-muted-foreground">Active now</p>
         </div>
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          className="rounded-full bg-accent/20 text-primary border-none hover:bg-accent/40"
-          onClick={getAiSuggestions}
-        >
-          <Sparkles className="w-4 h-4 mr-1" />
-          AI Starter
-        </Button>
       </header>
 
       <ScrollArea className="flex-1 p-4">
@@ -326,32 +286,6 @@ function ChatsContent() {
           ))}
         </div>
       </ScrollArea>
-
-      {showAi && aiSuggestions.length > 0 && (
-        <div className="absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl p-4 border-2 border-accent animate-in slide-in-from-bottom-5 duration-300 z-50">
-          <div className="flex justify-between items-center mb-3">
-            <p className="text-xs font-headline text-primary flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> AI Suggested Starters
-            </p>
-            <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setShowAi(false)}>Close</Button>
-          </div>
-          <div className="space-y-2">
-            {aiSuggestions.map((s, i) => (
-              <Button 
-                key={i} 
-                variant="ghost" 
-                className="w-full text-left justify-start h-auto p-2 text-xs bg-muted/50 hover:bg-accent/20 rounded-xl whitespace-normal font-body"
-                onClick={() => {
-                  setNewMessage(s)
-                  setShowAi(false)
-                }}
-              >
-                {s}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <footer className="p-4 bg-white border-t flex items-center gap-2">
         <Input 
