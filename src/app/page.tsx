@@ -1,15 +1,18 @@
+
 "use client"
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { onAuthStateChanged } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase"
+import { useAuth, useFirestore } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 
 export default function RootPage() {
   const router = useRouter()
+  const auth = useAuth()
+  const db = useFirestore()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -23,7 +26,7 @@ export default function RootPage() {
       }
     })
     return () => unsubscribe()
-  }, [router])
+  }, [router, auth, db])
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-8 animate-in fade-in zoom-in duration-500">
