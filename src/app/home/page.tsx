@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { auth, db } from "@/lib/firebase"
-import { collection, query, where, getDocs, limit } from "firebase/firestore"
-import { onAuthStateChanged } from "firebase/auth"
+import { useMemo } from "react"
+import { collection, query, where, limit } from "firebase/firestore"
+import { useFirestore, useUser, useCollection } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -22,41 +21,23 @@ interface UserProfile {
 }
 
 export default function HomePage() {
-  const [users, setUsers] = useState<UserProfile[]>([])
-  const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { user: currentUser } = useUser()
+  const db = useFirestore()
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push("/login")
-        return
-      }
+  const usersQuery = useMemo(() => {
+    return query(
+      collection(db, "users"), 
+      where("onboardingComplete", "==", true),
+      limit(20)
+    )
+  }, [db])
 
-      try {
-        const q = query(
-          collection(db, "users"), 
-          where("onboardingComplete", "==", true),
-          limit(20)
-        )
-        const querySnapshot = await getDocs(q)
-        const fetchedUsers: UserProfile[] = []
-        querySnapshot.forEach((doc) => {
-          const data = doc.data() as UserProfile
-          if (data.uid !== user.uid) {
-            fetchedUsers.push(data)
-          }
-        })
-        setUsers(fetchedUsers)
-      } catch (error) {
-        console.error("Error fetching users:", error)
-      } finally {
-        setLoading(false)
-      }
-    })
+  const { data: users, loading } = useCollection<UserProfile>(usersQuery)
 
-    return () => unsubscribe()
-  }, [router])
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => u.uid !== currentUser?.uid)
+  }, [users, currentUser])
 
   return (
     <div className="flex-1 pb-20 bg-background min-h-screen">
@@ -71,14 +52,14 @@ export default function HomePage() {
               <div key={i} className="aspect-[3/4] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
             <Heart className="w-12 h-12 text-muted" />
             <p className="text-muted-foreground font-body">No matches found yet. Try again later!</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <Card 
                 key={user.uid} 
                 className="overflow-hidden border-none shadow-md rounded-2xl group cursor-pointer active:scale-95 transition-transform"

@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createUserWithEmailAndPassword } from "firebase/auth"
-import { auth, db } from "@/lib/firebase"
 import { doc, setDoc } from "firebase/firestore"
+import { useAuth, useFirestore } from "@/firebase"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +20,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const auth = useAuth()
+  const db = useFirestore()
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,13 +30,24 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
       
-      // Initialize firestore user doc
-      await setDoc(doc(db, "users", user.uid), {
+      const userData = {
         uid: user.uid,
         email: user.email,
         onboardingComplete: false,
         createdAt: new Date().toISOString(),
-      })
+      }
+
+      const userRef = doc(db, "users", user.uid)
+      
+      setDoc(userRef, userData)
+        .catch(async (serverError) => {
+          const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'create',
+            requestResourceData: userData,
+          } satisfies SecurityRuleContext)
+          errorEmitter.emit('permission-error', permissionError)
+        })
       
       router.push("/onboarding")
     } catch (error: any) {
@@ -41,7 +56,6 @@ export default function RegisterPage() {
         title: "Registration failed",
         description: error.message,
       })
-    } finally {
       setLoading(false)
     }
   }

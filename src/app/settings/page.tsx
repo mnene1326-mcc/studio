@@ -1,6 +1,8 @@
 "use client"
 
-import { auth, db } from "@/lib/firebase"
+import { useAuth, useFirestore } from "@/firebase"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { deleteUser, signOut } from "firebase/auth"
 import { doc, deleteDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
@@ -23,13 +25,15 @@ import {
 export default function SettingsPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const auth = useAuth()
+  const db = useFirestore()
 
   const handleSignOut = async () => {
     try {
       await signOut(auth)
       router.push("/login")
     } catch (error) {
-      console.error(error)
+      // Errors handled centrally if needed
     }
   }
 
@@ -39,9 +43,19 @@ export default function SettingsPage() {
 
     try {
       const uid = user.uid
-      // Delete from firestore first
-      await deleteDoc(doc(db, "users", uid))
-      // Delete firebase auth user
+      const userRef = doc(db, "users", uid)
+      
+      // Non-blocking delete with centralized error handling
+      deleteDoc(userRef)
+        .catch(async () => {
+          const permissionError = new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'delete',
+          } satisfies SecurityRuleContext)
+          errorEmitter.emit('permission-error', permissionError)
+        })
+
+      // Delete auth user
       await deleteUser(user)
       
       toast({

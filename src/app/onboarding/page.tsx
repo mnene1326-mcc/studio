@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { auth, db } from "@/lib/firebase"
 import { doc, updateDoc } from "firebase/firestore"
+import { useAuth, useFirestore, useUser } from "@/firebase"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { onAuthStateChanged } from "firebase/auth"
 import { Heart } from "lucide-react"
 
 const EAST_AFRICAN_COUNTRIES = [
@@ -28,17 +29,11 @@ export default function OnboardingPage() {
   const [country, setCountry] = useState("")
   const [lookingFor, setLookingFor] = useState("")
   const [loading, setLoading] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
+  
+  const { user } = useUser()
+  const db = useFirestore()
   const router = useRouter()
   const { toast } = useToast()
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) router.push("/login")
-      else setUserId(user.uid)
-    })
-    return () => unsubscribe()
-  }, [router])
 
   const validateAge = (dateString: string) => {
     const today = new Date()
@@ -52,7 +47,7 @@ export default function OnboardingPage() {
   }
 
   const handleComplete = async () => {
-    if (!userId) return
+    if (!user) return
     if (!validateAge(dob)) {
       toast({
         variant: "destructive",
@@ -63,26 +58,30 @@ export default function OnboardingPage() {
     }
 
     setLoading(true)
-    try {
-      await updateDoc(doc(db, "users", userId), {
-        name,
-        gender,
-        dob,
-        country,
-        lookingFor,
-        onboardingComplete: true,
-        photoURL: `https://picsum.photos/seed/${userId}/400/400`, // Default placeholder
-      })
-      router.push("/home")
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error saving profile",
-        description: error.message,
-      })
-    } finally {
-      setLoading(false)
+    const updateData = {
+      name,
+      gender,
+      dob,
+      country,
+      lookingFor,
+      onboardingComplete: true,
+      photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
     }
+
+    const userRef = doc(db, "users", user.uid)
+    
+    updateDoc(userRef, updateData)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'update',
+          requestResourceData: updateData,
+        } satisfies SecurityRuleContext)
+        errorEmitter.emit('permission-error', permissionError)
+      })
+
+    // Optimistically proceed
+    router.push("/home")
   }
 
   return (

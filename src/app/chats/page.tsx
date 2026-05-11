@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState, Suspense } from "react"
+import { useEffect, useState, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { auth, db } from "@/lib/firebase"
-import { collection, query, where, getDocs, doc, getDoc, addDoc, serverTimestamp, orderBy, onSnapshot } from "firebase/firestore"
-import { onAuthStateChanged } from "firebase/auth"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy } from "firebase/firestore"
+import { useAuth, useFirestore, useUser, useCollection, useDoc } from "@/firebase"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -34,91 +35,99 @@ function ChatsContent() {
   const router = useRouter()
   const startWithId = searchParams.get("startWith")
   
-  const [currentUser, setCurrentUser] = useState<any>(null)
-  const [chatPartner, setChatPartner] = useState<ChatPartner | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
+  const { user: currentUser } = useUser()
+  const db = useFirestore()
+  const auth = useAuth()
+
+  const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
-  const [loading, setLoading] = useState(true)
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
   const [showAi, setShowAi] = useState(false)
-  const [chatId, setChatId] = useState<string | null>(null)
+
+  // Fetch partner details if startWithId is provided
+  const partnerRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
+  const { data: chatPartner } = useDoc<ChatPartner>(partnerRef)
+
+  // Fetch current user details for AI suggestions
+  const currentUserRef = useMemo(() => currentUser ? doc(db, "users", currentUser.uid) : null, [db, currentUser])
+  const { data: currentUserProfile } = useDoc<any>(currentUserRef)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push("/login")
-        return
-      }
-      
-      const userDoc = await getDoc(doc(db, "users", user.uid))
-      if (userDoc.exists()) {
-        setCurrentUser({ uid: user.uid, ...userDoc.data() })
-      }
+    if (!currentUser || !startWithId) return
 
-      if (startWithId) {
-        const partnerDoc = await getDoc(doc(db, "users", startWithId))
-        if (partnerDoc.exists()) {
-          setChatPartner({ uid: startWithId, ...partnerDoc.data() } as ChatPartner)
-          
-          // Find or create chat room
-          const chatsQ = query(
-            collection(db, "chats"),
-            where("participants", "array-contains", user.uid)
-          )
-          const chatsSnap = await getDocs(chatsQ)
-          let existingChatId = null
-          chatsSnap.forEach((doc) => {
-            const data = doc.data()
-            if (data.participants.includes(startWithId)) {
-              existingChatId = doc.id
-            }
-          })
-
-          if (existingChatId) {
-            setChatId(existingChatId)
-          } else {
-            const newChatDoc = await addDoc(collection(db, "chats"), {
-              participants: [user.uid, startWithId],
-              createdAt: serverTimestamp(),
-            })
-            setChatId(newChatDoc.id)
-          }
+    const findOrCreateChat = async () => {
+      const chatsQ = query(
+        collection(db, "chats"),
+        where("participants", "array-contains", currentUser.uid)
+      )
+      const chatsSnap = await getDocs(chatsQ)
+      let existingChatId = null
+      chatsSnap.forEach((doc) => {
+        const data = doc.data()
+        if (data.participants.includes(startWithId)) {
+          existingChatId = doc.id
         }
+      })
+
+      if (existingChatId) {
+        setChatId(existingChatId)
+      } else {
+        const chatData = {
+          participants: [currentUser.uid, startWithId],
+          createdAt: serverTimestamp(),
+        }
+        const chatsRef = collection(db, "chats")
+        addDoc(chatsRef, chatData)
+          .then(newChatDoc => setChatId(newChatDoc.id))
+          .catch(async () => {
+            const permissionError = new FirestorePermissionError({
+              path: chatsRef.path,
+              operation: 'create',
+              requestResourceData: chatData,
+            } satisfies SecurityRuleContext)
+            errorEmitter.emit('permission-error', permissionError)
+          })
       }
-      setLoading(false)
-    })
-    return () => unsubscribe()
-  }, [startWithId, router])
+    }
+    findOrCreateChat()
+  }, [currentUser, startWithId, db])
 
-  useEffect(() => {
-    if (!chatId) return
-    const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"))
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Message))
-      setMessages(msgs)
-    })
-    return () => unsubscribe()
-  }, [chatId])
+  const messagesQuery = useMemo(() => {
+    if (!chatId) return null
+    return query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"))
+  }, [db, chatId])
 
-  const handleSendMessage = async (text: string) => {
+  const { data: messages } = useCollection<Message>(messagesQuery)
+
+  const handleSendMessage = (text: string) => {
     if (!text.trim() || !chatId || !currentUser) return
-    await addDoc(collection(db, "chats", chatId, "messages"), {
+    const msgData = {
       text: text.trim(),
       senderId: currentUser.uid,
       timestamp: serverTimestamp(),
-    })
+    }
+    const messagesRef = collection(db, "chats", chatId, "messages")
+    addDoc(messagesRef, msgData)
+      .catch(async () => {
+        const permissionError = new FirestorePermissionError({
+          path: messagesRef.path,
+          operation: 'create',
+          requestResourceData: msgData,
+        } satisfies SecurityRuleContext)
+        errorEmitter.emit('permission-error', permissionError)
+      })
     setNewMessage("")
     setShowAi(false)
   }
 
   const getAiSuggestions = async () => {
-    if (!currentUser || !chatPartner) return
+    if (!currentUserProfile || !chatPartner) return
     try {
       const result = await suggestChatStarter({
         currentUserProfile: {
-          name: currentUser.name || "User",
-          interests: currentUser.interests || "Interested in connection",
-          lookingFor: currentUser.lookingFor || "Friendship",
+          name: currentUserProfile.name || "User",
+          interests: currentUserProfile.interests || "Interested in connection",
+          lookingFor: currentUserProfile.lookingFor || "Friendship",
         },
         otherUserProfile: {
           name: chatPartner.name,
@@ -129,11 +138,13 @@ function ChatsContent() {
       setAiSuggestions(result.suggestions)
       setShowAi(true)
     } catch (e) {
-      console.error(e)
+      // Errors handled by server action or global handler
     }
   }
 
-  if (loading) return <div className="p-10 text-center animate-pulse">Loading conversation...</div>
+  if (!currentUser) return null
+
+  if (!chatPartner && startWithId) return <div className="p-10 text-center animate-pulse">Loading conversation...</div>
 
   if (!chatPartner) {
     return (
@@ -180,17 +191,17 @@ function ChatsContent() {
           {messages.map((msg) => (
             <div 
               key={msg.id} 
-              className={`flex ${msg.senderId === currentUser?.uid ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start'}`}
             >
               <div 
                 className={`max-w-[80%] p-3 rounded-2xl text-sm font-body shadow-sm ${
-                  msg.senderId === currentUser?.uid 
+                  msg.senderId === currentUser.uid 
                     ? 'bg-primary text-white rounded-br-none' 
                     : 'bg-white text-foreground rounded-bl-none'
                 }`}
               >
                 {msg.text}
-                <div className={`text-[8px] mt-1 opacity-70 text-right`}>
+                <div className="text-[8px] mt-1 opacity-70 text-right">
                   {msg.timestamp ? format(msg.timestamp.toDate(), "HH:mm") : ""}
                 </div>
               </div>

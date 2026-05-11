@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { auth, db } from "@/lib/firebase"
-import { doc, getDoc } from "firebase/firestore"
-import { onAuthStateChanged } from "firebase/auth"
+import { useMemo } from "react"
+import { doc } from "firebase/firestore"
+import { useFirestore, useUser, useDoc, useAuth } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
@@ -22,24 +21,18 @@ interface UserProfile {
 }
 
 export default function MePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null)
   const router = useRouter()
+  const { user } = useUser()
+  const db = useFirestore()
+  const auth = useAuth()
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push("/login")
-        return
-      }
+  const profileRef = useMemo(() => {
+    return user ? doc(db, "users", user.uid) : null
+  }, [db, user])
 
-      const userDoc = await getDoc(doc(db, "users", user.uid))
-      if (userDoc.exists()) {
-        setProfile(userDoc.data() as UserProfile)
-      }
-    })
-    return () => unsubscribe()
-  }, [router])
+  const { data: profile, loading } = useDoc<UserProfile>(profileRef)
 
+  if (loading) return <div className="p-10 text-center animate-pulse">Loading profile...</div>
   if (!profile) return null
 
   const calculateAge = (dob: string) => {
@@ -64,7 +57,7 @@ export default function MePage() {
           />
         </div>
         <div>
-          <h2 className="text-3xl font-headline text-primary">{profile.name}, {calculateAge(profile.dob)}</h2>
+          <h2 className="text-3xl font-headline text-primary">{profile.name}, {profile.dob ? calculateAge(profile.dob) : ""}</h2>
           <p className="text-muted-foreground">{profile.email}</p>
         </div>
       </header>
