@@ -4,7 +4,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signInWithEmailAndPassword } from "firebase/auth"
-import { useAuth } from "@/firebase"
+import { doc, getDoc } from "firebase/firestore"
+import { useAuth, useFirestore } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,20 +20,30 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
   const auth = useAuth()
+  const db = useFirestore()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      router.push("/")
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+      
+      // Check onboarding status to decide where to send the user
+      const userRef = doc(db, "users", user.uid)
+      const userSnap = await getDoc(userRef)
+      
+      if (userSnap.exists() && userSnap.data().onboardingComplete) {
+        router.push("/home")
+      } else {
+        router.push("/onboarding")
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login failed",
         description: error.message,
       })
-    } finally {
       setLoading(false)
     }
   }

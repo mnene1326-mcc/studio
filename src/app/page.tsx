@@ -1,7 +1,10 @@
 
 "use client"
 
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useUser, useFirestore } from "@/firebase"
+import { doc, getDoc } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Heart, Mail, Zap } from "lucide-react"
 
@@ -11,6 +14,23 @@ import { Heart, Mail, Zap } from "lucide-react"
  */
 export default function WelcomePage() {
   const router = useRouter()
+  const { user, loading } = useUser()
+  const db = useFirestore()
+
+  // If already logged in, provide a way to jump straight to home
+  // but keep the Welcome screen as the main entry as requested.
+  useEffect(() => {
+    if (!loading && user) {
+      const checkOnboarding = async () => {
+        const userRef = doc(db, "users", user.uid)
+        const userSnap = await getDoc(userRef)
+        if (userSnap.exists() && userSnap.data().onboardingComplete) {
+          router.push("/home")
+        }
+      }
+      checkOnboarding()
+    }
+  }, [user, loading, db, router])
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-12 animate-in fade-in zoom-in duration-700 bg-gradient-to-b from-background to-secondary/20">
@@ -41,6 +61,16 @@ export default function WelcomePage() {
           <Zap className="w-5 h-5 fill-primary/10" />
           Fast Login
         </Button>
+
+        {user && !loading && (
+          <Button 
+            variant="link" 
+            className="w-full text-primary font-body"
+            onClick={() => router.push("/home")}
+          >
+            Enter MatchFlow as member
+          </Button>
+        )}
       </div>
 
       <footer className="absolute bottom-10 text-[10px] text-muted-foreground font-body uppercase tracking-widest opacity-60">
