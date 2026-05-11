@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useAuth } from "@/firebase"
 import { useRouter } from "next/navigation"
@@ -22,20 +23,24 @@ interface UserProfile {
 
 export default function MePage() {
   const router = useRouter()
-  const { user } = useUser()
+  const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const auth = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login")
+    }
+  }, [user, authLoading, router])
 
   const profileRef = useMemo(() => {
     return user ? doc(db, "users", user.uid) : null
   }, [db, user])
 
-  const { data: profile, loading } = useDoc<UserProfile>(profileRef)
-
-  if (loading) return <div className="p-10 text-center animate-pulse">Loading profile...</div>
-  if (!profile) return null
+  const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
 
   const calculateAge = (dob: string) => {
+    if (!dob) return ""
     const birthDate = new Date(dob)
     const today = new Date()
     let age = today.getFullYear() - birthDate.getFullYear()
@@ -44,12 +49,34 @@ export default function MePage() {
     return age
   }
 
+  if (authLoading || profileLoading) {
+    return (
+      <div className="flex-1 pb-20 bg-background flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center animate-pulse font-headline text-primary text-xl">Loading Profile...</div>
+        </div>
+        <BottomNav />
+      </div>
+    )
+  }
+
+  if (!user || !profile) {
+    return (
+      <div className="flex-1 pb-20 bg-background flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center font-body text-muted-foreground">Profile not found.</div>
+        </div>
+        <BottomNav />
+      </div>
+    )
+  }
+
   return (
-    <div className="flex-1 pb-20 bg-background">
+    <div className="flex-1 pb-20 bg-background min-h-screen">
       <header className="p-6 text-center space-y-4">
-        <div className="relative w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl overflow-hidden">
+        <div className="relative w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl overflow-hidden bg-muted">
           <Image 
-            src={profile.photoURL} 
+            src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`} 
             alt={profile.name} 
             fill 
             className="object-cover" 
@@ -57,8 +84,10 @@ export default function MePage() {
           />
         </div>
         <div>
-          <h2 className="text-3xl font-headline text-primary">{profile.name}, {profile.dob ? calculateAge(profile.dob) : ""}</h2>
-          <p className="text-muted-foreground">{profile.email}</p>
+          <h2 className="text-3xl font-headline text-primary">
+            {profile.name}{profile.dob ? `, ${calculateAge(profile.dob)}` : ""}
+          </h2>
+          <p className="text-muted-foreground font-body">{profile.email}</p>
         </div>
       </header>
 
@@ -70,29 +99,29 @@ export default function MePage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2 text-sm">
               <div className="p-2 bg-secondary rounded-lg"><MapPin className="w-4 h-4 text-primary" /></div>
-              <span>{profile.country}</span>
+              <span className="font-body">{profile.country || "Not specified"}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="p-2 bg-secondary rounded-lg"><Heart className="w-4 h-4 text-primary" /></div>
-              <span>{profile.lookingFor}</span>
+              <span className="font-body">{profile.lookingFor || "Not specified"}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="p-2 bg-secondary rounded-lg"><Users className="w-4 h-4 text-primary" /></div>
-              <span className="capitalize">{profile.gender}</span>
+              <span className="capitalize font-body">{profile.gender || "Not specified"}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <div className="p-2 bg-secondary rounded-lg"><Calendar className="w-4 h-4 text-primary" /></div>
-              <span>{profile.dob}</span>
+              <span className="font-body">{profile.dob || "Not specified"}</span>
             </div>
           </div>
         </section>
 
         <section className="space-y-2">
-          <Button variant="ghost" className="w-full justify-between h-14 rounded-xl hover:bg-white" asChild>
+          <Button variant="ghost" className="w-full justify-between h-14 rounded-xl hover:bg-white border border-transparent hover:border-border" asChild>
             <Link href="/settings">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-muted rounded-lg"><Settings className="w-5 h-5" /></div>
-                <span className="font-medium">Settings</span>
+                <span className="font-medium font-body">Settings</span>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </Link>
@@ -100,12 +129,12 @@ export default function MePage() {
           
           <Button 
             variant="ghost" 
-            className="w-full justify-between h-14 rounded-xl hover:bg-white text-destructive"
+            className="w-full justify-between h-14 rounded-xl hover:bg-white text-destructive border border-transparent hover:border-destructive/10"
             onClick={() => auth.signOut()}
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-destructive/10 rounded-lg"><LogOut className="w-5 h-5" /></div>
-              <span className="font-medium">Sign Out</span>
+              <span className="font-medium font-body">Sign Out</span>
             </div>
             <ChevronRight className="w-5 h-5 opacity-50" />
           </Button>
