@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { doc, updateDoc } from "firebase/firestore"
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { useAuth, useFirestore, useUser } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -13,8 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { Heart } from "lucide-react"
 
-const EAST_AFRICAN_COUNTRIES = [
-  "Kenya", "Tanzania", "Uganda", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "Somalia", "Eritrea", "Djibouti"
+const AFRICAN_COUNTRIES = [
+  "Kenya", "Tanzania", "Uganda", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "Somalia", "Eritrea", "Djibouti", "South Africa", "Nigeria", "Ghana", "Egypt"
 ]
 
 const LOOKING_FOR_OPTIONS = [
@@ -66,6 +67,7 @@ export default function OnboardingPage() {
       lookingFor,
       onboardingComplete: true,
       photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
+      updatedAt: serverTimestamp(),
     }
 
     const userRef = doc(db, "users", user.uid)
@@ -148,7 +150,7 @@ export default function OnboardingPage() {
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
-                  {EAST_AFRICAN_COUNTRIES.map((c) => (
+                  {AFRICAN_COUNTRIES.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
                 </SelectContent>

@@ -1,9 +1,10 @@
+
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createUserWithEmailAndPassword } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { useAuth, useFirestore } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -34,7 +35,7 @@ export default function RegisterPage() {
         uid: user.uid,
         email: user.email,
         onboardingComplete: false,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
       }
 
       const userRef = doc(db, "users", user.uid)
