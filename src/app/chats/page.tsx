@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc } from "firebase/firestore"
 import { useAuth, useFirestore, useUser, useCollection, useDoc } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -15,7 +14,6 @@ import { MessageSquare, Send, Sparkles, ChevronLeft, Search } from "lucide-react
 import { Input } from "@/components/ui/input"
 import { suggestChatStarter } from "@/ai/flows/suggest-chat-starter"
 import { format } from "date-fns"
-import { useMemoFirebase } from "@/firebase/firestore/use-memo-firebase"
 
 interface Message {
   id: string
@@ -187,9 +185,15 @@ function ChatsContent() {
       lastMessage: text.trim(),
       lastMessageAt: serverTimestamp()
     }
-    addDoc(collection(db, "temp"), updateData) // Placeholder just to show pattern, actual is below
-    // We should use setDoc/updateDoc but for simplicity in this MVP let's assume lastMessage exists
-    // The instructions say use setDoc/updateDoc/addDoc
+    updateDoc(chatRef, updateData)
+      .catch(async () => {
+        const permissionError = new FirestorePermissionError({
+          path: chatRef.path,
+          operation: 'update',
+          requestResourceData: updateData,
+        } satisfies SecurityRuleContext)
+        errorEmitter.emit('permission-error', permissionError)
+      })
     
     setNewMessage("")
     setShowAi(false)
