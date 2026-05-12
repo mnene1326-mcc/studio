@@ -67,22 +67,22 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div 
             onClick={() => router.push("/mystery-note")}
-            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-20"
+            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-28"
           >
             <div className="bg-white/20 p-2 rounded-xl">
-              <FileText className="w-5 h-5 text-white" />
+              <FileText className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
+            <span className="text-white font-black text-sm uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
           </div>
           
           <div 
             onClick={() => router.push("/tasks")}
-            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-20"
+            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-28"
           >
             <div className="bg-white/10 p-2 rounded-xl">
-              <Target className="w-5 h-5 text-white" />
+              <Target className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Task<br/>Center</span>
+            <span className="text-white font-black text-sm uppercase tracking-tighter leading-tight">Task<br/>Center</span>
           </div>
         </div>
 
