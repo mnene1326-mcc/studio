@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState } from "react"
@@ -7,7 +8,7 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
-import { Bell } from "lucide-react"
+import { Bell, FileText, Target } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -61,13 +62,37 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-6 pb-2 border-b border-black/5">
-        <div className="flex items-center justify-between mb-2">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
+        {/* Action Cards Row */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div 
+            onClick={() => router.push("/mystery-note")}
+            className="bg-[#FF3B30] rounded-2xl p-3 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10"
+          >
+            <div className="bg-white/20 p-2 rounded-xl">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
+          </div>
+          
+          <div 
+            onClick={() => router.push("/tasks")}
+            className="bg-black rounded-2xl p-3 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5"
+          >
+            <div className="bg-white/10 p-2 rounded-xl">
+              <Target className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Task<br/>Center</span>
+          </div>
+        </div>
+
+        {/* Tabs Row */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-lg font-black transition-all",
+                "relative text-sm font-black transition-all",
                 activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -79,7 +104,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-lg font-black transition-all",
+                "relative text-sm font-black transition-all",
                 activeTab === 'nearby' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -89,9 +114,9 @@ export default function HomePage() {
               )}
             </button>
           </div>
-          <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full bg-gray-50 relative group">
-            <Bell className="w-5 h-5 text-black group-hover:rotate-12 transition-transform" />
-            <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
+          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
+            <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
           </Button>
         </div>
       </header>
