@@ -18,12 +18,10 @@ export default function WelcomePage() {
   const router = useRouter()
   const [isRedirecting, setIsRedirecting] = useState(false)
 
-  // Ensure hydration stability
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Handle automatic redirect for authenticated users
   useEffect(() => {
     if (isMounted && !authLoading && user && !isRedirecting) {
       const checkOnboarding = async () => {
@@ -49,22 +47,18 @@ export default function WelcomePage() {
     setIsRedirecting(true)
     try {
       await signInAnonymously(auth)
-      // Redirect will be handled by the useEffect above
     } catch (error) {
       setIsRedirecting(false)
     }
   }
 
-  // To prevent hydration errors, render a consistent state
+  // Hydration guard: return the same HTML on server and first client render
   if (!isMounted) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-        <h1 className="text-4xl font-logo text-primary">MatchFlow</h1>
-      </div>
+      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen" />
     )
   }
 
-  // Splash screen while loading state or redirecting
   if (authLoading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
@@ -81,7 +75,6 @@ export default function WelcomePage() {
 
   return (
     <div className="relative flex-1 flex flex-col items-center justify-center min-h-screen overflow-hidden bg-white">
-      {/* Premium Background */}
       <div className="absolute inset-0 z-0">
         <Image 
           src="https://picsum.photos/seed/welcome/1200/1800" 

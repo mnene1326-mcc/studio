@@ -69,7 +69,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
-      {/* Hero Section */}
       <div className="relative h-[65vh] w-full">
         <Image
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
@@ -80,7 +79,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           priority
         />
         
-        {/* Top Controls */}
         <div className="absolute top-12 inset-x-0 px-4 flex justify-between items-center z-20">
           <Button 
             variant="ghost" 
@@ -99,7 +97,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           </Button>
         </div>
 
-        {/* Progress Dots */}
         <div className="absolute bottom-44 inset-x-0 flex justify-center gap-1 z-10">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={cn("h-0.5 rounded-full transition-all", i === 1 ? "w-4 bg-white" : "w-1.5 bg-white/40")} />
@@ -107,9 +104,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      {/* Content Section - High overlap and refined edges */}
-      <div className="relative -mt-44 bg-white px-6 pt-8 space-y-4 min-h-[50vh] z-20">
-        {/* Name & ID Header */}
+      <div className="relative -mt-44 bg-white px-6 pt-8 space-y-4 min-h-[50vh] z-20 rounded-t-[3rem]">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-1">
@@ -144,7 +139,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           </div>
         </div>
 
-        {/* About Me Section */}
         <section className="space-y-0.5">
           <h2 className="text-[10px] font-black text-black uppercase tracking-tighter">About Me</h2>
           <p className="text-[8px] font-bold text-gray-500 leading-relaxed italic">
@@ -152,7 +146,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           </p>
         </section>
 
-        {/* Bio Text Footer */}
         <div className="pb-8">
           <p className="text-[6px] font-bold text-gray-400 leading-relaxed uppercase tracking-widest">
             Little things say everything... dm for fun and serious talks 🥰
@@ -160,7 +153,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      {/* Fixed Bottom Action */}
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-50 z-50">
         <Button 
           className="w-full h-11 rounded-full bg-[#FF3B30] text-white hover:bg-red-600 text-[10px] font-bold flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 uppercase tracking-widest"

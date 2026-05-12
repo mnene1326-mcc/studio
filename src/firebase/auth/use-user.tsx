@@ -1,24 +1,28 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from '../provider';
 
+// Module-level variable to persist user across tab switches/navigation
+let cachedUser: User | null = null;
+let hasInitialized = false;
+
 /**
  * A hook that returns the current Firebase user and loading state.
- * It ensures a consistent loading state on the server and initial client render
- * to prevent hydration mismatches.
+ * Uses a persistent cache to prevent flickering during tab transitions.
  */
 export function useUser() {
   const auth = useAuth();
   
-  // Start with loading: true to ensure SSR and initial client hydration match.
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(cachedUser);
+  const [loading, setLoading] = useState(!hasInitialized);
 
   useEffect(() => {
-    // onAuthStateChanged is the source of truth for auth state
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      cachedUser = u;
+      hasInitialized = true;
       setUser(u);
       setLoading(false);
     });
