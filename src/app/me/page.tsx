@@ -1,10 +1,8 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
 import { doc } from "firebase/firestore"
-import { signOut } from "firebase/auth"
-import { useFirestore, useUser, useDoc, useAuth } from "@/firebase"
+import { useFirestore, useUser, useDoc } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
@@ -44,7 +42,6 @@ export default function MePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
-  const auth = useAuth()
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
 
@@ -84,25 +81,25 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
-      <header className="relative pt-10 pb-6 px-6 bg-gradient-to-b from-[#FF3B30] via-[#FF3B30]/30 to-[#F8F9FA]">
+      <header className="relative pt-12 pb-8 px-6 bg-gradient-to-b from-[#FF3B30]/10 via-[#FF3B30]/5 to-[#F8F9FA]">
         <div className="flex justify-between items-start">
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             <div className="flex items-center gap-1 group">
-              <h2 className="text-xl font-black text-black tracking-tight">{profile.name} 🫡</h2>
-              <ChevronRight className="w-4 h-4" />
+              <h2 className="text-2xl font-black text-black tracking-tight">{profile.name} 🫡</h2>
+              <BadgeCheck className="w-5 h-5 text-[#FF3B30]" />
             </div>
             
-            <div className="flex gap-1 py-0.5">
-              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-sm px-1.5 py-0.5 flex items-center gap-0.5">
-                <span className="text-[7px] text-white font-black italic">SVIP1</span>
+            <div className="flex gap-1.5 py-1">
+              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-md px-2 py-0.5 flex items-center shadow-sm">
+                <span className="text-[8px] text-white font-black italic tracking-widest">SVIP1</span>
               </div>
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-sm px-1.5 py-0.5 flex items-center gap-0.5">
-                <span className="text-[7px] text-white font-black italic">VIP4</span>
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-md px-2 py-0.5 flex items-center shadow-sm">
+                <span className="text-[8px] text-white font-black italic tracking-widest">VIP4</span>
               </div>
             </div>
 
             <div 
-              className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-opacity"
+              className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all hover:bg-black/5 rounded-full px-2 py-1 -ml-2"
               onClick={handleCopyId}
             >
               <p className="text-[#8B8B8B] font-bold text-xs tracking-tight">ID:{profile.matchFlowId || "null"}</p>
@@ -114,18 +111,21 @@ export default function MePage() {
             </div>
           </div>
 
-          <div className="relative w-16 h-16 rounded-full border-4 border-white/50 shadow-md overflow-hidden bg-muted">
-            <Image 
-              src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
-              alt={profile.name} 
-              fill 
-              className="object-cover" 
-              data-ai-hint="person profile"
-            />
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-br from-[#FF3B30] to-orange-500 rounded-full blur-sm opacity-50"></div>
+            <div className="relative w-20 h-20 rounded-full border-4 border-white shadow-xl overflow-hidden bg-muted">
+              <Image 
+                src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
+                alt={profile.name} 
+                fill 
+                className="object-cover" 
+                data-ai-hint="person profile"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-between mt-4 px-1">
+        <div className="flex justify-between mt-8 px-2 glass-card rounded-2xl p-4 shadow-sm">
           {[
             { label: "Friends", val: "0" },
             { label: "Following", val: "0" },
@@ -134,106 +134,84 @@ export default function MePage() {
           ].map((stat, i) => (
             <div key={i} className="flex flex-col items-center">
               <div className="flex items-start">
-                <span className="text-base font-black text-black leading-none">{stat.val}</span>
-                {stat.dot && <div className="w-1 h-1 bg-[#FF3B30] rounded-full -mt-0.5 ml-0.5" />}
+                <span className="text-lg font-black text-black leading-none tracking-tight">{stat.val}</span>
+                {stat.dot && <div className="w-1.5 h-1.5 bg-[#FF3B30] rounded-full -mt-0.5 ml-0.5 shadow-sm" />}
               </div>
-              <span className="text-[9px] text-[#8B8B8B] font-bold mt-0.5">{stat.label}</span>
+              <span className="text-[10px] text-[#8B8B8B] font-bold mt-1 uppercase tracking-tighter">{stat.label}</span>
             </div>
           ))}
         </div>
       </header>
 
-      <main className="px-4 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-[#FF3B30] rounded-xl p-4 flex flex-col justify-center gap-1 shadow-sm h-24 overflow-hidden">
+      <main className="px-4 space-y-6">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#FF3B30] rounded-2xl p-4 flex flex-col justify-center gap-1 shadow-lg shadow-red-500/10 h-24 overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-center gap-2">
-              <div className="bg-white rounded-full p-1 shadow-sm">
+              <div className="bg-white rounded-full p-1.5 shadow-md">
                 <CircleDollarSign className="w-4 h-4 text-[#FF3B30]" />
               </div>
-              <span className="text-2xl font-black text-white leading-none">10</span>
+              <span className="text-3xl font-black text-white leading-none">10</span>
             </div>
-            <span className="text-[9px] text-white/80 font-bold uppercase tracking-wider ml-1">Coins</span>
+            <span className="text-[10px] text-white/90 font-black uppercase tracking-widest ml-1">My Coins</span>
           </div>
-          <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-4 flex items-center justify-between shadow-sm h-24 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 flex items-center justify-between shadow-xl h-24 relative overflow-hidden group active:scale-95 transition-all">
              <div className="z-10 flex flex-col">
-               <span className="text-2xl font-black italic text-gray-200 tracking-tighter leading-none">VIP4</span>
-               <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1">Status</span>
+               <span className="text-3xl font-black italic text-gray-200 tracking-tighter leading-none">VIP4</span>
+               <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Upgrade</span>
              </div>
-             <div className="absolute right-[-10px] bottom-[-10px] opacity-30">
-                <Crown className="w-20 h-20 text-gray-200 rotate-12" />
+             <div className="absolute right-[-8px] bottom-[-8px] opacity-20 transition-transform group-hover:scale-110">
+                <Crown className="w-16 h-16 text-white rotate-12" />
              </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 py-4">
-           {[
-             { label: "Task center", icon: Target, color: "bg-red-500" },
-             { label: "Secret note", icon: FileText, color: "bg-orange-500" },
-             { label: "Income", icon: CircleDollarSign, color: "bg-red-400" },
-             { label: "Store", icon: Store, color: "bg-red-600" },
-             { label: "Aristocracy", icon: Hexagon, color: "bg-red-700" },
-             { label: "Tasks", icon: ClipboardList, color: "bg-pink-500" }
-           ].map((item, i) => (
-             <div key={i} className="flex flex-col items-center gap-1.5">
-               <div className={cn("p-1.5 rounded-lg shadow-sm", item.color)}>
-                 <item.icon className="w-5 h-5 text-white" />
+        <section className="bg-white rounded-[2rem] p-6 shadow-sm border border-black/5">
+          <h3 className="text-xs font-black text-black uppercase tracking-[0.2em] mb-6 px-1 opacity-40">Main Actions</h3>
+          <div className="grid grid-cols-3 gap-y-8">
+             {[
+               { label: "Task Center", icon: Target, color: "text-red-500", bg: "bg-red-50" },
+               { label: "Secret Note", icon: FileText, color: "text-orange-500", bg: "bg-orange-50" },
+               { label: "Income", icon: CircleDollarSign, color: "text-red-400", bg: "bg-red-50" },
+               { label: "Premium Store", icon: Store, color: "text-red-600", bg: "bg-red-50" },
+               { label: "Aristocracy", icon: Hexagon, color: "text-red-700", bg: "bg-red-50" },
+               { label: "Active Tasks", icon: ClipboardList, color: "text-pink-500", bg: "bg-pink-50" }
+             ].map((item, i) => (
+               <div key={i} className="flex flex-col items-center gap-2 group cursor-pointer">
+                 <div className={cn("p-4 rounded-[1.2rem] shadow-sm transition-all group-hover:shadow-md active:scale-90", item.bg)}>
+                   <item.icon className={cn("w-6 h-6", item.color)} />
+                 </div>
+                 <span className="text-[10px] font-black text-gray-600 text-center leading-tight tracking-tighter">{item.label}</span>
                </div>
-               <span className="text-[9px] font-bold text-gray-600 text-center leading-tight">{item.label}</span>
-             </div>
-           ))}
-        </div>
+             ))}
+          </div>
+        </section>
 
-        <div className="flex items-center justify-between px-1 mt-2">
-          <h3 className="text-sm font-bold text-black">Recommended Games</h3>
-          <ChevronRight className="w-3 h-3 text-gray-400" />
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
-          {[
-            { name: "Original 777", img: "777" },
-            { name: "MegaJackpot", img: "slots" },
-            { name: "DeepSea Treasure", img: "ocean" }
-          ].map((game, i) => (
-            <div key={i} className="flex flex-col items-center min-w-[80px] gap-1">
-              <div className="relative w-20 h-12 rounded-lg overflow-hidden bg-muted shadow-sm">
-                <Image 
-                  src={`https://picsum.photos/seed/${game.img}/200/120`} 
-                  alt={game.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <span className="text-[9px] font-bold text-gray-600 text-center leading-tight">{game.name}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-3 pt-4">
-          <h3 className="text-sm font-bold text-black px-1">Other</h3>
-          <div className="grid grid-cols-4 gap-y-4">
+        <section className="bg-white rounded-[2rem] p-6 shadow-sm border border-black/5">
+          <h3 className="text-xs font-black text-black uppercase tracking-[0.2em] mb-6 px-1 opacity-40">More Services</h3>
+          <div className="grid grid-cols-4 gap-y-8">
             {[
-              { label: "Bag", icon: ShoppingBag },
-              { label: "Level", icon: Shield },
-              { label: "Badge", icon: Award },
-              { label: "Certified", icon: BadgeCheck },
-              { label: "Customer service", icon: Headphones },
-              { label: "User Feedback", icon: MessageSquareQuote },
+              { label: "Inventory", icon: ShoppingBag },
+              { label: "Experience", icon: Shield },
+              { label: "Badges", icon: Award },
+              { label: "Verification", icon: BadgeCheck },
+              { label: "Help Center", icon: Headphones },
+              { label: "Feedback", icon: MessageSquareQuote },
               { label: "Settings", icon: Settings, href: "/settings" },
-              { label: "Game", icon: Gamepad2 }
+              { label: "Game Hub", icon: Gamepad2 }
             ].map((item, i) => (
               <Link 
                 key={i} 
                 href={item.href || "#"} 
-                className="flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                className="flex flex-col items-center gap-2 active:scale-90 transition-all group"
               >
-                <div className="relative">
-                  <item.icon className="w-6 h-6 text-black stroke-[1.5]" />
+                <div className="p-2 group-hover:bg-gray-50 rounded-xl transition-colors">
+                  <item.icon className="w-7 h-7 text-black/80 stroke-[1.5]" />
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 text-center leading-tight px-0.5">{item.label}</span>
+                <span className="text-[9px] font-black text-gray-500 text-center leading-tight px-0.5 uppercase tracking-tighter">{item.label}</span>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       </main>
 
       <BottomNav />

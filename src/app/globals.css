@@ -23,7 +23,7 @@
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
     --ring: 0 72% 51%;
-    --radius: 1rem;
+    --radius: 1.5rem;
   }
 }
 
@@ -37,11 +37,17 @@
 }
 
 .premium-blur {
-  @apply backdrop-blur-xl bg-white/40 border border-white/20;
+  @apply backdrop-blur-2xl bg-white/60 border border-white/40;
 }
 
 .premium-shadow {
-  box-shadow: 0 10px 30px -10px rgba(255, 59, 48, 0.2);
+  box-shadow: 0 20px 40px -15px rgba(255, 59, 48, 0.15);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .text-balance {
