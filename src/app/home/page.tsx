@@ -92,25 +92,25 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-base font-black transition-all",
-                activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
+                "relative text-sm font-semibold transition-all",
+                activeTab === 'recommend' ? "text-black" : "text-gray-400"
               )}
             >
               Recommend
               {activeTab === 'recommend' && (
-                <div className="absolute -bottom-2 left-0 w-6 h-1 bg-[#FF3B30] rounded-full shadow-sm shadow-red-500/50" />
+                <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
               )}
             </button>
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-base font-black transition-all",
-                activeTab === 'nearby' ? "text-black scale-105" : "text-gray-400"
+                "relative text-sm font-semibold transition-all",
+                activeTab === 'nearby' ? "text-black" : "text-gray-400"
               )}
             >
               Nearby
               {activeTab === 'nearby' && (
-                <div className="absolute -bottom-2 left-0 w-6 h-1 bg-[#FF3B30] rounded-full shadow-sm shadow-red-500/50" />
+                <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
               )}
             </button>
           </div>
@@ -121,24 +121,24 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-3 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-4 py-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.5/4.2] rounded-2xl bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3.5/4] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 text-center space-y-4 opacity-40">
-            <div className="text-xl font-black italic text-black">No one matches...</div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black">Try updating your filters</p>
+            <div className="text-lg font-bold italic text-black">No one matches...</div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">Try updating your filters</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-2xl aspect-[3.5/4.2] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
+                className="relative overflow-hidden border-none rounded-2xl aspect-[3.5/4] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
@@ -149,35 +149,35 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
                 <div 
-                  className="absolute top-3 right-3 premium-blur rounded-2xl px-4 py-1.5 shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
+                  className="absolute top-2 right-2 premium-blur rounded-full px-3 py-1 shadow-md flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-[#FF3B30] font-black text-[10px] italic tracking-tighter">Chat</span>
+                  <span className="text-[#FF3B30] font-bold text-[9px] italic tracking-tighter">Chat</span>
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 p-3 pt-12 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-white font-black text-sm truncate drop-shadow-lg">{user.name}</span>
-                    <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 shadow-lg border border-white/20">
-                      <div className="w-2.5 h-2.5 bg-black rounded-full flex items-center justify-center">
-                         <span className="text-[6px] text-yellow-400 font-black">✔</span>
+                <div className="absolute inset-x-0 bottom-0 p-2.5 pt-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <span className="text-white font-medium text-xs truncate drop-shadow-md">{user.name}</span>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 shadow border border-white/20">
+                      <div className="w-2 h-2 bg-black rounded-full flex items-center justify-center">
+                         <span className="text-[5px] text-yellow-400 font-bold">✔</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-1">
-                    <div className="bg-[#FF4D94] rounded-lg px-1 py-0.5 flex items-center gap-1 shadow-sm border border-white/10">
-                      <span className="text-[8px] text-white font-black leading-none">
+                    <div className="bg-[#FF4D94] rounded-md px-1 py-0.5 flex items-center gap-0.5 shadow-sm border border-white/5">
+                      <span className="text-[7px] text-white font-bold leading-none">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-1 py-0.5 shadow-sm border border-white/10">
-                      <span className="text-[8px] text-white font-black truncate max-w-[50px] leading-none">
-                        {user.interests?.split(',')[0] || "Match"}
+                    <div className="bg-black/30 backdrop-blur-sm rounded-md px-1 py-0.5 shadow-sm border border-white/5">
+                      <span className="text-[7px] text-white font-bold truncate max-w-[45px] leading-none">
+                        {user.interests?.split(',')[0] || user.country || "Match"}
                       </span>
                     </div>
                   </div>
