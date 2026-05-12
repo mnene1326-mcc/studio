@@ -2,29 +2,20 @@
 const CACHE_NAME = 'matchflow-cache-v1';
 const urlsToCache = [
   '/',
-  '/home',
-  '/chats',
-  '/me',
-  '/globals.css'
+  '/globals.css',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
-      })
+      .then((cache) => cache.addAll(urlsToCache))
   );
 });
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
+      .then((response) => response || fetch(event.request))
   );
 });

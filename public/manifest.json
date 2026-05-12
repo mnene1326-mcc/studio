@@ -2,19 +2,19 @@
 {
   "name": "MatchFlow",
   "short_name": "MatchFlow",
-  "description": "Premium Dating Experience for East Africa",
+  "description": "Connect with Heart - The premier dating app for East Africa",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#FF3B30",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/matchflow-icon/192/192",
+      "src": "https://picsum.photos/seed/icon-192/192/192",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://picsum.photos/seed/matchflow-icon/512/512",
+      "src": "https://picsum.photos/seed/icon-512/512/512",
       "sizes": "512x512",
       "type": "image/png"
     }
