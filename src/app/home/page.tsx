@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { collection, query, where, limit } from "firebase/firestore"
 import { useFirestore, useUser, useCollection } from "@/firebase"
 import { useRouter } from "next/navigation"
@@ -40,6 +40,11 @@ export default function HomePage() {
   const { user: currentUser } = useUser()
   const db = useFirestore()
   const [activeTab, setActiveTab] = useState<'recommend' | 'nearby'>('recommend')
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const usersQuery = useMemo(() => {
     return query(
@@ -60,10 +65,17 @@ export default function HomePage() {
     router.push(`/chats?startWith=${userId}`)
   }
 
+  // Deterministic distance to avoid hydration mismatch
+  const getDistance = (uid: string) => {
+    const seed = uid.charCodeAt(0) + uid.charCodeAt(uid.length - 1)
+    return seed % 2 === 0 ? ">500km" : "13.6km"
+  }
+
+  if (!isMounted) return null
+
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
-        {/* Action Cards Row */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div 
             onClick={() => router.push("/mystery-note")}
@@ -86,7 +98,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tabs Row */}
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-6">
             <button 
@@ -149,7 +160,6 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* Top Right "Hi" Badge */}
                 <div 
                   className="absolute top-3 right-3 bg-[#D4FF00] rounded-2xl px-3 py-1.5 shadow-md flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
                   onClick={(e) => handleChatClick(e, user.uid)}
@@ -168,21 +178,18 @@ export default function HomePage() {
                   </div>
                   
                   <div className="flex items-center gap-1">
-                    {/* Gender/Age Badge */}
                     <div className="bg-[#FF4D94] rounded-md px-1.5 py-0.5 flex items-center gap-0.5 shadow-sm">
                       <span className="text-[8px] text-white font-black leading-none">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    {/* Distance Badge */}
                     <div className="bg-[#D4FF00] rounded-md px-1.5 py-0.5 shadow-sm">
                       <span className="text-[8px] text-black font-black leading-none truncate max-w-[50px]">
-                        {Math.random() > 0.5 ? ">500km" : "13.6km"}
+                        {getDistance(user.uid)}
                       </span>
                     </div>
 
-                    {/* Tag Badge */}
                     <div className="bg-black/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm border border-white/10">
                       <span className="text-[8px] text-[#D4FF00] font-black leading-none uppercase tracking-tighter">
                         Sometimes
