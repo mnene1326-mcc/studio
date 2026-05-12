@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -7,7 +6,6 @@ import { useFirestore, useUser, useCollection } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Button } from "@/components/ui/button"
 import { FileText, Target, User as UserIcon } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -66,7 +64,7 @@ export default function HomePage() {
   }
 
   // Deterministic distance to avoid hydration mismatch
-  const getDistance = (uid: string) => {
+  const getDistance = (uid?: string) => {
     if (!uid) return "13.6km"
     const seed = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return seed % 2 === 0 ? ">500km" : "13.6km"
@@ -100,12 +98,12 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Navigation Tabs - Refined Typography */}
+        {/* Navigation Tabs */}
         <div className="flex items-center gap-6 mb-4 px-1">
           <button 
             onClick={() => setActiveTab('recommend')}
             className={cn(
-              "relative text-xs font-black lowercase tracking-tight transition-all",
+              "relative text-[10px] font-black lowercase tracking-widest transition-all",
               activeTab === 'recommend' ? "text-black" : "text-gray-400"
             )}
           >
@@ -117,7 +115,7 @@ export default function HomePage() {
           <button 
             onClick={() => setActiveTab('nearby')}
             className={cn(
-              "relative text-xs font-black lowercase tracking-tight transition-all",
+              "relative text-[10px] font-black lowercase tracking-widest transition-all",
               activeTab === 'nearby' ? "text-black" : "text-gray-400"
             )}
           >
@@ -132,7 +130,7 @@ export default function HomePage() {
         {loading ? (
           <div className="grid grid-cols-2 gap-1.5">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.5/4.5] rounded-[2rem] bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3/4] rounded-[2rem] bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -144,8 +142,8 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-1.5">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid} 
-                className="relative overflow-hidden border-none rounded-[2rem] aspect-[3.5/4.5] group cursor-pointer shadow-xl transition-all duration-500"
+                key={user.id || user.uid} 
+                className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/4] group cursor-pointer shadow-xl transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
@@ -163,11 +161,11 @@ export default function HomePage() {
                   <span className="text-black font-black text-sm italic tracking-tighter">Hi</span>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-80" />
 
                 <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1">
                   <div className="flex items-center gap-1">
-                    <span className="text-white font-normal text-sm truncate drop-shadow-md">{user.name} 🥰</span>
+                    <span className="text-white font-medium text-sm truncate drop-shadow-md">{user.name} 🥰</span>
                     <div className="w-3.5 h-3.5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 border border-white/40">
                       <UserIcon className="w-2 h-2 text-black fill-current" />
                     </div>
