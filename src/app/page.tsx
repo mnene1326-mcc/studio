@@ -69,7 +69,7 @@ export default function WelcomePage() {
             </div>
           </div>
           <div className="space-y-3">
-            <h1 className="text-6xl font-headline text-primary tracking-tight leading-none">MatchFlow</h1>
+            <h1 className="text-6xl font-logo text-primary leading-none">MatchFlow</h1>
             <p className="text-xl font-body text-foreground/80 italic leading-relaxed text-balance">
               Where sophisticated hearts connect with purpose.
             </p>
