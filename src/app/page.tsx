@@ -7,7 +7,7 @@ import { useUser, useFirestore, useAuth } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { signInAnonymously } from "firebase/auth"
 import { Button } from "@/components/ui/button"
-import { Heart, Mail, Zap, Loader2 } from "lucide-react"
+import { Mail, Zap, Loader2 } from "lucide-react"
 import Image from "next/image"
 
 export default function WelcomePage() {
@@ -77,12 +77,6 @@ export default function WelcomePage() {
 
       <div className="relative z-10 flex flex-col items-center space-y-12 px-8 text-center max-w-lg">
         <div className="space-y-6">
-          <div className="relative group">
-            <div className="absolute -inset-4 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition duration-1000"></div>
-            <div className="relative bg-white p-8 rounded-full shadow-2xl">
-              <Heart className="w-12 h-12 text-primary fill-primary animate-pulse" />
-            </div>
-          </div>
           <div className="space-y-3">
             <h1 className="text-6xl font-logo text-primary leading-none">MatchFlow</h1>
             <p className="text-xl font-body text-foreground/80 italic leading-relaxed text-balance">
