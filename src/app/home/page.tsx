@@ -37,7 +37,7 @@ export default function HomePage() {
   const router = useRouter()
   const { user: currentUser } = useUser()
   const db = useFirestore()
-  const [activeTab, setActiveTab] = useState<'recommend' | 'newcomer' | 'nearby'>('recommend')
+  const [activeTab, setActiveTab] = useState<'recommend' | 'nearby'>('recommend')
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -134,15 +134,6 @@ export default function HomePage() {
               )}
             </button>
             <button 
-              onClick={() => setActiveTab('newcomer')}
-              className={cn(
-                "relative text-base font-medium transition-all",
-                activeTab === 'newcomer' ? "text-black" : "text-gray-400"
-              )}
-            >
-              Newcomer
-            </button>
-            <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
                 "relative text-base font-medium transition-all",
@@ -150,6 +141,11 @@ export default function HomePage() {
               )}
             >
               Nearby
+              {activeTab === 'nearby' && (
+                <div className="absolute -bottom-2 left-0 w-full h-1.5 overflow-hidden">
+                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-1" />
+                </div>
+              )}
             </button>
           </div>
           <div className="flex items-center gap-3">
@@ -165,7 +161,7 @@ export default function HomePage() {
         {loading ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3/4] rounded-[2rem] bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3/3.8] rounded-[2rem] bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -177,7 +173,7 @@ export default function HomePage() {
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/4] group cursor-pointer shadow-md"
+                className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
