@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
 import { useFirestore, useUser } from "@/firebase"
@@ -41,9 +41,16 @@ function OnboardingContent() {
   const router = useRouter()
   const { toast } = useToast()
 
+  // Calculate the maximum date allowed (must be at least 18 years ago)
+  const maxDate = useMemo(() => {
+    const d = new Date()
+    d.setFullYear(d.getFullYear() - 18)
+    return d.toISOString().split('T')[0]
+  }, [])
+
   const generateRandomDOB = () => {
     const currentYear = new Date().getFullYear();
-    const maxYear = currentYear - 19;
+    const maxYear = currentYear - 18;
     const minYear = currentYear - 45;
     const year = Math.floor(Math.random() * (maxYear - minYear + 1) + minYear);
     const month = Math.floor(Math.random() * 12);
@@ -183,6 +190,7 @@ function OnboardingContent() {
                 <Input 
                   id="dob" 
                   type="date" 
+                  max={maxDate}
                   value={dob} 
                   onChange={(e) => setDob(e.target.value)} 
                   className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary"

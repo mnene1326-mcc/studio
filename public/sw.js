@@ -1,22 +1,20 @@
 
-const CACHE_NAME = 'matchflow-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Pacifico&family=Belleza&family=Alegreya:wght@400;500;700&display=swap'
-];
-
-self.addEventListener('install', (event) => {
+self.addEventListener('install', function(event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+    caches.open('matchflow-cache').then(function(cache) {
+      return cache.addAll([
+        '/',
+        '/home',
+        '/chats',
+        '/me'
+      ]);
     })
   );
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', function(event) {
   event.respondWith(
-    caches.match(event.request).then((response) => {
+    caches.match(event.request).then(function(response) {
       return response || fetch(event.request);
     })
   );
