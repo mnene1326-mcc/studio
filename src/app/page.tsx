@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -6,27 +7,27 @@ import { useUser, useFirestore, useAuth } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { signInAnonymously } from "firebase/auth"
 import { Button } from "@/components/ui/button"
-import { Mail, Zap } from "lucide-react"
+import { Mail, Zap, Loader2 } from "lucide-react"
 import Image from "next/image"
 
 export default function WelcomePage() {
   const [isMounted, setIsMounted] = useState(false)
-  const { user, loading } = useUser()
+  const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const auth = useAuth()
   const router = useRouter()
-  const [redirecting, setRedirecting] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
-  // Ensure hydration stability by only running client-specific logic after mount
+  // Ensure hydration stability
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
   // Handle automatic redirect for authenticated users
   useEffect(() => {
-    if (isMounted && !loading && user) {
-      setRedirecting(true)
+    if (isMounted && !authLoading && user && !isRedirecting) {
       const checkOnboarding = async () => {
+        setIsRedirecting(true)
         try {
           const userRef = doc(db, "users", user.uid)
           const userSnap = await getDoc(userRef)
@@ -37,40 +38,42 @@ export default function WelcomePage() {
             router.push("/onboarding")
           }
         } catch (error) {
-          // If onboarding check fails, allow user to stay on login screen
-          setRedirecting(false)
+          setIsRedirecting(false)
         }
       }
       checkOnboarding()
     }
-  }, [isMounted, loading, user, db, router])
+  }, [isMounted, authLoading, user, db, router, isRedirecting])
 
   const handleFastLogin = async () => {
-    setRedirecting(true)
+    setIsRedirecting(true)
     try {
       await signInAnonymously(auth)
-      router.push("/onboarding?fast=true")
+      // Redirect will be handled by the useEffect above
     } catch (error) {
-      setRedirecting(false)
+      setIsRedirecting(false)
     }
   }
 
-  // To prevent hydration errors, render a completely consistent state
-  // until the component has mounted on the client.
+  // To prevent hydration errors, render a consistent state
   if (!isMounted) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-        <h1 className="text-5xl font-logo text-primary">MatchFlow</h1>
+        <h1 className="text-4xl font-logo text-primary">MatchFlow</h1>
       </div>
     )
   }
 
-  // After mount, show animated splash while loading user state or redirecting
-  if (loading || redirecting) {
+  // Splash screen while loading state or redirecting
+  if (authLoading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-        <div className="animate-in fade-in zoom-in duration-700 ease-out">
+        <div className="animate-in fade-in zoom-in duration-500 ease-out flex flex-col items-center gap-6">
           <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Entering MatchFlow...</p>
+          </div>
         </div>
       </div>
     )
