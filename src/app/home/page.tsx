@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo } from "react"
@@ -6,10 +7,10 @@ import { useFirestore, useUser, useCollection } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Heart, MessageSquare, Sparkles } from "lucide-react"
+import { Search, Bell } from "lucide-react"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 interface UserProfile {
   uid: string
@@ -18,7 +19,18 @@ interface UserProfile {
   country: string
   lookingFor: string
   gender: string
+  dob: string
   onboardingComplete: boolean
+}
+
+function calculateAge(dob: string) {
+  if (!dob) return 20
+  const birthDate = new Date(dob)
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const m = today.getMonth() - birthDate.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--
+  return age
 }
 
 export default function HomePage() {
@@ -46,71 +58,87 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex-1 pb-24 bg-background min-h-screen">
-      <header className="sticky top-0 z-40 premium-blur border-b px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-headline text-primary tracking-tight">Discover</h1>
-        <Button variant="ghost" size="icon" className="rounded-full bg-primary/5 text-primary w-9 h-9">
-          <Sparkles className="w-4 h-4" />
-        </Button>
+    <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
+      <header className="sticky top-0 z-40 bg-white px-4 pt-4 pb-2 border-b">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <h1 className="text-xl font-bold font-sans text-black">Recommend</h1>
+              <div className="absolute -bottom-1 left-0 w-8 h-1 bg-[#1DB954] rounded-full" />
+            </div>
+            <button className="text-gray-500 font-medium text-sm">Newcomer</button>
+            <button className="text-gray-500 font-medium text-sm">Nearby</button>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
+              <Bell className="w-5 h-5 text-black" />
+              <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+            </Button>
+            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
+              <Search className="w-5 h-5 text-black" />
+            </Button>
+          </div>
+        </div>
       </header>
 
-      <main className="p-3 sm:p-4 lg:max-w-4xl lg:mx-auto">
+      <main className="p-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3/4.5] rounded-3xl bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3/4] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center space-y-6 opacity-40">
-            <Heart className="w-16 h-16 text-muted" />
-            <div className="space-y-1">
-              <p className="text-xl font-headline text-primary">Awaiting the perfect match</p>
-              <p className="text-sm font-body">New profiles arrive every day.</p>
-            </div>
+          <div className="flex flex-col items-center justify-center py-32 text-center space-y-4 opacity-40">
+            <div className="text-xl font-bold">No profiles found</div>
+            <p className="text-sm">Try expanding your search settings.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
                 key={user.uid} 
-                className="overflow-hidden border-none shadow-lg rounded-[1.5rem] group cursor-pointer transition-all hover:shadow-2xl active:scale-95 duration-500 bg-transparent"
+                className="relative overflow-hidden border-none rounded-2xl aspect-[3/4.2] group cursor-pointer"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
-                <div className="relative aspect-[3/4.5]">
-                  <Image 
-                    src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/600`} 
-                    alt={user.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                    data-ai-hint="person portrait"
-                  />
-                  
-                  {/* Subtle Top Gradient for Chat Icon visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20" />
-                  
-                  {/* Quick Chat Icon */}
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute top-3 right-3 rounded-full w-8 h-8 premium-blur text-white border-none hover:bg-white/40 z-10 shadow-sm"
-                    onClick={(e) => handleChatClick(e, user.uid)}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                  </Button>
+                <Image 
+                  src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/600`} 
+                  alt={user.name}
+                  fill
+                  className="object-cover"
+                  data-ai-hint="person portrait"
+                />
+                
+                {/* Top Right Hi Badge */}
+                <div 
+                  className="absolute top-2 right-2 bg-[#C6FF00] rounded-lg px-2 py-1 shadow-sm flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                  onClick={(e) => handleChatClick(e, user.uid)}
+                >
+                  <span className="text-black font-black italic text-sm tracking-tighter">Hi</span>
+                </div>
 
-                  <div className="absolute bottom-3 left-3 right-3 text-white space-y-2">
-                    <div className="space-y-0.5">
-                      <p className="font-headline text-lg truncate leading-none font-bold">{user.name}</p>
-                      <div className="flex items-center text-[10px] opacity-80 font-body">
-                        <MapPin className="w-2.5 h-2.5 mr-1" />
-                        {user.country}
-                      </div>
+                {/* Bottom Overlay */}
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="text-white font-bold text-sm truncate">{user.name}</span>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center scale-75">
+                      <span className="text-[6px] text-black font-black">✔</span>
                     </div>
-                    
-                    <Badge variant="secondary" className="text-[8px] font-medium tracking-wide px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white border-none uppercase w-fit">
-                      {user.lookingFor}
-                    </Badge>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1">
+                    <div className="bg-[#FF4D94] rounded-md px-1.5 py-0.5 flex items-center gap-0.5">
+                      <span className="text-[10px] text-white">♀</span>
+                      <span className="text-[10px] text-white font-bold">{calculateAge(user.dob)}</span>
+                    </div>
+                    <div className="bg-[#C6FF00] rounded-md px-1.5 py-0.5">
+                      <span className="text-[10px] text-black font-bold">13.6km</span>
+                    </div>
+                    <div className="bg-black/60 rounded-md px-1.5 py-0.5 backdrop-blur-sm">
+                      <span className="text-[10px] text-white font-medium truncate max-w-[50px] block">
+                        {user.lookingFor || 'Gemini'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Card>

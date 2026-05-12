@@ -1,8 +1,9 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, MessageSquare, User } from "lucide-react"
+import { Home, Globe, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function BottomNav() {
@@ -10,12 +11,13 @@ export function BottomNav() {
 
   const navItems = [
     { label: "Home", icon: Home, href: "/home" },
-    { label: "Chats", icon: MessageSquare, href: "/chats" },
+    { label: "Moment", icon: Globe, href: "/moments" },
+    { label: "Chat", icon: MessageCircle, href: "/chats" },
     { label: "Me", icon: User, href: "/me" },
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t h-16 flex items-center justify-around px-4 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t h-16 flex items-center justify-around px-2 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
       {navItems.map((item) => {
         const isActive = pathname === item.href
         return (
@@ -23,12 +25,30 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive ? "text-primary font-bold" : "text-muted-foreground"
+              "flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all relative",
+              isActive ? "text-black" : "text-gray-400"
             )}
           >
-            <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5px]")} />
-            <span className="text-[10px] font-headline">{item.label}</span>
+            <div className={cn(
+              "p-2 rounded-xl flex items-center justify-center transition-all",
+              isActive && "bg-[#EFFF24]/20"
+            )}>
+              <item.icon className={cn("w-6 h-6", isActive && "text-black fill-current opacity-80")} />
+            </div>
+            
+            <span className={cn(
+              "text-[10px] font-bold tracking-tight",
+              isActive ? "text-black" : "text-gray-400"
+            )}>
+              {item.label}
+            </span>
+
+            {/* Notification Badge Example for Chat */}
+            {item.label === "Chat" && (
+              <div className="absolute top-1 right-[20%] bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 border-2 border-white">
+                99+
+              </div>
+            )}
           </Link>
         )
       })}
