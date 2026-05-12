@@ -100,7 +100,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
 
         {/* Progress Dots */}
-        <div className="absolute bottom-10 inset-x-0 flex justify-center gap-1">
+        <div className="absolute bottom-16 inset-x-0 flex justify-center gap-1">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={cn("h-1 rounded-full transition-all", i === 1 ? "w-6 bg-white" : "w-2 bg-white/40")} />
           ))}
@@ -108,7 +108,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       </div>
 
       {/* Content Section - Straight edges (no curves) */}
-      <div className="relative -mt-8 bg-white px-6 pt-8 space-y-8 min-h-[50vh]">
+      <div className="relative -mt-16 bg-white px-6 pt-8 space-y-8 min-h-[50vh]">
         {/* Name & ID Header */}
         <div className="flex justify-between items-start">
           <div className="space-y-3">
