@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "use-navigation"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, MessageSquare, User } from "lucide-react"
 import { cn } from "@/lib/utils"
