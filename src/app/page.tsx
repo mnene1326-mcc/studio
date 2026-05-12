@@ -16,9 +16,14 @@ export default function WelcomePage() {
   const db = useFirestore()
   const auth = useAuth()
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
-    if (!loading && user) {
+    setHasMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!loading && user && hasMounted) {
       const checkOnboarding = async () => {
         setIsRedirecting(true)
         try {
@@ -36,7 +41,7 @@ export default function WelcomePage() {
       }
       checkOnboarding()
     }
-  }, [user, loading, db, router])
+  }, [user, loading, db, router, hasMounted])
 
   const handleFastLogin = async () => {
     setIsRedirecting(true)
@@ -49,11 +54,12 @@ export default function WelcomePage() {
     }
   }
 
-  if (loading || isRedirecting) {
+  // Force loading state (splash screen) during hydration to avoid mismatches
+  if (!hasMounted || loading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
         <div className="animate-in fade-in zoom-in duration-700 ease-out">
-          <h1 className="text-6xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
+          <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
         </div>
       </div>
     )
