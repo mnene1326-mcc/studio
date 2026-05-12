@@ -1,4 +1,5 @@
-const CACHE_NAME = 'matchflow-cache-v1';
+
+const CACHE_NAME = 'matchflow-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',

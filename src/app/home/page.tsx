@@ -67,7 +67,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div 
             onClick={() => router.push("/mystery-note")}
-            className="bg-[#FF3B30] rounded-2xl p-3 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10"
+            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-20"
           >
             <div className="bg-white/20 p-2 rounded-xl">
               <FileText className="w-5 h-5 text-white" />
@@ -77,7 +77,7 @@ export default function HomePage() {
           
           <div 
             onClick={() => router.push("/tasks")}
-            className="bg-black rounded-2xl p-3 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5"
+            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-20"
           >
             <div className="bg-white/10 p-2 rounded-xl">
               <Target className="w-5 h-5 text-white" />
@@ -87,7 +87,7 @@ export default function HomePage() {
         </div>
 
         {/* Tabs Row */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-6">
             <button 
               onClick={() => setActiveTab('recommend')}
