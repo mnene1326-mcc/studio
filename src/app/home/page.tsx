@@ -126,10 +126,7 @@ export default function HomePage() {
             </button>
           </div>
           <div className="flex items-center gap-3">
-             <div className="relative">
-                <ShoppingBag className="w-6 h-6 text-white" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#D4FF00] rounded-full border-2 border-[#FF3B30]" />
-             </div>
+             <ShoppingBag className="w-6 h-6 text-white" />
              <Search className="w-6 h-6 text-white" />
           </div>
         </div>
@@ -151,7 +148,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.id} 
+                key={user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >

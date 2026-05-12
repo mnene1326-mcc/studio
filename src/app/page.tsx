@@ -11,12 +11,12 @@ import { Mail, Zap } from "lucide-react"
 import Image from "next/image"
 
 export default function WelcomePage() {
+  const [hasMounted, setHasMounted] = useState(false)
   const router = useRouter()
   const { user, loading } = useUser()
   const db = useFirestore()
   const auth = useAuth()
   const [isRedirecting, setIsRedirecting] = useState(false)
-  const [hasMounted, setHasMounted] = useState(false)
 
   useEffect(() => {
     setHasMounted(true)
@@ -49,14 +49,22 @@ export default function WelcomePage() {
       await signInAnonymously(auth)
       router.push("/onboarding?fast=true")
     } catch (error) {
-      console.error("Fast login failed", error)
       setIsRedirecting(false)
     }
   }
 
-  // To prevent hydration errors, we render a consistent splash screen 
-  // until the component has mounted and we know the auth state.
-  if (!hasMounted || loading || isRedirecting) {
+  // To prevent hydration errors, we render a completely consistent state
+  // until the component has mounted on the client.
+  if (!hasMounted) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
+        <h1 className="text-5xl font-logo text-primary">MatchFlow</h1>
+      </div>
+    )
+  }
+
+  // After mount, we can show loading or the full splash screen
+  if (loading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
         <div className="animate-in fade-in zoom-in duration-700 ease-out">

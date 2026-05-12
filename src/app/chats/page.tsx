@@ -29,7 +29,6 @@ interface Chat {
   lastMessage?: string
   lastMessageAt?: any
   createdAt: any
-  unreadCount?: number
 }
 
 interface UserProfile {
