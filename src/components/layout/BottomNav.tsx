@@ -11,7 +11,7 @@ export function BottomNav() {
 
   const navItems = [
     { label: "Home", icon: Home, href: "/home" },
-    { label: "Chat", icon: MessageSquare, href: "/chats", badge: "99+" },
+    { label: "Chat", icon: MessageSquare, href: "/chats" },
     { label: "Me", icon: User, href: "/me" },
   ]
 
@@ -33,12 +33,6 @@ export function BottomNav() {
               isActive && "bg-[#D4FF00] shadow-lg shadow-[#D4FF00]/40 scale-110"
             )}>
               <item.icon className={cn("w-6 h-6", isActive ? "text-black fill-current" : "text-gray-400")} />
-              
-              {item.badge && (
-                <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-black px-1 rounded-full border border-white">
-                  {item.badge}
-                </div>
-              )}
             </div>
             
             <span className={cn(

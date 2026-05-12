@@ -85,9 +85,6 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
           <p className="text-xs text-gray-500 truncate font-bold flex-1 pr-4">
             {chat.lastMessage || "hi love..."}
           </p>
-          <div className="bg-[#FF3B30] rounded-full w-4 h-4 flex items-center justify-center shadow-sm shrink-0">
-            <span className="text-[8px] text-white font-black">1</span>
-          </div>
         </div>
       </div>
     </div>
