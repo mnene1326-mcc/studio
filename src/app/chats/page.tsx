@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo } from "react"
@@ -245,7 +246,7 @@ function ChatsContent() {
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
                 <ShoppingBag className="w-6 h-6" />
              </Button>
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
+             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20" onClick={() => router.push('/me')}>
                 <UserIcon className="w-6 h-6" />
              </Button>
           </div>

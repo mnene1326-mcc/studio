@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
@@ -10,14 +11,9 @@ export default function WelcomePage() {
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
-  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (isMounted && !authLoading) {
+    if (!authLoading) {
       if (user) {
         const checkOnboarding = async () => {
           try {
@@ -37,9 +33,8 @@ export default function WelcomePage() {
         router.push("/login")
       }
     }
-  }, [isMounted, authLoading, user, db, router])
+  }, [authLoading, user, db, router])
 
-  // Identical initial shell for server and client to fix hydration
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
       <div className="animate-in fade-in zoom-in duration-700 ease-out flex flex-col items-center gap-6">

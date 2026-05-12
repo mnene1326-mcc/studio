@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, use, useState } from "react"
@@ -97,50 +98,50 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      <div className="relative -mt-36 bg-white px-6 pt-8 space-y-4 min-h-[50vh] z-20 rounded-t-[3rem]">
+      <div className="relative -mt-36 bg-white px-6 pt-8 space-y-4 min-h-[50vh] z-20 rounded-t-[3rem] shadow-2xl">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-1">
-              <h1 className="text-sm font-black text-black tracking-tight">{profile.name}</h1>
-              <div className="w-2 h-2 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
-                <User className="w-1 h-1 text-black fill-current" />
+              <h1 className="text-xs font-black text-black tracking-tight">{profile.name}</h1>
+              <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
+                <User className="w-1.5 h-1.5 text-black fill-current" />
               </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-1">
-              <span className="bg-[#006400] text-white px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
-                ♀ {age}
+              <span className="bg-[#006400] text-white px-1.5 py-0.5 rounded text-[7px] font-black uppercase">
+                {profile.gender === 'female' ? '♀' : '♂'} {age}
               </span>
-              <span className="bg-black/5 text-gray-700 px-1.5 py-0.5 rounded text-[8px] font-black border border-black/5">
+              <span className="bg-black/5 text-gray-700 px-1.5 py-0.5 rounded text-[7px] font-black border border-black/5">
                 {profile.country || "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-1.5 py-0.5 rounded text-[8px] font-black">13.6km</span>
+              <span className="bg-black text-[#D4FF00] px-1.5 py-0.5 rounded text-[7px] font-black">13.6km</span>
             </div>
 
             <div 
-              className="flex items-center gap-1 text-[#8B8B8B] text-[7px] font-bold cursor-pointer"
+              className="flex items-center gap-1 text-[#8B8B8B] text-[6px] font-bold cursor-pointer"
               onClick={handleCopyId}
             >
-              <span>ID:{profile.matchFlowId || "null"}</span>
+              <span>ID:{profile.matchFlowId || "---"}</span>
               <Copy className={cn("w-2 h-2", copied ? "text-green-500" : "text-[#8B8B8B]")} />
             </div>
           </div>
 
           <div className="bg-gray-50 rounded-full px-2 py-1 flex items-center gap-1 border border-black/5">
             <div className="w-1 h-1 bg-green-500 rounded-full" />
-            <span className="text-[7px] font-black text-gray-500 uppercase">Online</span>
+            <span className="text-[6px] font-black text-gray-500 uppercase">Online</span>
           </div>
         </div>
 
         <section className="space-y-1">
-          <h2 className="text-[10px] font-black text-black uppercase">About Me</h2>
-          <p className="text-[9px] font-bold text-gray-500 leading-relaxed italic">
-            "{profile.interests || "I'm looking for someone special to share my time with..."}"
+          <h2 className="text-[9px] font-black text-black uppercase">About Me</h2>
+          <p className="text-[8px] font-bold text-gray-500 leading-relaxed italic">
+            "{profile.interests || `I'm interested in ${profile.lookingFor?.toLowerCase() || 'meeting new people'} and finding meaningful connections...`}"
           </p>
         </section>
 
         <div className="pb-8">
-          <p className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">
+          <p className="text-[6px] font-bold text-gray-400 uppercase tracking-widest">
             dm for fun and serious talks 🥰
           </p>
         </div>
@@ -148,7 +149,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t z-50">
         <Button 
-          className="w-full h-11 rounded-full bg-[#FF3B30] text-white hover:bg-red-600 text-[11px] font-bold flex items-center justify-center gap-2 shadow-xl active:scale-95 uppercase"
+          className="w-full h-12 rounded-full bg-[#FF3B30] text-white hover:bg-red-600 text-xs font-black flex items-center justify-center gap-2 shadow-xl active:scale-95 uppercase tracking-widest"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
           <MessageSquare className="w-4 h-4 fill-current" />

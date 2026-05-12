@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -40,10 +41,6 @@ export function BottomNav() {
             )}>
               {item.label}
             </span>
-
-            {isActive && (
-               <div className="absolute -top-1 w-8 h-1 bg-[#D4FF00] rounded-full blur-sm" />
-            )}
           </Link>
         )
       })}
