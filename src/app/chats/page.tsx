@@ -100,7 +100,6 @@ function DraggableGameButton() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
-    // Set initial position after mount
     setPos({ x: window.innerWidth - 70, y: window.innerHeight - 180 })
   }, [])
 
@@ -119,7 +118,6 @@ function DraggableGameButton() {
     const newX = e.clientX - dragOffset.x
     const newY = e.clientY - dragOffset.y
     
-    // Simple bounds check
     const margin = 20
     const safeX = Math.max(margin, Math.min(newX, window.innerWidth - 60))
     const safeY = Math.max(margin, Math.min(newY, window.innerHeight - 100))
@@ -244,19 +242,16 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
-        <header className="sticky top-0 z-40 bg-[#FF3B30]/5 backdrop-blur-md px-4 pt-6 pb-2 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-8 pb-4 flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <h1 className="text-xl font-black text-[#FF3B30]">Chat</h1>
-              <div className="absolute -bottom-1 left-0 w-6 h-1 bg-[#FF3B30] rounded-full" />
-            </div>
+            <h1 className="text-2xl font-logo text-white drop-shadow-sm">Chat</h1>
           </div>
-          <div className="flex items-center gap-1">
-             <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
-                <ShoppingBag className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
+                <ShoppingBag className="w-6 h-6" />
              </Button>
-             <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full">
-                <UserIcon className="w-5 h-5" />
+             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
+                <UserIcon className="w-6 h-6" />
              </Button>
           </div>
         </header>
