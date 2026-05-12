@@ -67,7 +67,8 @@ export default function HomePage() {
 
   // Deterministic distance to avoid hydration mismatch
   const getDistance = (uid: string) => {
-    const seed = uid.charCodeAt(0) + uid.charCodeAt(uid.length - 1)
+    if (!uid) return "13.6km"
+    const seed = uid.charCodeAt(0) + (uid.charCodeAt(uid.length - 1) || 0)
     return seed % 2 === 0 ? ">500km" : "13.6km"
   }
 
@@ -132,7 +133,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-2 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-4 py-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
           <div className="grid grid-cols-2 gap-1.5">
             {[1, 2, 3, 4].map((i) => (
