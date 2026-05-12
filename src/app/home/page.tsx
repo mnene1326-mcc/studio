@@ -76,10 +76,9 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
-      {/* Sticky Top Bar (Notification + Logo) */}
+      {/* Sticky Top Bar (Notification) */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/5">
-        <div className="px-6 py-4 lg:max-w-4xl lg:mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-logo text-[#FF3B30]">MatchFlow</h1>
+        <div className="px-6 py-4 lg:max-w-4xl lg:mx-auto flex items-center justify-end">
           <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
             <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
             <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
@@ -111,7 +110,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Navigation Tabs (Below buttons, small letters) */}
+        {/* Navigation Tabs (Below buttons, small lowercase letters) */}
         <div className="flex items-center gap-6 mb-4 px-1">
           <button 
             onClick={() => setActiveTab('recommend')}
@@ -155,7 +154,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-1.5">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid} 
+                key={user.id} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3.5/4.5] group cursor-pointer shadow-xl transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
@@ -176,7 +175,7 @@ export default function HomePage() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
 
-                <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1.5">
+                <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1">
                   <div className="flex items-center gap-1">
                     <span className="text-white font-normal text-sm truncate drop-shadow-md">{user.name} 🥰</span>
                     <div className="w-3.5 h-3.5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 border border-white/40">
