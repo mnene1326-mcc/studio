@@ -77,7 +77,7 @@ export default function HomePage() {
     <div className="flex-1 pb-24 bg-white min-h-screen">
       {/* Unified Red Header Section */}
       <div className="bg-[#FF3B30]">
-        <div className="h-6" />
+        <div className="h-2" /> {/* Tighter top spacing */}
         
         <div className="px-4 pb-3">
           {/* Top Feature Cards */}
@@ -112,8 +112,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tab Navigation - Sticky and seamless with the red block */}
-        <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-3 flex items-center justify-between shadow-sm">
+        {/* Tab Navigation - Unified Red Background */}
+        <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
               onClick={() => setActiveTab('Recommend')}
@@ -182,29 +182,21 @@ export default function HomePage() {
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
 
-                <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1.5">
-                  <div className="flex items-center gap-1">
+                <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start gap-1">
+                  <div className="flex items-baseline gap-1.5">
                     <span className="text-white font-black text-sm truncate drop-shadow-md">{user.name}</span>
-                    <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
-                      <UserIcon className="w-2.5 h-2.5 text-black fill-current" />
-                    </div>
+                    <span className="text-white/90 font-black text-[10px] drop-shadow-sm">{calculateAge(user.dob)}</span>
                   </div>
                   
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <div className="bg-[#FF4D94] rounded-md px-1.5 py-0.5 flex items-center gap-0.5 shadow-sm">
-                      <span className="text-[8px] text-white font-black leading-none uppercase">
-                        {user.gender === 'female' ? '♀' : '♂'} {calculateAge(user.dob)}
-                      </span>
-                    </div>
-                    
-                    <div className="bg-[#D4FF00] rounded-md px-1.5 py-0 shadow-sm">
-                      <span className="text-[8px] text-black font-black leading-none truncate uppercase tracking-tighter">
+                  <div className="flex items-center gap-1">
+                    <div className="bg-[#D4FF00] rounded px-1.5 py-0 shadow-sm">
+                      <span className="text-[7px] text-black font-black leading-tight truncate uppercase tracking-tighter">
                         {user.country || "Kenya"}
                       </span>
                     </div>
-
-                    <div className="bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm border border-white/10">
-                      <span className="text-[8px] text-white font-black leading-none uppercase tracking-tighter">
+                    
+                    <div className="bg-black/40 backdrop-blur-sm rounded px-1.5 py-0 shadow-sm border border-white/10">
+                      <span className="text-[7px] text-white font-black leading-tight uppercase tracking-tighter">
                         {getTag(user.uid)}
                       </span>
                     </div>
