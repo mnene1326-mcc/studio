@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -25,27 +26,6 @@
     --ring: 340 50% 30%;
     --radius: 1rem;
   }
-  .dark {
-    --background: 20 10% 5%;
-    --foreground: 20 10% 98%;
-    --card: 20 10% 8%;
-    --card-foreground: 20 10% 98%;
-    --popover: 20 10% 8%;
-    --popover-foreground: 20 10% 98%;
-    --primary: 340 50% 40%;
-    --primary-foreground: 340 10% 98%;
-    --secondary: 20 10% 15%;
-    --secondary-foreground: 20 10% 98%;
-    --muted: 20 10% 15%;
-    --muted-foreground: 20 5% 65%;
-    --accent: 340 30% 25%;
-    --accent-foreground: 340 10% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 20 10% 20%;
-    --input: 20 10% 20%;
-    --ring: 340 50% 40%;
-  }
 }
 
 @layer base {
@@ -67,4 +47,15 @@
 
 .text-balance {
   text-wrap: balance;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
