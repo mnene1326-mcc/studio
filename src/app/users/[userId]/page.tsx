@@ -120,15 +120,15 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              {/* Green Background for Age */}
-              <span className="bg-[#00D100] text-white px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wide shadow-sm">
+              {/* Dark Green Background for Age */}
+              <span className="bg-[#006400] text-white px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-wide shadow-sm">
                 ♀ {age}
               </span>
               {/* Blur Background for Country */}
-              <span className="bg-black/10 backdrop-blur-md text-gray-800 px-2 py-1 rounded-md text-[10px] font-black tracking-wide border border-black/5 shadow-sm">
+              <span className="bg-black/10 backdrop-blur-md text-gray-800 px-3 py-1.5 rounded-md text-[11px] font-black tracking-wide border border-black/5 shadow-sm">
                 {profile.country ? profile.country.charAt(0).toUpperCase() + profile.country.slice(1) : "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-2 py-1 rounded-md text-[10px] font-black tracking-wide">13.66km</span>
+              <span className="bg-black text-[#D4FF00] px-3 py-1.5 rounded-md text-[11px] font-black tracking-wide">13.66km</span>
             </div>
 
             <div 

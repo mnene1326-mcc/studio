@@ -109,7 +109,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('Recommend')}
               className={cn(
-                "relative text-base font-black transition-all uppercase tracking-tight",
+                "relative text-base font-black transition-all tracking-tight",
                 activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
               )}
             >
@@ -118,7 +118,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
-                "relative text-base font-black transition-all uppercase tracking-tight",
+                "relative text-base font-black transition-all tracking-tight",
                 activeTab === 'Nearby' ? "text-white scale-105" : "text-white/60"
               )}
             >
@@ -177,12 +177,12 @@ export default function HomePage() {
                   <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none mb-2">{user.name}</h4>
                   
                   <div className="flex items-center gap-1.5">
-                    {/* Green Background for Age */}
-                    <span className="bg-[#00D100] px-2 py-0.5 rounded-md text-white font-black text-[9px] leading-none shadow-sm">
+                    {/* Dark Green Background for Age */}
+                    <span className="bg-[#006400] px-2.5 py-1 rounded-md text-white font-black text-[11px] leading-none shadow-sm">
                       {calculateAge(user.dob)}
                     </span>
                     {/* Blur Background for Country */}
-                    <span className="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-md text-white font-bold text-[9px] border border-white/20 leading-none shadow-sm">
+                    <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-md text-white font-bold text-[11px] border border-white/20 leading-none shadow-sm">
                       {user.country ? user.country.charAt(0).toUpperCase() + user.country.slice(1) : "Kenya"}
                     </span>
                   </div>
