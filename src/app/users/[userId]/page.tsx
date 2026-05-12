@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, use, useState } from "react"
@@ -50,7 +51,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   const handleCopyId = () => {
     if (profile?.matchFlowId) {
-      navigator.clipboard.writeText(profile.matchFlowId)
+      navigator.clipboard.wordText(profile.matchFlowId)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
@@ -98,20 +99,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           >
             <MoreHorizontal className="w-6 h-6" />
           </Button>
-        </div>
-
-        {/* Floating Thumbnails Overlay */}
-        <div className="absolute bottom-16 inset-x-0 px-4 flex gap-2 overflow-x-auto no-scrollbar pb-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-white/50 shadow-lg shrink-0">
-               <Image 
-                src={`https://picsum.photos/seed/${profile.uid}-${i}/200/300`} 
-                alt="moment" 
-                fill 
-                className="object-cover" 
-              />
-            </div>
-          ))}
         </div>
 
         {/* Progress Dots */}
@@ -173,27 +160,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           <p className="text-sm font-bold text-gray-500 leading-relaxed italic">
             "{profile.interests || "I'm looking for someone special to share my time with and see where things go..."}"
           </p>
-        </section>
-
-        {/* Moments Section */}
-        <section className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-black text-black">Moments</h2>
-            <ChevronRight className="w-6 h-6 text-gray-300" />
-          </div>
-          
-          <div className="grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="aspect-[4/5] relative rounded-2xl overflow-hidden shadow-md">
-                <Image 
-                  src={`https://picsum.photos/seed/moment-${profile.uid}-${i}/300/400`} 
-                  alt="moment" 
-                  fill 
-                  className="object-cover" 
-                />
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* Bio Text Footer */}
