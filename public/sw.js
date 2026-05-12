@@ -1,13 +1,17 @@
 
+const CACHE_NAME = 'matchflow-v1';
+const urlsToCache = [
+  '/',
+  '/home',
+  '/chats',
+  '/me',
+  '/globals.css'
+];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open('matchflow-v1').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/home',
-        '/chats',
-        '/me',
-      ]);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
     })
   );
 });

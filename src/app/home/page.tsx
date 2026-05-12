@@ -68,7 +68,7 @@ export default function HomePage() {
   // Deterministic distance to avoid hydration mismatch
   const getDistance = (uid: string) => {
     if (!uid || uid.length === 0) return "13.6km"
-    const seed = uid.charCodeAt(0) + uid.charCodeAt(uid.length - 1)
+    const seed = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return seed % 2 === 0 ? ">500km" : "13.6km"
   }
 
@@ -76,47 +76,20 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
-      {/* Sticky Top Bar (Tabs + Notification) */}
+      {/* Sticky Top Bar (Notification + Logo) */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/5">
-        <div className="px-6 pt-4 pb-2 lg:max-w-4xl lg:mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={() => setActiveTab('recommend')}
-                className={cn(
-                  "relative text-sm font-black uppercase tracking-widest transition-all",
-                  activeTab === 'recommend' ? "text-black" : "text-gray-400"
-                )}
-              >
-                Recommend
-                {activeTab === 'recommend' && (
-                  <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
-                )}
-              </button>
-              <button 
-                onClick={() => setActiveTab('nearby')}
-                className={cn(
-                  "relative text-sm font-black uppercase tracking-widest transition-all",
-                  activeTab === 'nearby' ? "text-black" : "text-gray-400"
-                )}
-              >
-                Nearby
-                {activeTab === 'nearby' && (
-                  <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
-                )}
-              </button>
-            </div>
-            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
-              <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
-              <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
-            </Button>
-          </div>
+        <div className="px-6 py-4 lg:max-w-4xl lg:mx-auto flex items-center justify-between">
+          <h1 className="text-xl font-logo text-[#FF3B30]">MatchFlow</h1>
+          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
+            <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
+          </Button>
         </div>
       </header>
 
       <main className="px-6 lg:max-w-4xl lg:mx-auto">
         {/* Action Cards */}
-        <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
+        <div className="grid grid-cols-2 gap-2 mt-4 mb-6">
           <div 
             onClick={() => router.push("/mystery-note")}
             className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-28"
@@ -138,6 +111,34 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Navigation Tabs (Below buttons, small letters) */}
+        <div className="flex items-center gap-6 mb-4 px-1">
+          <button 
+            onClick={() => setActiveTab('recommend')}
+            className={cn(
+              "relative text-xs font-black lowercase tracking-tight transition-all",
+              activeTab === 'recommend' ? "text-black" : "text-gray-400"
+            )}
+          >
+            recommend
+            {activeTab === 'recommend' && (
+              <div className="absolute -bottom-1.5 left-0 w-4 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
+            )}
+          </button>
+          <button 
+            onClick={() => setActiveTab('nearby')}
+            className={cn(
+              "relative text-xs font-black lowercase tracking-tight transition-all",
+              activeTab === 'nearby' ? "text-black" : "text-gray-400"
+            )}
+          >
+            nearby
+            {activeTab === 'nearby' && (
+              <div className="absolute -bottom-1.5 left-0 w-4 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
+            )}
+          </button>
+        </div>
+
         {/* User Grid */}
         {loading ? (
           <div className="grid grid-cols-2 gap-1.5">
@@ -154,7 +155,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-1.5">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.id} 
+                key={user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3.5/4.5] group cursor-pointer shadow-xl transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
