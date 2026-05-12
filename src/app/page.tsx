@@ -7,7 +7,7 @@ import { useUser, useFirestore, useAuth } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { signInAnonymously } from "firebase/auth"
 import { Button } from "@/components/ui/button"
-import { Mail, Zap, Loader2 } from "lucide-react"
+import { Mail, Zap } from "lucide-react"
 import Image from "next/image"
 
 export default function WelcomePage() {
@@ -52,9 +52,8 @@ export default function WelcomePage() {
   if (loading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
-        <div className="space-y-4 text-center">
-          <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto" />
-          <p className="font-headline text-primary text-xl animate-pulse">MatchFlow is loading...</p>
+        <div className="animate-in fade-in zoom-in duration-700 ease-out">
+          <h1 className="text-7xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
         </div>
       </div>
     )
