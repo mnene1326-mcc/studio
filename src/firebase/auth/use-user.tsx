@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,29 +5,27 @@ import { User, onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from '../provider';
 
 // Client-only cache to prevent flickering during tab navigation
-// We use a global variable that is only initialized on the client side
 let cachedUser: User | null = null;
 let hasInitialized = false;
 
 /**
  * A hook that returns the current Firebase user and loading state.
- * Uses a persistent client-side cache to prevent flickering during transitions.
+ * Stabilized for Next.js hydration by ensuring initial state is consistent.
  */
 export function useUser() {
   const auth = useAuth();
   
-  // Initialize state from cache if available (only on client)
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== 'undefined') return cachedUser;
-    return null;
-  });
-  
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined') return !hasInitialized;
-    return true;
-  });
+  // Always start with loading: true on the server and first client pass to prevent hydration mismatch
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If we have cached data on the client, use it immediately after mount
+    if (hasInitialized) {
+      setUser(cachedUser);
+      setLoading(false);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       cachedUser = u;
       hasInitialized = true;
