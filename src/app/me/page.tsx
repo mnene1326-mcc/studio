@@ -12,21 +12,13 @@ import {
   ChevronRight, 
   Copy, 
   Check, 
-  ClipboardList, 
-  CircleDollarSign, 
-  Store, 
-  Hexagon, 
-  ShoppingBag, 
-  Shield, 
-  Award, 
   BadgeCheck, 
   Headphones, 
-  MessageSquareQuote, 
-  Gamepad2,
-  Crown,
-  FileText,
-  Target,
-  Wallet
+  Camera,
+  CircleDollarSign,
+  Wallet,
+  ShieldCheck,
+  ChevronRight as ChevronRightIcon
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -83,126 +75,128 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
-      <header className="relative pt-12 pb-8 px-6 bg-gradient-to-b from-[#FF3B30]/10 via-[#FF3B30]/5 to-[#F8F9FA]">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 group">
-              <h2 className="text-2xl font-black text-black tracking-tight">{profile.name} 🫡</h2>
-              <BadgeCheck className="w-5 h-5 text-[#FF3B30]" />
-            </div>
-            
-            <div 
-              className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all hover:bg-black/5 rounded-full px-2 py-1 -ml-2"
-              onClick={handleCopyId}
-            >
-              <p className="text-[#8B8B8B] font-bold text-xs tracking-tight">ID:{profile.matchFlowId || "null"}</p>
-              {copied ? (
-                <Check className="w-3 h-3 text-green-600" />
-              ) : (
-                <Copy className="w-3 h-3 text-[#8B8B8B]" />
-              )}
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="relative w-20 h-20 rounded-full shadow-xl overflow-hidden bg-muted">
-              <Image 
-                src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
-                alt={profile.name} 
-                fill 
-                className="object-cover" 
-                data-ai-hint="person profile"
-              />
-            </div>
+      {/* Centered Header Section */}
+      <header className="relative pt-16 pb-8 px-6 flex flex-col items-center">
+        {/* Visitors Top Right */}
+        <div className="absolute top-8 right-6">
+          <div className="bg-white/80 backdrop-blur-md rounded-full px-4 py-1.5 border border-black/5 shadow-sm flex items-center gap-2 active:scale-95 transition-transform cursor-pointer">
+            <span className="text-sm font-black text-black">12k</span>
+            <span className="text-[9px] uppercase font-black text-[#8B8B8B] tracking-widest">Visitors</span>
           </div>
         </div>
 
-        <div className="flex justify-center mt-8 px-2 glass-card rounded-2xl p-4 shadow-sm">
-          <div className="flex flex-col items-center">
-            <div className="flex items-start">
-              <span className="text-lg font-black text-black leading-none tracking-tight">12k</span>
-              <div className="w-1.5 h-1.5 bg-[#FF3B30] rounded-full -mt-0.5 ml-0.5 shadow-sm" />
-            </div>
-            <span className="text-[10px] text-[#8B8B8B] font-bold mt-1 uppercase tracking-tighter">Visitors</span>
+        {/* Avatar Middle Top */}
+        <div className="relative mb-4">
+          <div className="relative w-28 h-28 rounded-full border-[6px] border-white shadow-2xl overflow-hidden bg-muted">
+            <Image 
+              src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
+              alt={profile.name} 
+              fill 
+              className="object-cover" 
+              data-ai-hint="person profile"
+            />
           </div>
+          {/* Edit Profile Icon */}
+          <button className="absolute bottom-1 right-1 bg-[#FF3B30] p-2.5 rounded-full border-4 border-white shadow-lg active:scale-90 transition-transform">
+            <Camera className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        {/* Name Below Avatar */}
+        <div className="flex items-center gap-1.5 mb-1">
+          <h2 className="text-2xl font-black text-black tracking-tight">{profile.name}</h2>
+          <BadgeCheck className="w-6 h-6 text-[#FF3B30] fill-[#FF3B30]/10" />
+        </div>
+
+        {/* ID Below Name */}
+        <div 
+          className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all hover:bg-black/5 rounded-full px-3 py-1"
+          onClick={handleCopyId}
+        >
+          <p className="text-[#8B8B8B] font-bold text-sm tracking-tight">ID:{profile.matchFlowId || "null"}</p>
+          {copied ? (
+            <Check className="w-3.5 h-3.5 text-green-600" />
+          ) : (
+            <Copy className="w-3.5 h-3.5 text-[#8B8B8B]" />
+          )}
         </div>
       </header>
 
-      <main className="px-4 space-y-6">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#FF3B30] rounded-2xl p-4 flex flex-col justify-center gap-1 shadow-lg shadow-red-500/10 h-24 overflow-hidden group active:scale-95 transition-all">
-            <div className="flex items-center gap-2">
-              <div className="bg-white rounded-full p-1.5 shadow-md">
-                <CircleDollarSign className="w-4 h-4 text-[#FF3B30]" />
-              </div>
-              <span className="text-3xl font-black text-white leading-none">10</span>
-            </div>
-            <span className="text-[10px] text-white/90 font-black uppercase tracking-widest ml-1">My Coins</span>
-          </div>
+      <main className="px-6 space-y-6">
+        {/* Recharge & Income Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <Button 
+            className="h-20 bg-[#FF3B30] hover:bg-red-600 rounded-3xl shadow-xl shadow-red-500/20 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all"
+          >
+            <CircleDollarSign className="w-5 h-5" />
+            <span className="text-[11px] font-black uppercase tracking-widest">Recharge</span>
+          </Button>
           
-          <div className="bg-gradient-to-br from-[#4285F4] to-[#2B65C5] rounded-2xl p-4 flex items-center justify-between shadow-lg h-24 relative overflow-hidden group active:scale-95 transition-all">
-             <div className="z-10 flex flex-col">
-               <div className="flex items-center gap-2">
-                  <div className="bg-white rounded-full p-1.5 shadow-md">
-                    <Wallet className="w-4 h-4 text-[#4285F4]" />
+          <Button 
+            className="h-20 bg-white hover:bg-gray-50 border border-black/5 rounded-3xl shadow-lg flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all"
+          >
+            <Wallet className="w-5 h-5 text-[#4285F4]" />
+            <span className="text-[11px] font-black uppercase tracking-widest">Income</span>
+          </Button>
+        </div>
+
+        {/* Primary Action List */}
+        <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-black/5 overflow-hidden">
+          <div className="flex flex-col">
+            <Button 
+              variant="ghost" 
+              className="h-16 justify-between rounded-[2rem] px-6 hover:bg-gray-50 active:bg-gray-100"
+              asChild
+            >
+              <Link href="#">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-50 p-2.5 rounded-2xl">
+                    <ShieldCheck className="w-6 h-6 text-green-600" />
                   </div>
-                  <span className="text-3xl font-black text-white leading-none">0.00</span>
-               </div>
-               <span className="text-[10px] text-white/80 font-black uppercase tracking-widest mt-1 ml-1">Income</span>
-             </div>
-             <div className="absolute right-[-8px] bottom-[-8px] opacity-10 transition-transform group-hover:scale-110">
-                <CircleDollarSign className="w-16 h-16 text-white rotate-12" />
-             </div>
+                  <span className="font-black text-sm text-black">Verify Now</span>
+                </div>
+                <ChevronRightIcon className="w-5 h-5 text-gray-300" />
+              </Link>
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              className="h-16 justify-between rounded-[2rem] px-6 hover:bg-gray-50 active:bg-gray-100"
+              asChild
+            >
+              <Link href="#">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-50 p-2.5 rounded-2xl">
+                    <Headphones className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <span className="font-black text-sm text-black">Customer Support</span>
+                </div>
+                <ChevronRightIcon className="w-5 h-5 text-gray-300" />
+              </Link>
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              className="h-16 justify-between rounded-[2rem] px-6 hover:bg-gray-50 active:bg-gray-100"
+              asChild
+            >
+              <Link href="/settings">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gray-50 p-2.5 rounded-2xl">
+                    <Settings className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <span className="font-black text-sm text-black">Settings</span>
+                </div>
+                <ChevronRightIcon className="w-5 h-5 text-gray-300" />
+              </Link>
+            </Button>
           </div>
         </div>
 
-        <section className="bg-white rounded-[2rem] p-6 shadow-sm border border-black/5">
-          <h3 className="text-xs font-black text-black uppercase tracking-[0.2em] mb-6 px-1 opacity-40">Main Actions</h3>
-          <div className="grid grid-cols-3 gap-y-8">
-             {[
-               { label: "Task Center", icon: Target, color: "text-red-500", bg: "bg-red-50" },
-               { label: "Secret Note", icon: FileText, color: "text-orange-500", bg: "bg-orange-50" },
-               { label: "Income", icon: CircleDollarSign, color: "text-red-400", bg: "bg-red-50" },
-               { label: "Premium Store", icon: Store, color: "text-red-600", bg: "bg-red-50" },
-               { label: "Aristocracy", icon: Hexagon, color: "text-red-700", bg: "bg-red-50" },
-               { label: "Active Tasks", icon: ClipboardList, color: "text-pink-500", bg: "bg-pink-50" }
-             ].map((item, i) => (
-               <div key={i} className="flex flex-col items-center gap-2 group cursor-pointer">
-                 <div className={cn("p-4 rounded-[1.2rem] shadow-sm transition-all group-hover:shadow-md active:scale-90", item.bg)}>
-                   <item.icon className={cn("w-6 h-6", item.color)} />
-                 </div>
-                 <span className="text-[10px] font-black text-gray-600 text-center leading-tight tracking-tighter">{item.label}</span>
-               </div>
-             ))}
-          </div>
-        </section>
-
-        <section className="bg-white rounded-[2rem] p-6 shadow-sm border border-black/5">
-          <h3 className="text-xs font-black text-black uppercase tracking-[0.2em] mb-6 px-1 opacity-40">More Services</h3>
-          <div className="grid grid-cols-4 gap-y-8">
-            {[
-              { label: "Inventory", icon: ShoppingBag },
-              { label: "Experience", icon: Shield },
-              { label: "Badges", icon: Award },
-              { label: "Verification", icon: BadgeCheck },
-              { label: "Help Center", icon: Headphones },
-              { label: "Feedback", icon: MessageSquareQuote },
-              { label: "Settings", icon: Settings, href: "/settings" },
-              { label: "Game Hub", icon: Gamepad2 }
-            ].map((item, i) => (
-              <Link 
-                key={i} 
-                href={item.href || "#"} 
-                className="flex flex-col items-center gap-2 active:scale-90 transition-all group"
-              >
-                <div className="p-2 group-hover:bg-gray-50 rounded-xl transition-colors">
-                  <item.icon className="w-7 h-7 text-black/80 stroke-[1.5]" />
-                </div>
-                <span className="text-[9px] font-black text-gray-500 text-center leading-tight px-0.5 uppercase tracking-tighter">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {/* Secondary Info */}
+        <div className="text-center pb-8">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">MatchFlow v1.0 Premium</p>
+        </div>
       </main>
 
       <BottomNav />
