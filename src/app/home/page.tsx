@@ -3,7 +3,7 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { collection, query, where, limit } from "firebase/firestore"
-import { useFirestore, useUser, useCollection } from "@/firebase"
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -45,7 +45,7 @@ export default function HomePage() {
     setIsMounted(true)
   }, [])
 
-  const usersQuery = useMemo(() => {
+  const usersQuery = useMemoFirebase(() => {
     return query(
       collection(db, "users"), 
       where("onboardingComplete", "==", true),
@@ -149,7 +149,7 @@ export default function HomePage() {
         </div>
 
         {/* User Grid */}
-        {loading ? (
+        {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="aspect-[3/3.8] rounded-[2rem] bg-muted animate-pulse" />
@@ -218,16 +218,6 @@ export default function HomePage() {
           </div>
         )}
       </main>
-
-      {/* Floating Action Badge */}
-      <div className="fixed bottom-24 right-4 z-40 space-y-3">
-         <div className="bg-white/90 backdrop-blur-md rounded-2xl p-1 shadow-xl border border-white/50 active:scale-95 transition-transform">
-            <div className="bg-[#D4FF00] rounded-xl px-2 py-1 flex flex-col items-center">
-               <Gamepad2 className="w-5 h-5 text-black" />
-               <span className="text-[8px] font-black text-black">Game</span>
-            </div>
-         </div>
-      </div>
 
       <BottomNav />
     </div>
