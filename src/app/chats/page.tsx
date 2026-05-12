@@ -100,7 +100,6 @@ function DraggableGameButton() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
-    // Start position: bottom right area
     setPos({ x: window.innerWidth - 70, y: window.innerHeight - 180 })
   }, [])
 
@@ -115,15 +114,11 @@ function DraggableGameButton() {
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return
-    
     const newX = e.clientX - dragOffset.x
     const newY = e.clientY - dragOffset.y
-    
-    // Boundary checks (stay within screen)
     const margin = 20
     const safeX = Math.max(margin, Math.min(newX, window.innerWidth - 60))
     const safeY = Math.max(margin, Math.min(newY, window.innerHeight - 100))
-    
     setPos({ x: safeX, y: safeY })
   }
 
@@ -156,7 +151,6 @@ function ChatsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const startWithId = searchParams.get("startWith")
-  
   const { user: currentUser } = useUser()
   const db = useFirestore()
 
@@ -263,7 +257,7 @@ function ChatsContent() {
         </header>
 
         <main className="flex-1 divide-y divide-gray-50">
-          {listLoading ? (
+          {listLoading && userChats.length === 0 ? (
              <div className="p-4 space-y-3">
                {[1, 2, 3].map(i => (
                  <div key={i} className="flex gap-3 items-center">
@@ -289,9 +283,7 @@ function ChatsContent() {
             </div>
           )}
         </main>
-
         <DraggableGameButton />
-
         <BottomNav />
       </div>
     )
@@ -372,7 +364,7 @@ function ChatsContent() {
 
 export default function ChatsPage() {
   return (
-    <Suspense fallback={<div className="p-16 text-center font-black text-xl text-[#FF3B30] animate-pulse">MatchFlow...</div>}>
+    <Suspense fallback={null}>
       <ChatsContent />
     </Suspense>
   )
