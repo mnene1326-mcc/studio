@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -29,6 +28,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 interface UserProfile {
   name: string
@@ -90,8 +90,7 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
-      {/* Header Section with Lime Gradient */}
-      <header className="relative pt-12 pb-8 px-6 bg-gradient-to-b from-[#C6FF00] via-[#DFFF00]/40 to-[#F8F9FA]">
+      <header className="relative pt-12 pb-8 px-6 bg-gradient-to-b from-[#FF3B30] via-[#FF3B30]/40 to-[#F8F9FA]">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-1 group">
@@ -99,22 +98,15 @@ export default function MePage() {
               <ChevronRight className="w-5 h-5" />
             </div>
             
-            {/* VIP Badges Row */}
             <div className="flex gap-1.5 py-1">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-sm px-1.5 py-0.5 flex items-center gap-0.5">
+              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-sm px-1.5 py-0.5 flex items-center gap-0.5">
                 <span className="text-[8px] text-white font-black italic">SVIP1</span>
               </div>
               <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-sm px-1.5 py-0.5 flex items-center gap-0.5">
                 <span className="text-[8px] text-white font-black italic">VIP4</span>
               </div>
-              <div className="bg-[#1D4ED8] rounded-full p-0.5">
-                <div className="bg-white rounded-full px-1 flex items-center gap-0.5">
-                   <span className="text-[8px] text-[#1D4ED8] font-bold">16.</span>
-                </div>
-              </div>
             </div>
 
-            {/* MatchFlow ID */}
             <div 
               className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-opacity"
               onClick={handleCopyId}
@@ -128,7 +120,6 @@ export default function MePage() {
             </div>
           </div>
 
-          {/* Profile Picture */}
           <div className="relative w-20 h-20 rounded-full border-4 border-white/50 shadow-lg overflow-hidden bg-muted">
             <Image 
               src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
@@ -140,7 +131,6 @@ export default function MePage() {
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="flex justify-between mt-6 px-2">
           {[
             { label: "Friends", val: "0" },
@@ -151,7 +141,7 @@ export default function MePage() {
             <div key={i} className="flex flex-col items-center">
               <div className="flex items-start">
                 <span className="text-lg font-black text-black leading-none">{stat.val}</span>
-                {stat.dot && <div className="w-1.5 h-1.5 bg-red-500 rounded-full -mt-0.5 ml-0.5" />}
+                {stat.dot && <div className="w-1.5 h-1.5 bg-[#FF3B30] rounded-full -mt-0.5 ml-0.5" />}
               </div>
               <span className="text-[11px] text-[#8B8B8B] font-bold mt-1">{stat.label}</span>
             </div>
@@ -159,35 +149,31 @@ export default function MePage() {
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="px-4 -mt-4 space-y-4">
-        {/* Wallet & VIP Cards */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-[#B4F000] rounded-2xl p-4 flex flex-col justify-center gap-1 shadow-sm h-24">
+          <div className="bg-[#FF3B30] rounded-2xl p-4 flex flex-col justify-center gap-1 shadow-sm h-24">
             <div className="flex items-center gap-2">
               <div className="bg-white rounded-full p-1 shadow-sm">
-                <CircleDollarSign className="w-4 h-4 text-orange-400 fill-orange-400" />
+                <CircleDollarSign className="w-4 h-4 text-[#FF3B30]" />
               </div>
               <span className="text-xl font-black text-white">10</span>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-[#948471] via-[#6B5A49] to-[#4A3D31] rounded-2xl p-4 flex items-center justify-between shadow-sm h-24 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 flex items-center justify-between shadow-sm h-24 relative overflow-hidden">
              <div className="z-10">
-               <span className="text-2xl font-black italic text-[#E8D5C4] tracking-tighter">VIP4</span>
+               <span className="text-2xl font-black italic text-gray-200 tracking-tighter">VIP4</span>
              </div>
              <div className="absolute right-[-10px] bottom-[-10px] opacity-40">
-                <Crown className="w-20 h-20 text-[#E8D5C4] rotate-12" />
+                <Crown className="w-20 h-20 text-gray-200 rotate-12" />
              </div>
           </div>
         </div>
 
-        {/* Recommended Games Header */}
         <div className="flex items-center justify-between px-1">
           <h3 className="font-bold text-black">Recommended Games</h3>
           <ChevronRight className="w-4 h-4 text-gray-400" />
         </div>
 
-        {/* Horizontal Game Scroll */}
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
           {[
             { name: "Original 777", img: "777" },
@@ -208,13 +194,12 @@ export default function MePage() {
           ))}
         </div>
 
-        {/* Primary Service Icons */}
         <div className="grid grid-cols-4 gap-4 py-4">
            {[
-             { label: "Tasks", icon: ClipboardList, color: "bg-green-500" },
-             { label: "Income", icon: CircleDollarSign, color: "bg-lime-400" },
-             { label: "Store", icon: Store, color: "bg-green-600" },
-             { label: "Aristocracy", icon: Hexagon, color: "bg-lime-500" }
+             { label: "Tasks", icon: ClipboardList, color: "bg-red-500" },
+             { label: "Income", icon: CircleDollarSign, color: "bg-red-400" },
+             { label: "Store", icon: Store, color: "bg-red-600" },
+             { label: "Aristocracy", icon: Hexagon, color: "bg-red-700" }
            ].map((item, i) => (
              <div key={i} className="flex flex-col items-center gap-2">
                <div className={cn("p-2 rounded-xl shadow-sm", item.color)}>
@@ -225,7 +210,6 @@ export default function MePage() {
            ))}
         </div>
 
-        {/* Other Section */}
         <div className="space-y-4 pt-2">
           <h3 className="font-bold text-black px-1">Other</h3>
           <div className="grid grid-cols-4 gap-y-6">
@@ -246,7 +230,7 @@ export default function MePage() {
               >
                 <div className="relative">
                   <item.icon className="w-7 h-7 text-black stroke-[1.5]" />
-                  <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-lime-400 rounded-full border border-white" />
+                  <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-[#FF3B30] rounded-full border border-white" />
                 </div>
                 <span className="text-[10px] font-bold text-gray-500 text-center leading-tight px-1">{item.label}</span>
               </Link>
@@ -258,8 +242,4 @@ export default function MePage() {
       <BottomNav />
     </div>
   )
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ')
 }

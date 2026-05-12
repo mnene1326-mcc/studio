@@ -1,4 +1,3 @@
-
 "use client"
 
 import Link from "next/link"
@@ -25,26 +24,25 @@ export function BottomNav() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center flex-1 h-full gap-0.5 transition-all relative",
-              isActive ? "text-black" : "text-gray-400"
+              isActive ? "text-[#FF3B30]" : "text-gray-400"
             )}
           >
             <div className={cn(
               "p-2 rounded-2xl flex items-center justify-center transition-all",
-              isActive && "bg-[#C6FF00]/40"
+              isActive && "bg-[#FF3B30]/10"
             )}>
-              <item.icon className={cn("w-7 h-7", isActive && "text-black fill-current opacity-80")} />
+              <item.icon className={cn("w-7 h-7", isActive && "text-[#FF3B30] fill-current opacity-80")} />
             </div>
             
             <span className={cn(
               "text-[10px] font-black tracking-tight mt-0.5",
-              isActive ? "text-black" : "text-gray-400"
+              isActive ? "text-[#FF3B30]" : "text-gray-400"
             )}>
               {item.label}
             </span>
 
-            {/* Notification Badge for Chat */}
             {item.label === "Chat" && (
-              <div className="absolute top-2 right-[20%] bg-red-500 text-white text-[9px] font-black rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 border-2 border-white shadow-sm">
+              <div className="absolute top-2 right-[20%] bg-[#FF3B30] text-white text-[9px] font-black rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 border-2 border-white shadow-sm">
                 99+
               </div>
             )}

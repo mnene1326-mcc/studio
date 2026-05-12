@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState } from "react"
@@ -72,7 +71,7 @@ export default function HomePage() {
             >
               Nearby
               {activeTab === 'nearby' && (
-                <div className="absolute -bottom-2 left-0 w-8 h-1.5 bg-[#C6FF00] rounded-full" />
+                <div className="absolute -bottom-2 left-0 w-8 h-1.5 bg-[#FF3B30] rounded-full" />
               )}
             </button>
             <button 
@@ -84,7 +83,7 @@ export default function HomePage() {
             >
               Recommend
               {activeTab === 'recommend' && (
-                <div className="absolute -bottom-2 left-0 w-8 h-1.5 bg-[#C6FF00] rounded-full" />
+                <div className="absolute -bottom-2 left-0 w-8 h-1.5 bg-[#FF3B30] rounded-full" />
               )}
             </button>
           </div>
@@ -94,7 +93,7 @@ export default function HomePage() {
             </Button>
             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full relative">
               <Bell className="w-6 h-6 text-black" />
-              <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+              <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#FF3B30] rounded-full border-2 border-white" />
             </Button>
           </div>
         </div>
@@ -128,15 +127,13 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* "Hi" Quick Action Badge */}
                 <div 
-                  className="absolute top-4 right-4 bg-[#C6FF00] rounded-2xl px-3 py-1.5 shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20"
+                  className="absolute top-4 right-4 bg-[#FF3B30] rounded-2xl px-3 py-1.5 shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-black font-black italic text-sm tracking-tighter">Hi</span>
+                  <span className="text-white font-black italic text-sm tracking-tighter">Hi</span>
                 </div>
 
-                {/* Bottom Overlay Info */}
                 <div className="absolute inset-x-0 bottom-0 p-4 pt-16 bg-gradient-to-t from-black/95 via-black/40 to-transparent">
                   <div className="flex items-center gap-2 mb-2.5">
                     <span className="text-white font-black text-lg truncate drop-shadow-md">{user.name}</span>
@@ -149,8 +146,8 @@ export default function HomePage() {
                     <div className="bg-[#FF4D94] rounded-xl px-2.5 py-1 flex items-center gap-1 shadow-md">
                       <span className="text-[11px] text-white font-black">♀ {calculateAge(user.dob)}</span>
                     </div>
-                    <div className="bg-[#C6FF00] rounded-xl px-2.5 py-1 shadow-md">
-                      <span className="text-[11px] text-black font-black">1.2km</span>
+                    <div className="bg-[#FF3B30] rounded-xl px-2.5 py-1 shadow-md">
+                      <span className="text-[11px] text-white font-black">1.2km</span>
                     </div>
                     <div className="bg-white/10 rounded-xl px-2.5 py-1 backdrop-blur-xl border border-white/20">
                       <span className="text-[11px] text-white font-black truncate max-w-[70px] block">

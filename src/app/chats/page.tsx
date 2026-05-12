@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo } from "react"
@@ -50,7 +49,6 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
 
   if (!partner) return null
 
-  // Random placeholder status for demo aesthetic
   const randomStatus = ["🔥 0.2°C", "💧 9.57°C", "🌸 116.4°C"][Math.floor(Math.random() * 3)]
 
   return (
@@ -61,7 +59,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
       <div className="relative">
         <Avatar className="w-16 h-16 border-2 border-white shadow-sm">
           <AvatarImage src={partner.photoURL || `https://picsum.photos/seed/${partner.uid}/200/200`} />
-          <AvatarFallback className="bg-[#C6FF00] font-black">{partner.name?.[0] || '?'}</AvatarFallback>
+          <AvatarFallback className="bg-[#FF3B30] text-white font-black">{partner.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
         <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
       </div>
@@ -78,9 +76,9 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
         </div>
         <div className="flex justify-between items-center">
           <p className="text-sm text-gray-500 truncate font-bold flex-1 pr-4">
-            {chat.lastMessage || "hi love I am looking for serious..."}
+            {chat.lastMessage || "hi love..."}
           </p>
-          <div className="bg-red-500 rounded-full w-5 h-5 flex items-center justify-center shadow-sm">
+          <div className="bg-[#FF3B30] rounded-full w-5 h-5 flex items-center justify-center shadow-sm">
             <span className="text-[10px] text-white font-black">1</span>
           </div>
         </div>
@@ -178,30 +176,22 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
-  // LIST VIEW
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-24">
-        <header className="sticky top-0 z-40 bg-[#C6FF00]/10 backdrop-blur-md px-6 pt-10 pb-4 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-[#FF3B30]/10 backdrop-blur-md px-6 pt-10 pb-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <h1 className="text-3xl font-black text-[#1DB954]">Chat</h1>
-              <div className="absolute -bottom-1 left-0 w-8 h-1.5 bg-[#1DB954] rounded-full" />
+              <h1 className="text-3xl font-black text-[#FF3B30]">Chat</h1>
+              <div className="absolute -bottom-1 left-0 w-8 h-1.5 bg-[#FF3B30] rounded-full" />
             </div>
           </div>
           <div className="flex items-center gap-3">
-             <div className="bg-white rounded-full p-2 relative shadow-sm">
-               <span className="text-xs">😊</span>
-               <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black px-1 rounded-full border border-white">New</div>
-             </div>
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full">
                 <ShoppingBag className="w-6 h-6" />
              </Button>
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full">
                 <UserIcon className="w-6 h-6" />
-             </Button>
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full">
-                <ListFilter className="w-6 h-6" />
              </Button>
           </div>
         </header>
@@ -223,7 +213,7 @@ function ChatsContent() {
             <div className="flex-1 flex flex-col items-center justify-center text-center py-24 px-10 space-y-6 opacity-40 italic">
               <MessageSquare className="w-20 h-20 text-muted-foreground" />
               <p className="font-black text-xl">No active chats...</p>
-              <Button onClick={() => router.push("/home")} variant="outline" className="rounded-full border-[#C6FF00] text-[#1DB954] font-black">Find Someone</Button>
+              <Button onClick={() => router.push("/home")} variant="outline" className="rounded-full border-[#FF3B30] text-[#FF3B30] font-black">Find Someone</Button>
             </div>
           ) : (
             <div className="bg-white">
@@ -234,13 +224,12 @@ function ChatsContent() {
           )}
         </main>
 
-        {/* Floating Game Bubble */}
         <div className="fixed bottom-28 right-6 z-50">
           <div className="relative group cursor-pointer active:scale-95 transition-transform">
-            <div className="bg-[#C6FF00] p-4 rounded-full shadow-2xl flex items-center justify-center">
-              <Gamepad2 className="w-8 h-8 text-black" />
+            <div className="bg-[#FF3B30] p-4 rounded-full shadow-2xl flex items-center justify-center">
+              <Gamepad2 className="w-8 h-8 text-white" />
             </div>
-            <div className="absolute -bottom-2 -left-2 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded-lg border-2 border-white shadow-sm">
+            <div className="absolute -bottom-2 -left-2 bg-black text-white text-[10px] font-black px-2 py-0.5 rounded-lg border-2 border-white shadow-sm">
               Game
             </div>
           </div>
@@ -251,8 +240,7 @@ function ChatsContent() {
     )
   }
 
-  // CONVERSATION VIEW
-  if (!chatPartner) return <div className="p-20 text-center animate-pulse font-black text-2xl text-[#1DB954]">Searching...</div>
+  if (!chatPartner) return <div className="p-20 text-center animate-pulse font-black text-2xl text-[#FF3B30]">Searching...</div>
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-gray-50 relative overflow-hidden">
@@ -260,7 +248,7 @@ function ChatsContent() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/chats")} className="rounded-full">
           <ChevronLeft className="w-7 h-7" />
         </Button>
-        <Avatar className="w-12 h-12 border-2 border-[#C6FF00]">
+        <Avatar className="w-12 h-12 border-2 border-[#FF3B30]">
           <AvatarImage src={chatPartner.photoURL} />
           <AvatarFallback className="font-black">{chatPartner.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
@@ -277,7 +265,7 @@ function ChatsContent() {
               <div className={cn(
                 "max-w-[80%] p-4 rounded-[2rem] text-sm font-black shadow-sm",
                 msg.senderId === currentUser.uid 
-                  ? 'bg-[#C6FF00] text-black rounded-br-none' 
+                  ? 'bg-[#FF3B30] text-white rounded-br-none' 
                   : 'bg-white text-black border border-gray-100 rounded-bl-none'
               )}>
                 {msg.text}
@@ -300,7 +288,7 @@ function ChatsContent() {
         />
         <Button 
           size="icon" 
-          className="rounded-full w-12 h-12 bg-[#C6FF00] hover:bg-[#B4F000] text-black shrink-0" 
+          className="rounded-full w-12 h-12 bg-[#FF3B30] hover:bg-red-600 text-white shrink-0" 
           disabled={!newMessage.trim()}
           onClick={() => handleSendMessage(newMessage)}
         >
@@ -313,7 +301,7 @@ function ChatsContent() {
 
 export default function ChatsPage() {
   return (
-    <Suspense fallback={<div className="p-20 text-center font-black text-2xl text-[#1DB954]">Loading Chats...</div>}>
+    <Suspense fallback={<div className="p-20 text-center font-black text-2xl text-[#FF3B30]">Loading Chats...</div>}>
       <ChatsContent />
     </Suspense>
   )
