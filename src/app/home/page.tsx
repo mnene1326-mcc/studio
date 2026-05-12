@@ -64,7 +64,7 @@ export default function HomePage() {
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
         {/* Action Cards Row */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-4">
           <div 
             onClick={() => router.push("/mystery-note")}
             className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-28"
@@ -121,11 +121,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="p-3 lg:max-w-4xl lg:mx-auto">
+      <main className="p-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.8/4.5] rounded-2xl bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3.8/4.2] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -134,11 +134,11 @@ export default function HomePage() {
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black">Try updating your filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-2xl aspect-[3.8/4.5] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
+                className="relative overflow-hidden border-none rounded-2xl aspect-[3.8/4.2] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
@@ -152,32 +152,32 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
                 <div 
-                  className="absolute top-4 right-4 premium-blur rounded-2xl px-5 py-2 shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
+                  className="absolute top-3 right-3 premium-blur rounded-2xl px-4 py-1.5 shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-[#FF3B30] font-black text-xs italic tracking-tighter">Chat</span>
+                  <span className="text-[#FF3B30] font-black text-[10px] italic tracking-tighter">Chat</span>
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 p-4 pt-16 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-white font-black text-base truncate drop-shadow-lg">{user.name}</span>
-                    <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 shadow-lg border border-white/20">
-                      <div className="w-3.5 h-3.5 bg-black rounded-full flex items-center justify-center">
-                         <span className="text-[8px] text-yellow-400 font-black">✔</span>
+                <div className="absolute inset-x-0 bottom-0 p-3 pt-12 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-white font-black text-sm truncate drop-shadow-lg">{user.name}</span>
+                    <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 shadow-lg border border-white/20">
+                      <div className="w-2.5 h-2.5 bg-black rounded-full flex items-center justify-center">
+                         <span className="text-[6px] text-yellow-400 font-black">✔</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap gap-1.5">
-                    <div className="bg-[#FF4D94] rounded-lg px-2 py-0.5 flex items-center gap-1 shadow-sm border border-white/10">
-                      <span className="text-[10px] text-white font-black leading-none">
+                  <div className="flex flex-wrap gap-1">
+                    <div className="bg-[#FF4D94] rounded-lg px-1.5 py-0.5 flex items-center gap-1 shadow-sm border border-white/10">
+                      <span className="text-[9px] text-white font-black leading-none">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm border border-white/10">
-                      <span className="text-[10px] text-white font-black truncate max-w-[80px] leading-none">
-                        {user.interests?.split(',')[0] || "Gemini"}
+                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-1.5 py-0.5 shadow-sm border border-white/10">
+                      <span className="text-[9px] text-white font-black truncate max-w-[60px] leading-none">
+                        {user.interests?.split(',')[0] || "Match"}
                       </span>
                     </div>
                   </div>
