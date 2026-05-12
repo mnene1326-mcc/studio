@@ -58,7 +58,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white">
-        <div className="animate-pulse font-logo text-primary text-2xl italic">MatchFlow...</div>
+        <div className="animate-pulse font-logo text-primary text-xl italic">MatchFlow...</div>
       </div>
     )
   }
@@ -99,7 +99,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           </Button>
         </div>
 
-        {/* Progress Dots - Raised further to avoid being hidden by content */}
+        {/* Progress Dots */}
         <div className="absolute bottom-32 inset-x-0 flex justify-center gap-1 z-10">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={cn("h-1 rounded-full transition-all", i === 1 ? "w-6 bg-white" : "w-2 bg-white/40")} />
@@ -107,73 +107,71 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      {/* Content Section - Straight edges (no curves) raised further */}
-      <div className="relative -mt-28 bg-white px-6 pt-8 space-y-8 min-h-[50vh] z-20">
+      {/* Content Section */}
+      <div className="relative -mt-28 bg-white px-6 pt-8 space-y-6 min-h-[50vh] z-20">
         {/* Name & ID Header */}
         <div className="flex justify-between items-start">
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-black text-black tracking-tight">{profile.name}💜💜</h1>
-              <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                <User className="w-3 h-3 text-black fill-current" />
+              <h1 className="text-2xl font-black text-black tracking-tight">{profile.name}💜💜</h1>
+              <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center border border-white shadow-sm">
+                <User className="w-2.5 h-2.5 text-black fill-current" />
               </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              {/* Dark Green Background for Age */}
-              <span className="bg-[#006400] text-white px-3.5 py-2 rounded-md text-base font-black uppercase tracking-wide shadow-sm">
+              <span className="bg-[#006400] text-white px-2.5 py-1.5 rounded-md text-[11px] font-black uppercase tracking-wide shadow-sm">
                 ♀ {age}
               </span>
-              {/* Blur Background for Country */}
-              <span className="bg-black/10 backdrop-blur-md text-gray-800 px-3.5 py-2 rounded-md text-base font-black tracking-wide border border-black/5 shadow-sm">
+              <span className="bg-black/5 backdrop-blur-md text-gray-700 px-2.5 py-1.5 rounded-md text-[11px] font-black tracking-wide border border-black/5 shadow-sm">
                 {profile.country ? profile.country.charAt(0).toUpperCase() + profile.country.slice(1) : "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-3.5 py-2 rounded-md text-base font-black tracking-wide shadow-sm">13.66km</span>
+              <span className="bg-black text-[#D4FF00] px-2.5 py-1.5 rounded-md text-[11px] font-black tracking-wide shadow-sm">13.66km</span>
             </div>
 
             <div 
-              className="flex items-center gap-1 text-[#8B8B8B] text-xs font-bold cursor-pointer active:opacity-60"
+              className="flex items-center gap-1 text-[#8B8B8B] text-[10px] font-bold cursor-pointer active:opacity-60"
               onClick={handleCopyId}
             >
               <span>ID:{profile.matchFlowId || "null"}</span>
-              <Copy className={cn("w-3 h-3 transition-colors", copied ? "text-green-500" : "text-[#8B8B8B]")} />
+              <Copy className={cn("w-2.5 h-2.5 transition-colors", copied ? "text-green-500" : "text-[#8B8B8B]")} />
             </div>
           </div>
 
-          <div className="bg-gray-100 rounded-full px-4 py-2 flex items-center gap-1.5 border border-white shadow-sm">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs font-black text-gray-600">Online</span>
+          <div className="bg-gray-50 rounded-full px-3 py-1.5 flex items-center gap-1.5 border border-black/5 shadow-sm">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-[10px] font-black text-gray-500">Online</span>
           </div>
         </div>
 
         {/* About Me Section */}
-        <section className="space-y-4">
+        <section className="space-y-3">
           <div className="flex items-baseline gap-2">
             <div className="relative">
-              <h2 className="text-2xl font-black text-black">About Me</h2>
-              <div className="absolute -bottom-1 left-0 w-full h-2 bg-[#D4FF00]/40 rounded-full -rotate-1" />
+              <h2 className="text-lg font-black text-black">About Me</h2>
+              <div className="absolute -bottom-0.5 left-0 w-full h-1.5 bg-[#D4FF00]/40 rounded-full -rotate-1" />
             </div>
           </div>
-          <p className="text-sm font-bold text-gray-500 leading-relaxed italic">
+          <p className="text-xs font-bold text-gray-500 leading-relaxed italic">
             "{profile.interests || "I'm looking for someone special to share my time with and see where things go..."}"
           </p>
         </section>
 
         {/* Bio Text Footer */}
-        <div className="pb-12">
-          <p className="text-[10px] font-bold text-gray-400 leading-relaxed">
+        <div className="pb-8">
+          <p className="text-[9px] font-bold text-gray-400 leading-relaxed">
             Little things say everything... dm for fun and serious talks 💦🍑🍆🥰
           </p>
         </div>
       </div>
 
-      {/* Fixed Bottom Action - Large Red Chat Button */}
+      {/* Fixed Bottom Action */}
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-50 z-50">
         <Button 
-          className="w-full h-16 rounded-[2rem] bg-[#FF3B30] text-white hover:bg-red-600 text-xl font-bold flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 uppercase tracking-widest"
+          className="w-full h-14 rounded-[2rem] bg-[#FF3B30] text-white hover:bg-red-600 text-lg font-bold flex items-center justify-center gap-2.5 shadow-xl transition-all active:scale-95 uppercase tracking-widest"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
-          <MessageSquare className="w-7 h-7 fill-current" />
+          <MessageSquare className="w-6 h-6 fill-current" />
           CHAT
         </Button>
       </div>

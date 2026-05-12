@@ -54,7 +54,8 @@ export default function WelcomePage() {
     }
   }
 
-  // Force loading state (splash screen) during hydration to avoid mismatches
+  // To prevent hydration errors, always render the splash/loading state
+  // until the component has mounted on the client.
   if (!hasMounted || loading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
@@ -83,8 +84,8 @@ export default function WelcomePage() {
       <div className="relative z-10 flex flex-col items-center space-y-12 px-8 text-center max-w-lg">
         <div className="space-y-6">
           <div className="space-y-3">
-            <h1 className="text-6xl font-logo text-primary leading-none">MatchFlow</h1>
-            <p className="text-xl font-body text-foreground/80 italic leading-relaxed text-balance">
+            <h1 className="text-5xl font-logo text-primary leading-none">MatchFlow</h1>
+            <p className="text-lg font-body text-foreground/80 italic leading-relaxed text-balance">
               Where sophisticated hearts connect with purpose.
             </p>
           </div>
