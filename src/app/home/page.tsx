@@ -76,44 +76,46 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
-      {/* Sticky Top Bar (Logo + Notification) */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setActiveTab('recommend')}
-              className={cn(
-                "relative text-sm font-black uppercase tracking-widest transition-all",
-                activeTab === 'recommend' ? "text-black" : "text-gray-400"
-              )}
-            >
-              Recommend
-              {activeTab === 'recommend' && (
-                <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
-              )}
-            </button>
-            <button 
-              onClick={() => setActiveTab('nearby')}
-              className={cn(
-                "relative text-sm font-black uppercase tracking-widest transition-all",
-                activeTab === 'nearby' ? "text-black" : "text-gray-400"
-              )}
-            >
-              Nearby
-              {activeTab === 'nearby' && (
-                <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
-              )}
-            </button>
+      {/* Sticky Top Bar (Tabs + Notification) */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/5">
+        <div className="px-6 pt-4 pb-2 lg:max-w-4xl lg:mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setActiveTab('recommend')}
+                className={cn(
+                  "relative text-sm font-black uppercase tracking-widest transition-all",
+                  activeTab === 'recommend' ? "text-black" : "text-gray-400"
+                )}
+              >
+                Recommend
+                {activeTab === 'recommend' && (
+                  <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
+                )}
+              </button>
+              <button 
+                onClick={() => setActiveTab('nearby')}
+                className={cn(
+                  "relative text-sm font-black uppercase tracking-widest transition-all",
+                  activeTab === 'nearby' ? "text-black" : "text-gray-400"
+                )}
+              >
+                Nearby
+                {activeTab === 'nearby' && (
+                  <div className="absolute -bottom-2 left-0 w-6 h-0.5 bg-[#FF3B30] rounded-full shadow-sm" />
+                )}
+              </button>
+            </div>
+            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
+              <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
+              <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
-            <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
-            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
-          </Button>
         </div>
       </header>
 
-      <main className="px-4 lg:max-w-4xl lg:mx-auto">
-        {/* Action Cards (Scrollable) */}
+      <main className="px-6 lg:max-w-4xl lg:mx-auto">
+        {/* Action Cards */}
         <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
           <div 
             onClick={() => router.push("/mystery-note")}
@@ -175,7 +177,7 @@ export default function HomePage() {
 
                 <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1.5">
                   <div className="flex items-center gap-1">
-                    <span className="text-white font-black text-sm truncate drop-shadow-md">{user.name} 🥰</span>
+                    <span className="text-white font-normal text-sm truncate drop-shadow-md">{user.name} 🥰</span>
                     <div className="w-3.5 h-3.5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 border border-white/40">
                       <UserIcon className="w-2 h-2 text-black fill-current" />
                     </div>
