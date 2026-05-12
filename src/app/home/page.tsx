@@ -180,28 +180,21 @@ export default function HomePage() {
                   <span className="text-black font-black text-xs italic tracking-tighter uppercase">Chat</span>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
 
-                <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start gap-1">
-                  <div className="flex items-baseline gap-1.5">
-                    <h4 className="text-white font-black text-sm truncate drop-shadow-md">{user.name}</h4>
-                    <div className="bg-black/40 backdrop-blur-sm rounded px-1 py-0 shadow-sm border border-white/10">
-                      <span className="text-white font-black text-[8px] leading-none drop-shadow-sm">{calculateAge(user.dob)}</span>
-                    </div>
+                <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="text-white font-black text-sm drop-shadow-md truncate">{user.name}</h4>
+                    <span className="text-white font-black text-[10px] drop-shadow-md">{calculateAge(user.dob)}</span>
                   </div>
                   
-                  <div className="flex items-center gap-1">
-                    <div className="bg-[#D4FF00] rounded px-1 py-0 shadow-sm">
-                      <span className="text-[7px] text-black font-black leading-tight truncate uppercase tracking-tighter">
-                        {user.country || "Kenya"}
-                      </span>
-                    </div>
-                    
-                    <div className="bg-black/40 backdrop-blur-sm rounded px-1 py-0 shadow-sm border border-white/10">
-                      <span className="text-[7px] text-white font-black leading-tight uppercase tracking-tighter">
-                        {getTag(user.uid)}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-white font-black text-[8px] uppercase tracking-wider drop-shadow-sm opacity-90">
+                      {user.country || "Kenya"}
+                    </span>
+                    <span className="text-white font-black text-[8px] uppercase tracking-wider drop-shadow-sm opacity-90">
+                      • {getTag(user.uid)}
+                    </span>
                   </div>
                 </div>
               </Card>

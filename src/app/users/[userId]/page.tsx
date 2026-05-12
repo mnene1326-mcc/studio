@@ -121,16 +121,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-1.5">
-              <div className="bg-[#FF4D94] rounded px-1.5 py-0 flex items-center gap-1 shadow-sm">
-                <span className="text-[9px] text-white font-black leading-none uppercase">♀ {age}</span>
-              </div>
-              <div className="bg-[#D4FF00] rounded px-1.5 py-0 flex items-center gap-1 shadow-sm">
-                <span className="text-[9px] text-black font-black leading-none uppercase">13.66km</span>
-              </div>
-              <div className="bg-black rounded px-1.5 py-0 flex items-center gap-1 shadow-sm border border-yellow-400/30">
-                <span className="text-[9px] text-yellow-400 font-black leading-none uppercase tracking-tighter">{profile.country || "Kenya"}</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs font-black text-[#FF4D94] uppercase tracking-wide">♀ {age}</span>
+              <span className="text-xs font-black text-gray-400">•</span>
+              <span className="text-xs font-black text-gray-800 uppercase tracking-wide">{profile.country || "Kenya"}</span>
+              <span className="text-xs font-black text-gray-400">•</span>
+              <span className="text-xs font-black text-[#D4FF00] bg-black px-1.5 rounded-sm">13.66km</span>
             </div>
 
             <div 
