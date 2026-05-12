@@ -111,7 +111,7 @@ export default function MePage() {
               className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-opacity"
               onClick={handleCopyId}
             >
-              <p className="text-[#8B8B8B] font-bold text-xs tracking-tight">ID:{profile.matchFlowId}</p>
+              <p className="text-[#8B8B8B] font-bold text-xs tracking-tight">ID:{profile.matchFlowId || "Generating..."}</p>
               {copied ? (
                 <Check className="w-3 h-3 text-green-600" />
               ) : (
@@ -149,27 +149,29 @@ export default function MePage() {
         </div>
       </header>
 
-      <main className="px-4 -mt-2 space-y-3">
+      <main className="px-4 space-y-3">
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-[#FF3B30] rounded-xl p-3 flex flex-col justify-center gap-1 shadow-sm h-20">
-            <div className="flex items-center gap-1.5">
+          <div className="bg-[#FF3B30] rounded-xl p-4 flex flex-col justify-center gap-1 shadow-sm h-24 overflow-hidden">
+            <div className="flex items-center gap-2">
               <div className="bg-white rounded-full p-1 shadow-sm">
-                <CircleDollarSign className="w-3 h-3 text-[#FF3B30]" />
+                <CircleDollarSign className="w-4 h-4 text-[#FF3B30]" />
               </div>
-              <span className="text-lg font-black text-white">10</span>
+              <span className="text-2xl font-black text-white leading-none">10</span>
             </div>
+            <span className="text-[9px] text-white/80 font-bold uppercase tracking-wider ml-1">Coins</span>
           </div>
-          <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-3 flex items-center justify-between shadow-sm h-20 relative overflow-hidden">
-             <div className="z-10">
-               <span className="text-xl font-black italic text-gray-200 tracking-tighter">VIP4</span>
+          <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-4 flex items-center justify-between shadow-sm h-24 relative overflow-hidden">
+             <div className="z-10 flex flex-col">
+               <span className="text-2xl font-black italic text-gray-200 tracking-tighter leading-none">VIP4</span>
+               <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1">Status</span>
              </div>
-             <div className="absolute right-[-5px] bottom-[-5px] opacity-40">
-                <Crown className="w-14 h-14 text-gray-200 rotate-12" />
+             <div className="absolute right-[-10px] bottom-[-10px] opacity-30">
+                <Crown className="w-20 h-20 text-gray-200 rotate-12" />
              </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between px-1 mt-4">
           <h3 className="text-sm font-bold text-black">Recommended Games</h3>
           <ChevronRight className="w-3 h-3 text-gray-400" />
         </div>
@@ -194,7 +196,7 @@ export default function MePage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-4 gap-3 py-2">
+        <div className="grid grid-cols-4 gap-3 py-4">
            {[
              { label: "Tasks", icon: ClipboardList, color: "bg-red-500" },
              { label: "Income", icon: CircleDollarSign, color: "bg-red-400" },

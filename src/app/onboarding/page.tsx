@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -64,7 +63,6 @@ export default function OnboardingPage() {
 
     setLoading(true)
 
-    // Check if user already has an ID, if not generate one (fallback)
     const userRef = doc(db, "users", user.uid)
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
