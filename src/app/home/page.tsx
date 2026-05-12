@@ -103,7 +103,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tab Navigation - Unified Red Background, No curves on ends */}
+        {/* Tab Navigation - Unified Red Background */}
         <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
@@ -151,7 +151,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid} 
+                key={user.id} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >

@@ -11,7 +11,7 @@ import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MessageSquare, Send, ChevronLeft, ShoppingBag, User as UserIcon, ListFilter, Gamepad2 } from "lucide-react"
+import { MessageSquare, Send, ChevronLeft, ShoppingBag, User as UserIcon, Gamepad2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -48,7 +48,6 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
   const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   const { data: partner } = useDoc<UserProfile>(partnerRef)
 
-  // Deterministic status based on UID to avoid hydration mismatch
   const getStatus = (uid: string) => {
     const statuses = ["🔥 0.2°C", "💧 9.5°C", "🌸 116.4°C"]
     const index = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % statuses.length
@@ -89,6 +88,64 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
           <div className="bg-[#FF3B30] rounded-full w-4 h-4 flex items-center justify-center shadow-sm shrink-0">
             <span className="text-[8px] text-white font-black">1</span>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DraggableGameButton() {
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    // Set initial position after mount
+    setPos({ x: window.innerWidth - 70, y: window.innerHeight - 180 })
+  }, [])
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsDragging(true)
+    setDragOffset({
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y
+    })
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return
+    
+    const newX = e.clientX - dragOffset.x
+    const newY = e.clientY - dragOffset.y
+    
+    // Simple bounds check
+    const margin = 20
+    const safeX = Math.max(margin, Math.min(newX, window.innerWidth - 60))
+    const safeY = Math.max(margin, Math.min(newY, window.innerHeight - 100))
+    
+    setPos({ x: safeX, y: safeY })
+  }
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false)
+    e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+
+  return (
+    <div 
+      className="fixed z-50 touch-none"
+      style={{ left: pos.x, top: pos.y }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+    >
+      <div className="relative group cursor-pointer active:scale-95 transition-transform">
+        <div className="bg-[#FF3B30] p-3 rounded-full shadow-lg flex items-center justify-center">
+          <Gamepad2 className="w-6 h-6 text-white" />
+        </div>
+        <div className="absolute -bottom-1 -left-1 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded-md border border-white shadow-sm pointer-events-none">
+          Game
         </div>
       </div>
     </div>
@@ -232,16 +289,7 @@ function ChatsContent() {
           )}
         </main>
 
-        <div className="fixed bottom-24 right-4 z-50">
-          <div className="relative group cursor-pointer active:scale-95 transition-transform">
-            <div className="bg-[#FF3B30] p-3 rounded-full shadow-lg flex items-center justify-center">
-              <Gamepad2 className="w-6 h-6 text-white" />
-            </div>
-            <div className="absolute -bottom-1 -left-1 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded-md border border-white shadow-sm">
-              Game
-            </div>
-          </div>
-        </div>
+        <DraggableGameButton />
 
         <BottomNav />
       </div>
