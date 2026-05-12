@@ -76,9 +76,7 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
-      {/* Removed the sticky header with notification button */}
-
-      <main className="px-6 lg:max-w-4xl lg:mx-auto pt-4">
+      <main className="px-4 lg:max-w-4xl lg:mx-auto pt-4">
         {/* Action Cards */}
         <div className="grid grid-cols-2 gap-2 mt-4 mb-6">
           <div 
@@ -102,7 +100,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Navigation Tabs (Below buttons, small lowercase letters) */}
+        {/* Navigation Tabs */}
         <div className="flex items-center gap-6 mb-4 px-1">
           <button 
             onClick={() => setActiveTab('recommend')}

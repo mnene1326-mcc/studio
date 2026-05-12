@@ -1,13 +1,22 @@
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.open('matchflow-v1').then((cache) => {
+      return cache.addAll([
+        '/',
+        '/home',
+        '/chats',
+        '/me',
+        '/globals.css'
+      ]);
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Simple pass-through for now
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
+  );
 });
