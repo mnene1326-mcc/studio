@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -24,7 +25,8 @@ import {
   Gamepad2,
   Crown,
   FileText,
-  Target
+  Target,
+  Wallet
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -93,9 +95,6 @@ export default function MePage() {
               <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-md px-2 py-0.5 flex items-center shadow-sm">
                 <span className="text-[8px] text-white font-black italic tracking-widest">SVIP1</span>
               </div>
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-md px-2 py-0.5 flex items-center shadow-sm">
-                <span className="text-[8px] text-white font-black italic tracking-widest">VIP4</span>
-              </div>
             </div>
 
             <div 
@@ -125,21 +124,14 @@ export default function MePage() {
           </div>
         </div>
 
-        <div className="flex justify-between mt-8 px-2 glass-card rounded-2xl p-4 shadow-sm">
-          {[
-            { label: "Friends", val: "0" },
-            { label: "Following", val: "0" },
-            { label: "Followers", val: "20" },
-            { label: "Visitors", val: "12k", dot: true }
-          ].map((stat, i) => (
-            <div key={i} className="flex flex-col items-center">
-              <div className="flex items-start">
-                <span className="text-lg font-black text-black leading-none tracking-tight">{stat.val}</span>
-                {stat.dot && <div className="w-1.5 h-1.5 bg-[#FF3B30] rounded-full -mt-0.5 ml-0.5 shadow-sm" />}
-              </div>
-              <span className="text-[10px] text-[#8B8B8B] font-bold mt-1 uppercase tracking-tighter">{stat.label}</span>
+        <div className="flex justify-center mt-8 px-2 glass-card rounded-2xl p-4 shadow-sm">
+          <div className="flex flex-col items-center">
+            <div className="flex items-start">
+              <span className="text-lg font-black text-black leading-none tracking-tight">12k</span>
+              <div className="w-1.5 h-1.5 bg-[#FF3B30] rounded-full -mt-0.5 ml-0.5 shadow-sm" />
             </div>
-          ))}
+            <span className="text-[10px] text-[#8B8B8B] font-bold mt-1 uppercase tracking-tighter">Visitors</span>
+          </div>
         </div>
       </header>
 
@@ -154,13 +146,20 @@ export default function MePage() {
             </div>
             <span className="text-[10px] text-white/90 font-black uppercase tracking-widest ml-1">My Coins</span>
           </div>
-          <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-4 flex items-center justify-between shadow-xl h-24 relative overflow-hidden group active:scale-95 transition-all">
+          
+          {/* Replaced VIP4 with Income Button Card */}
+          <div className="bg-gradient-to-br from-[#4285F4] to-[#2B65C5] rounded-2xl p-4 flex items-center justify-between shadow-lg h-24 relative overflow-hidden group active:scale-95 transition-all">
              <div className="z-10 flex flex-col">
-               <span className="text-3xl font-black italic text-gray-200 tracking-tighter leading-none">VIP4</span>
-               <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Upgrade</span>
+               <div className="flex items-center gap-2">
+                  <div className="bg-white rounded-full p-1.5 shadow-md">
+                    <Wallet className="w-4 h-4 text-[#4285F4]" />
+                  </div>
+                  <span className="text-3xl font-black text-white leading-none">0.00</span>
+               </div>
+               <span className="text-[10px] text-white/80 font-black uppercase tracking-widest mt-1 ml-1">Income</span>
              </div>
-             <div className="absolute right-[-8px] bottom-[-8px] opacity-20 transition-transform group-hover:scale-110">
-                <Crown className="w-16 h-16 text-white rotate-12" />
+             <div className="absolute right-[-8px] bottom-[-8px] opacity-10 transition-transform group-hover:scale-110">
+                <CircleDollarSign className="w-16 h-16 text-white rotate-12" />
              </div>
           </div>
         </div>
