@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -7,7 +6,7 @@ import { useFirestore, useUser, useCollection } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Heart, Gamepad2, Search, ShoppingBag, User as UserIcon, CheckCircle2 } from "lucide-react"
+import { Heart, Gamepad2, Search, ShoppingBag, User as UserIcon } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -115,29 +114,6 @@ export default function HomePage() {
               <p className="text-white/80 text-[10px] font-bold">Have fun</p>
             </div>
           </div>
-        </div>
-
-        {/* Notification Banner */}
-        <div className="bg-gradient-to-r from-[#70E1FF]/40 via-[#A88CFF]/40 to-[#FF9EE6]/40 rounded-2xl p-3 flex items-center justify-between shadow-sm border border-white/40">
-           <div className="flex items-center gap-2 overflow-hidden">
-             <span className="text-[10px] font-black text-[#5C5C5C] shrink-0">16:22</span>
-             <div className="flex items-center gap-1 overflow-hidden">
-                <span className="text-[10px] font-black text-[#FFB800] truncate">adrian kaaya</span>
-                <span className="text-[10px] text-[#5C5C5C]">to</span>
-                <span className="text-[10px] font-black text-[#FF4D94] truncate">🌹 RISSY 🌺</span>
-             </div>
-           </div>
-           <button className="bg-[#D4FF00] rounded-full px-3 py-1 text-[10px] font-black text-black shadow-sm active:scale-95 transition-all shrink-0">
-             View TV wall
-           </button>
-        </div>
-
-        {/* Wishlist Status Sub-banner */}
-        <div className="px-1 flex items-center gap-2">
-           <p className="text-[10px] font-bold text-gray-400">
-             Completed my wish list <span className="text-black font-black italic">Antique Telephonex5</span>
-           </p>
-           <span className="text-[10px] font-bold text-gray-300 ml-auto">Locked 10s</span>
         </div>
 
         {/* Tab Navigation */}
