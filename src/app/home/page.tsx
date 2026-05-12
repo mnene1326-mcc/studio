@@ -78,7 +78,7 @@ export default function HomePage() {
       <main className="px-4 pt-4 space-y-4">
         {/* Top Feature Cards - These will scroll away */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-24 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
+          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
               <div className="bg-white/30 p-1 rounded-2xl backdrop-blur-sm">
                  <div className="relative">
@@ -93,7 +93,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-24 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
+          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
               <div className="bg-white/30 p-1 rounded-2xl backdrop-blur-sm">
                 <Gamepad2 className="w-5 h-5 text-black" />
@@ -200,7 +200,7 @@ export default function HomePage() {
                       </span>
                     </div>
                     
-                    <div className="bg-[#D4FF00] rounded-md px-1.5 py-[1px] shadow-sm">
+                    <div className="bg-[#D4FF00] rounded-md px-1.5 py-0 shadow-sm">
                       <span className="text-[8px] text-black font-black leading-none truncate uppercase tracking-tighter">
                         {user.country || "Kenya"}
                       </span>

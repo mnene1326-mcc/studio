@@ -51,7 +51,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   const handleCopyId = () => {
     if (profile?.matchFlowId) {
-      navigator.clipboard.wordText(profile.matchFlowId)
+      navigator.clipboard.writeText(profile.matchFlowId)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
