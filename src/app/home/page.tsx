@@ -144,18 +144,14 @@ export default function HomePage() {
                   </div>
                   
                   <div className="flex flex-wrap gap-1.5">
-                    <div className="bg-[#FF4D94] rounded-lg px-2.5 py-1 flex items-center gap-1 shadow-sm border border-white/10">
-                      <span className="text-[10px] text-white font-black">
+                    <div className="bg-[#FF4D94] rounded-lg px-2 py-0.5 flex items-center gap-1 shadow-sm border border-white/10">
+                      <span className="text-[10px] text-white font-black leading-none">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    <div className="bg-[#FF3B30] rounded-lg px-2.5 py-1 shadow-sm border border-white/10">
-                      <span className="text-[10px] text-white font-black">1.2km</span>
-                    </div>
-
-                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-2.5 py-1 shadow-sm border border-white/10">
-                      <span className="text-[10px] text-white font-black truncate max-w-[60px]">
+                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm border border-white/10">
+                      <span className="text-[10px] text-white font-black truncate max-w-[80px] leading-none">
                         {user.interests?.split(',')[0] || "Gemini"}
                       </span>
                     </div>
