@@ -82,43 +82,39 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
       <main className="px-4 pt-4 space-y-4">
-        {/* Top Feature Cards */}
+        {/* Top Feature Cards - These will scroll away */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-5 flex flex-col justify-between h-36 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
+          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-sm">
+              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
                  <div className="relative">
-                    <Heart className="w-8 h-8 text-black fill-current" />
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#4285F4] rounded-full border-2 border-white" />
+                    <Heart className="w-7 h-7 text-black fill-current" />
+                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4285F4] rounded-full border-2 border-white" />
                  </div>
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-white font-black text-xl leading-none">Voice<br />Chat</h3>
+              <h3 className="text-white font-black text-lg leading-none">Voice<br />Chat</h3>
               <p className="text-white/80 text-[10px] font-bold">Voice chat now</p>
-            </div>
-            <div className="absolute top-2 right-2 flex gap-1">
-               <div className="w-1.5 h-1.5 bg-[#4CAF50] rounded-full" />
-               <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-5 flex flex-col justify-between h-36 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
+          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-sm">
-                <Gamepad2 className="w-8 h-8 text-black" />
+              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
+                <Gamepad2 className="w-7 h-7 text-black" />
               </div>
               <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-white font-black text-xl leading-none">Game<br />Center</h3>
+              <h3 className="text-white font-black text-lg leading-none">Game<br />Center</h3>
               <p className="text-white/80 text-[10px] font-bold">Have fun</p>
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center justify-between pt-2">
+        {/* Tab Navigation - Sticky at top */}
+        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-4 px-4 py-3 flex items-center justify-between border-b border-transparent">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setActiveTab('recommend')}
@@ -129,7 +125,7 @@ export default function HomePage() {
             >
               recommend
               {activeTab === 'recommend' && (
-                <div className="absolute -bottom-1 left-0 w-full h-1 overflow-hidden">
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
                    <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
                 </div>
               )}
@@ -143,7 +139,7 @@ export default function HomePage() {
             >
               nearby
               {activeTab === 'nearby' && (
-                <div className="absolute -bottom-1 left-0 w-full h-1 overflow-hidden">
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
                    <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
                 </div>
               )}
