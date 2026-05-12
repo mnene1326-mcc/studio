@@ -75,6 +75,9 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
+      {/* Top Background Fill for Red Header */}
+      <div className="bg-[#FF3B30] h-6 w-full fixed top-0 z-50 md:hidden" />
+      
       <main className="px-4 pt-4 space-y-4">
         {/* Top Feature Cards - These will scroll away */}
         <div className="grid grid-cols-2 gap-3">
@@ -107,44 +110,44 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tab Navigation - Sticky at top */}
-        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-4 px-4 py-3 flex items-center justify-between border-b border-transparent">
-          <div className="flex items-center gap-4">
+        {/* Tab Navigation - Sticky at top with Red Background and No Curves */}
+        <div className="sticky top-0 z-40 bg-[#FF3B30] -mx-4 px-4 py-4 flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-6">
             <button 
               onClick={() => setActiveTab('Recommend')}
               className={cn(
-                "relative text-sm font-black transition-all",
-                activeTab === 'Recommend' ? "text-black scale-105" : "text-gray-400"
+                "relative text-base font-black transition-all",
+                activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
               )}
             >
               Recommend
               {activeTab === 'Recommend' && (
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
-                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
+                <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
+                   <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
                 </div>
               )}
             </button>
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
-                "relative text-sm font-black transition-all",
-                activeTab === 'Nearby' ? "text-black" : "text-gray-400"
+                "relative text-base font-black transition-all",
+                activeTab === 'Nearby' ? "text-white" : "text-white/60"
               )}
             >
               Nearby
               {activeTab === 'Nearby' && (
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
-                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
+                <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
+                   <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
                 </div>
               )}
             </button>
           </div>
           <div className="flex items-center gap-3">
              <div className="relative">
-                <ShoppingBag className="w-6 h-6 text-black" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                <ShoppingBag className="w-6 h-6 text-white" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#D4FF00] rounded-full border-2 border-[#FF3B30]" />
              </div>
-             <Search className="w-6 h-6 text-black" />
+             <Search className="w-6 h-6 text-white" />
           </div>
         </div>
 
@@ -152,7 +155,7 @@ export default function HomePage() {
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3/3.8] rounded-[2rem] bg-muted animate-pulse" />
+              <div key={`skeleton-${i}`} className="aspect-[3/3.8] rounded-[2rem] bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -163,7 +166,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid} 
+                key={user.uid || user.id} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
