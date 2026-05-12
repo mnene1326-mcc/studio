@@ -1,9 +1,9 @@
 
 "use client"
 
-import Link from "next/link"
+import Link from "link"
 import { usePathname } from "next/navigation"
-import { Home, Globe, MessageCircle, User } from "lucide-react"
+import { Home, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function BottomNav() {
@@ -11,7 +11,6 @@ export function BottomNav() {
 
   const navItems = [
     { label: "Home", icon: Home, href: "/home" },
-    { label: "Moment", icon: Globe, href: "/moments" },
     { label: "Chat", icon: MessageCircle, href: "/chats" },
     { label: "Me", icon: User, href: "/me" },
   ]
@@ -43,9 +42,9 @@ export function BottomNav() {
               {item.label}
             </span>
 
-            {/* Notification Badge Example for Chat */}
+            {/* Notification Badge for Chat */}
             {item.label === "Chat" && (
-              <div className="absolute top-1 right-[20%] bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 border-2 border-white">
+              <div className="absolute top-1 right-[25%] bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 border-2 border-white">
                 99+
               </div>
             )}
