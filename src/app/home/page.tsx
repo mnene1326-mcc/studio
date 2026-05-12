@@ -75,12 +75,12 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Top Section with continuous Red Background */}
+      {/* Unified Red Header Section */}
       <div className="bg-[#FF3B30]">
-        {/* Safe area fill for status bar */}
-        <div className="h-safe-top w-full pt-8" />
+        {/* Tightened Top Space */}
+        <div className="h-6" />
         
-        <div className="px-4 py-4 space-y-4">
+        <div className="px-4 pb-3">
           {/* Top Feature Cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
@@ -111,46 +111,46 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Tab Navigation - Sticky at top with Red Background and No Curves */}
-          <div className="sticky top-0 z-40 bg-[#FF3B30] -mx-4 px-4 py-2 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-6">
-              <button 
-                onClick={() => setActiveTab('Recommend')}
-                className={cn(
-                  "relative text-base font-black transition-all",
-                  activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
-                )}
-              >
-                Recommend
-                {activeTab === 'Recommend' && (
-                  <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
-                     <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
-                  </div>
-                )}
-              </button>
-              <button 
-                onClick={() => setActiveTab('Nearby')}
-                className={cn(
-                  "relative text-base font-black transition-all",
-                  activeTab === 'Nearby' ? "text-white" : "text-white/60"
-                )}
-              >
-                Nearby
-                {activeTab === 'Nearby' && (
-                  <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
-                     <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
-                  </div>
-                )}
-              </button>
-            </div>
-            <div className="flex items-center gap-3">
-               <div className="relative">
-                  <ShoppingBag className="w-6 h-6 text-white" />
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#D4FF00] rounded-full border-2 border-[#FF3B30]" />
-               </div>
-               <Search className="w-6 h-6 text-white" />
-            </div>
+        {/* Tab Navigation - Sticky and seamless with the red block */}
+        <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-3 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setActiveTab('Recommend')}
+              className={cn(
+                "relative text-base font-black transition-all",
+                activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
+              )}
+            >
+              Recommend
+              {activeTab === 'Recommend' && (
+                <div className="absolute -bottom-2.5 left-0 w-full h-1.5 overflow-hidden">
+                   <div className="w-full h-3 bg-[#D4FF00] rounded-full" />
+                </div>
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveTab('Nearby')}
+              className={cn(
+                "relative text-base font-black transition-all",
+                activeTab === 'Nearby' ? "text-white" : "text-white/60"
+              )}
+            >
+              Nearby
+              {activeTab === 'Nearby' && (
+                <div className="absolute -bottom-2.5 left-0 w-full h-1.5 overflow-hidden">
+                   <div className="w-full h-3 bg-[#D4FF00] rounded-full" />
+                </div>
+              )}
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+             <div className="relative">
+                <ShoppingBag className="w-6 h-6 text-white" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#D4FF00] rounded-full border-2 border-[#FF3B30]" />
+             </div>
+             <Search className="w-6 h-6 text-white" />
           </div>
         </div>
       </div>
