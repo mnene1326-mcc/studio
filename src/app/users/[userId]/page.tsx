@@ -58,7 +58,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white">
-        <div className="animate-pulse font-headline text-primary text-2xl italic">MatchFlow...</div>
+        <div className="animate-pulse font-logo text-primary text-2xl italic">MatchFlow...</div>
       </div>
     )
   }
@@ -107,8 +107,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="relative -mt-8 bg-white rounded-t-[2.5rem] px-6 pt-8 space-y-8 min-h-[50vh]">
+      {/* Content Section - Straight edges (no curves) */}
+      <div className="relative -mt-8 bg-white px-6 pt-8 space-y-8 min-h-[50vh]">
         {/* Name & ID Header */}
         <div className="flex justify-between items-start">
           <div className="space-y-3">
