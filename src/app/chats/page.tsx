@@ -11,7 +11,7 @@ import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MessageSquare, Send, ChevronLeft, ShoppingBag, User as UserIcon, Gamepad2 } from "lucide-react"
+import { MessageSquare, Send, ChevronLeft, ShoppingBag, User as UserIcon, Gamepad2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -100,6 +100,7 @@ function DraggableGameButton() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
+    // Start position: bottom right area
     setPos({ x: window.innerWidth - 70, y: window.innerHeight - 180 })
   }, [])
 
@@ -118,6 +119,7 @@ function DraggableGameButton() {
     const newX = e.clientX - dragOffset.x
     const newY = e.clientY - dragOffset.y
     
+    // Boundary checks (stay within screen)
     const margin = 20
     const safeX = Math.max(margin, Math.min(newX, window.innerWidth - 60))
     const safeY = Math.max(margin, Math.min(newY, window.innerHeight - 100))
@@ -160,6 +162,7 @@ function ChatsContent() {
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
+  const [isInitializingChat, setIsInitializingChat] = useState(false)
 
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
@@ -180,7 +183,7 @@ function ChatsContent() {
   }, [userChatsRaw])
 
   const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
-  const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
+  const { data: chatPartner, loading: partnerLoading } = useDoc<UserProfile>(partnerRef)
 
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) {
@@ -190,6 +193,7 @@ function ChatsContent() {
 
     let isMounted = true
     const findOrCreateChat = async () => {
+      setIsInitializingChat(true)
       try {
         const chatsRef = collection(db, "chats")
         const chatsSnap = await getDocs(query(chatsRef, where("participants", "array-contains", currentUser.uid)))
@@ -216,6 +220,8 @@ function ChatsContent() {
       } catch (err) {
         if (!isMounted) return
         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'chats', operation: 'list' }))
+      } finally {
+        if (isMounted) setIsInitializingChat(false)
       }
     }
     findOrCreateChat()
@@ -227,7 +233,7 @@ function ChatsContent() {
     return query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(50))
   }, [db, chatId])
 
-  const { data: messages } = useCollection<Message>(messagesQuery)
+  const { data: messages, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const handleSendMessage = (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid) return
@@ -291,8 +297,6 @@ function ChatsContent() {
     )
   }
 
-  if (!chatPartner) return <div className="p-16 text-center animate-pulse font-black text-xl text-[#FF3B30]">Searching...</div>
-
   return (
     <div className="flex-1 flex flex-col h-screen bg-gray-50 relative overflow-hidden">
       <header className="bg-white border-b p-3 flex items-center gap-2 shadow-sm pt-8">
@@ -300,32 +304,48 @@ function ChatsContent() {
           <ChevronLeft className="w-6 h-6" />
         </Button>
         <Avatar className="w-10 h-10 border border-[#FF3B30]">
-          <AvatarImage src={chatPartner.photoURL} />
-          <AvatarFallback className="font-black text-xs">{chatPartner.name?.[0] || '?'}</AvatarFallback>
+          <AvatarImage src={chatPartner?.photoURL} />
+          <AvatarFallback className="font-black text-xs">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h3 className="font-black text-base leading-tight">{chatPartner.name}</h3>
-          <p className="text-[8px] text-green-500 font-bold">● Online</p>
+          {partnerLoading ? (
+            <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+          ) : (
+            <>
+              <h3 className="font-black text-base leading-tight">{chatPartner?.name || 'Loading...'}</h3>
+              <p className="text-[8px] text-green-500 font-bold">● Online</p>
+            </>
+          )}
         </div>
       </header>
 
       <ScrollArea className="flex-1 p-3 bg-white/50">
         <div className="space-y-3 pb-4">
-          {messages.map((msg) => (
-            <div key={msg.id} className={cn("flex", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
-              <div className={cn(
-                "max-w-[80%] p-3 rounded-[1.5rem] text-xs font-black shadow-sm",
-                msg.senderId === currentUser.uid 
-                  ? 'bg-[#FF3B30] text-white rounded-br-none' 
-                  : 'bg-white text-black border border-gray-100 rounded-bl-none'
-              )}>
-                {msg.text}
-                <div className="text-[8px] mt-1 opacity-60 text-right italic font-bold">
-                  {msg.timestamp?.toDate ? format(msg.timestamp.toDate(), "HH:mm") : ""}
+          {isInitializingChat || (messagesLoading && messages.length === 0) ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-6 h-6 text-[#FF3B30] animate-spin" />
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-10 opacity-30 italic font-black text-xs">
+              Start the conversation...
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className={cn("flex", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
+                <div className={cn(
+                  "max-w-[80%] p-3 rounded-[1.5rem] text-xs font-black shadow-sm",
+                  msg.senderId === currentUser.uid 
+                    ? 'bg-[#FF3B30] text-white rounded-br-none' 
+                    : 'bg-white text-black border border-gray-100 rounded-bl-none'
+                )}>
+                  {msg.text}
+                  <div className="text-[8px] mt-1 opacity-60 text-right italic font-bold">
+                    {msg.timestamp?.toDate ? format(msg.timestamp.toDate(), "HH:mm") : ""}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </ScrollArea>
 
@@ -340,7 +360,7 @@ function ChatsContent() {
         <Button 
           size="icon" 
           className="rounded-full w-10 h-10 bg-[#FF3B30] hover:bg-red-600 text-white shrink-0" 
-          disabled={!newMessage.trim()}
+          disabled={!newMessage.trim() || !chatId}
           onClick={() => handleSendMessage(newMessage)}
         >
           <Send className="w-5 h-5" />
@@ -352,7 +372,7 @@ function ChatsContent() {
 
 export default function ChatsPage() {
   return (
-    <Suspense fallback={<div className="p-16 text-center font-black text-xl text-[#FF3B30]">Loading...</div>}>
+    <Suspense fallback={<div className="p-16 text-center font-black text-xl text-[#FF3B30] animate-pulse">MatchFlow...</div>}>
       <ChatsContent />
     </Suspense>
   )
