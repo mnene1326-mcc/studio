@@ -68,14 +68,14 @@ export default function HomePage() {
   // Deterministic distance to avoid hydration mismatch
   const getDistance = (uid: string) => {
     if (!uid) return "13.6km"
-    const seed = uid.charCodeAt(0) + (uid.charCodeAt(uid.length - 1) || 0)
+    const seed = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return seed % 2 === 0 ? ">500km" : "13.6km"
   }
 
   if (!isMounted) return null
 
   return (
-    <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
+    <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div 
