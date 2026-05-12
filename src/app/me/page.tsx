@@ -112,7 +112,7 @@ export default function MePage() {
 
           <div className="relative">
             <div className="absolute -inset-1 bg-gradient-to-br from-[#FF3B30] to-orange-500 rounded-full blur-sm opacity-50"></div>
-            <div className="relative w-20 h-20 rounded-full border-4 border-white shadow-xl overflow-hidden bg-muted">
+            <div className="relative w-20 h-20 rounded-full shadow-xl overflow-hidden bg-muted">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
                 alt={profile.name} 
@@ -147,7 +147,6 @@ export default function MePage() {
             <span className="text-[10px] text-white/90 font-black uppercase tracking-widest ml-1">My Coins</span>
           </div>
           
-          {/* Replaced VIP4 with Income Button Card */}
           <div className="bg-gradient-to-br from-[#4285F4] to-[#2B65C5] rounded-2xl p-4 flex items-center justify-between shadow-lg h-24 relative overflow-hidden group active:scale-95 transition-all">
              <div className="z-10 flex flex-col">
                <div className="flex items-center gap-2">
