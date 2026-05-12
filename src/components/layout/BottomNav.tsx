@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Compass, MessageCircle, User } from "lucide-react"
+import { Home, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function BottomNav() {
@@ -11,7 +11,6 @@ export function BottomNav() {
 
   const navItems = [
     { label: "Home", icon: Home, href: "/home" },
-    { label: "Moment", icon: Compass, href: "/moment" },
     { label: "Chat", icon: MessageCircle, href: "/chats" },
     { label: "Me", icon: User, href: "/me" },
   ]
