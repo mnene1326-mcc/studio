@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useAuth, useFirestore } from "@/firebase"
@@ -31,7 +32,7 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     try {
       await signOut(auth)
-      router.push("/login")
+      router.push("/")
     } catch (error) {
       // Errors handled centrally if needed
     }
@@ -43,7 +44,7 @@ export default function SettingsPage() {
 
     try {
       const uid = user.uid
-      const userRef = doc(db, "users", uid)
+      const userRef = doc(db, uid)
       
       // Non-blocking delete with centralized error handling
       deleteDoc(userRef)
@@ -62,7 +63,7 @@ export default function SettingsPage() {
         title: "Account deleted",
         description: "Your account and data have been removed.",
       })
-      router.push("/register")
+      router.push("/")
     } catch (error: any) {
       toast({
         variant: "destructive",
