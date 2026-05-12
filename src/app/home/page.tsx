@@ -66,18 +66,6 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-6">
             <button 
-              onClick={() => setActiveTab('nearby')}
-              className={cn(
-                "relative text-lg font-black transition-all",
-                activeTab === 'nearby' ? "text-black" : "text-gray-400"
-              )}
-            >
-              Nearby
-              {activeTab === 'nearby' && (
-                <div className="absolute -bottom-1.5 left-0 w-5 h-1 bg-[#FF3B30] rounded-full" />
-              )}
-            </button>
-            <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
                 "relative text-lg font-black transition-all",
@@ -86,6 +74,18 @@ export default function HomePage() {
             >
               Recommend
               {activeTab === 'recommend' && (
+                <div className="absolute -bottom-1.5 left-0 w-5 h-1 bg-[#FF3B30] rounded-full" />
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveTab('nearby')}
+              className={cn(
+                "relative text-lg font-black transition-all",
+                activeTab === 'nearby' ? "text-black" : "text-gray-400"
+              )}
+            >
+              Nearby
+              {activeTab === 'nearby' && (
                 <div className="absolute -bottom-1.5 left-0 w-5 h-1 bg-[#FF3B30] rounded-full" />
               )}
             </button>
@@ -125,7 +125,6 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* Chat Button Top Right */}
                 <div 
                   className="absolute top-3 right-3 bg-[#FF3B30] rounded-2xl px-4 py-1.5 shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border-2 border-white/20"
                   onClick={(e) => handleChatClick(e, user.uid)}
@@ -133,7 +132,6 @@ export default function HomePage() {
                   <span className="text-white font-black text-[11px] italic tracking-tight">Chat</span>
                 </div>
 
-                {/* Bottom Details Overlay */}
                 <div className="absolute inset-x-0 bottom-0 p-3 pt-12 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                   <div className="flex items-center gap-1.5 mb-2">
                     <span className="text-white font-black text-sm truncate drop-shadow-lg">{user.name}</span>
@@ -145,19 +143,16 @@ export default function HomePage() {
                   </div>
                   
                   <div className="flex flex-wrap gap-1.5">
-                    {/* Pink Tag: Gender/Age */}
                     <div className="bg-[#FF4D94] rounded-md px-2 py-0.5 flex items-center gap-1 shadow-sm">
                       <span className="text-[9px] text-white font-black">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    {/* Red Tag: Distance (Simulated) */}
                     <div className="bg-[#FF3B30] rounded-md px-2 py-0.5 shadow-sm">
                       <span className="text-[9px] text-white font-black">1.2km</span>
                     </div>
 
-                    {/* Black Tag: Info/Attribute */}
                     <div className="bg-black/60 backdrop-blur-sm rounded-md px-2 py-0.5 shadow-sm">
                       <span className="text-[9px] text-white font-black truncate max-w-[50px]">
                         {user.interests?.split(',')[0] || "Gemini"}

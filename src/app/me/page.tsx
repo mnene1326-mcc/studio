@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -23,7 +24,9 @@ import {
   Headphones, 
   MessageSquareQuote, 
   Gamepad2,
-  Crown
+  Crown,
+  FileText,
+  Target
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -162,7 +165,25 @@ export default function MePage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-1 mt-4">
+        <div className="grid grid-cols-4 gap-3 py-4">
+           {[
+             { label: "Task center", icon: Target, color: "bg-red-500" },
+             { label: "Secret note", icon: FileText, color: "bg-orange-500" },
+             { label: "Income", icon: CircleDollarSign, color: "bg-red-400" },
+             { label: "Store", icon: Store, color: "bg-red-600" },
+             { label: "Aristocracy", icon: Hexagon, color: "bg-red-700" },
+             { label: "Tasks", icon: ClipboardList, color: "bg-pink-500" }
+           ].map((item, i) => (
+             <div key={i} className="flex flex-col items-center gap-1.5">
+               <div className={cn("p-1.5 rounded-lg shadow-sm", item.color)}>
+                 <item.icon className="w-5 h-5 text-white" />
+               </div>
+               <span className="text-[9px] font-bold text-gray-600 text-center leading-tight">{item.label}</span>
+             </div>
+           ))}
+        </div>
+
+        <div className="flex items-center justify-between px-1 mt-2">
           <h3 className="text-sm font-bold text-black">Recommended Games</h3>
           <ChevronRight className="w-3 h-3 text-gray-400" />
         </div>
@@ -187,23 +208,7 @@ export default function MePage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-4 gap-3 py-4">
-           {[
-             { label: "Tasks", icon: ClipboardList, color: "bg-red-500" },
-             { label: "Income", icon: CircleDollarSign, color: "bg-red-400" },
-             { label: "Store", icon: Store, color: "bg-red-600" },
-             { label: "Aristocracy", icon: Hexagon, color: "bg-red-700" }
-           ].map((item, i) => (
-             <div key={i} className="flex flex-col items-center gap-1.5">
-               <div className={cn("p-1.5 rounded-lg shadow-sm", item.color)}>
-                 <item.icon className="w-5 h-5 text-white" />
-               </div>
-               <span className="text-[9px] font-bold text-gray-600">{item.label}</span>
-             </div>
-           ))}
-        </div>
-
-        <div className="space-y-3 pt-1">
+        <div className="space-y-3 pt-4">
           <h3 className="text-sm font-bold text-black px-1">Other</h3>
           <div className="grid grid-cols-4 gap-y-4">
             {[
