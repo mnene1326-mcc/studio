@@ -92,7 +92,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-lg font-black transition-all",
+                "relative text-base font-black transition-all",
                 activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -104,7 +104,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-lg font-black transition-all",
+                "relative text-base font-black transition-all",
                 activeTab === 'nearby' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -121,7 +121,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-4 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-3 py-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
@@ -169,14 +169,14 @@ export default function HomePage() {
                   </div>
                   
                   <div className="flex flex-wrap gap-1">
-                    <div className="bg-[#FF4D94] rounded-lg px-1.5 py-0.5 flex items-center gap-1 shadow-sm border border-white/10">
-                      <span className="text-[9px] text-white font-black leading-none">
+                    <div className="bg-[#FF4D94] rounded-lg px-1 py-0.5 flex items-center gap-1 shadow-sm border border-white/10">
+                      <span className="text-[8px] text-white font-black leading-none">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-1.5 py-0.5 shadow-sm border border-white/10">
-                      <span className="text-[9px] text-white font-black truncate max-w-[60px] leading-none">
+                    <div className="bg-black/40 backdrop-blur-md rounded-lg px-1 py-0.5 shadow-sm border border-white/10">
+                      <span className="text-[8px] text-white font-black truncate max-w-[50px] leading-none">
                         {user.interests?.split(',')[0] || "Match"}
                       </span>
                     </div>
