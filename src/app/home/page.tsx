@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
-import { Bell, FileText, Target, User as UserIcon } from "lucide-react"
+import { FileText, Target, User as UserIcon } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -76,17 +76,9 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
-      {/* Sticky Top Bar (Notification) */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-black/5">
-        <div className="px-6 py-4 lg:max-w-4xl lg:mx-auto flex items-center justify-end">
-          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full bg-gray-50 relative group">
-            <Bell className="w-4 h-4 text-black group-hover:rotate-12 transition-transform" />
-            <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border-2 border-white shadow-sm" />
-          </Button>
-        </div>
-      </header>
+      {/* Removed the sticky header with notification button */}
 
-      <main className="px-6 lg:max-w-4xl lg:mx-auto">
+      <main className="px-6 lg:max-w-4xl lg:mx-auto pt-4">
         {/* Action Cards */}
         <div className="grid grid-cols-2 gap-2 mt-4 mb-6">
           <div 
