@@ -98,7 +98,7 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            {/* Edit Profile Icon - Changed to Pencil */}
+            {/* Edit Profile Icon - Pencil */}
             <button className="absolute bottom-1 right-1 bg-white p-2.5 rounded-full border border-gray-100 shadow-lg active:scale-90 transition-transform">
               <Pencil className="w-5 h-5 text-[#FF3B30]" />
             </button>
@@ -125,7 +125,7 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Recharge & Income Grid - Positioned to bridge red/white bg */}
+          {/* Recharge & Income Grid */}
           <div className="grid grid-cols-2 gap-4">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 border border-white/20 rounded-3xl shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
@@ -193,11 +193,6 @@ export default function MePage() {
                 </Link>
               </Button>
             </div>
-          </div>
-
-          {/* Secondary Info */}
-          <div className="text-center pb-8">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">MatchFlow v1.0 Premium</p>
           </div>
         </main>
       </div>
