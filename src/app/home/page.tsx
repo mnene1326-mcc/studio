@@ -77,7 +77,6 @@ export default function HomePage() {
     <div className="flex-1 pb-24 bg-white min-h-screen">
       {/* Unified Red Header Section */}
       <div className="bg-[#FF3B30]">
-        {/* Tightened Top Space */}
         <div className="h-6" />
         
         <div className="px-4 pb-3">
@@ -124,25 +123,15 @@ export default function HomePage() {
               )}
             >
               Recommend
-              {activeTab === 'Recommend' && (
-                <div className="absolute -bottom-2.5 left-0 w-full h-1.5 overflow-hidden">
-                   <div className="w-full h-3 bg-[#D4FF00] rounded-full" />
-                </div>
-              )}
             </button>
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
                 "relative text-base font-black transition-all",
-                activeTab === 'Nearby' ? "text-white" : "text-white/60"
+                activeTab === 'Nearby' ? "text-white scale-105" : "text-white/60"
               )}
             >
               Nearby
-              {activeTab === 'Nearby' && (
-                <div className="absolute -bottom-2.5 left-0 w-full h-1.5 overflow-hidden">
-                   <div className="w-full h-3 bg-[#D4FF00] rounded-full" />
-                </div>
-              )}
             </button>
           </div>
           <div className="flex items-center gap-3">
