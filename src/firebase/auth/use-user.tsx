@@ -15,17 +15,11 @@ let hasInitialized = false;
 export function useUser() {
   const auth = useAuth();
   
-  // Always start with loading: true on the server and first client pass to prevent hydration mismatch
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Use cached data if available for instant UI response
+  const [user, setUser] = useState<User | null>(cachedUser);
+  const [loading, setLoading] = useState(!hasInitialized);
 
   useEffect(() => {
-    // If we have cached data on the client, use it immediately after mount
-    if (hasInitialized) {
-      setUser(cachedUser);
-      setLoading(false);
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       cachedUser = u;
       hasInitialized = true;

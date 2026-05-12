@@ -10,37 +10,37 @@ import { Mail, Zap, Loader2 } from "lucide-react"
 import Image from "next/image"
 
 export default function WelcomePage() {
-  const [isMounted, setIsMounted] = useState(false)
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const auth = useAuth()
   const router = useRouter()
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const [showLanding, setShowLanding] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (isMounted && !authLoading && user && !isRedirecting) {
-      const checkOnboarding = async () => {
+    if (!authLoading) {
+      if (user) {
         setIsRedirecting(true)
-        try {
-          const userRef = doc(db, "users", user.uid)
-          const userSnap = await getDoc(userRef)
-          
-          if (userSnap.exists() && userSnap.data().onboardingComplete) {
-            router.push("/home")
-          } else {
-            router.push("/onboarding")
+        const checkOnboarding = async () => {
+          try {
+            const userRef = doc(db, "users", user.uid)
+            const userSnap = await getDoc(userRef)
+            if (userSnap.exists() && userSnap.data().onboardingComplete) {
+              router.push("/home")
+            } else {
+              router.push("/onboarding")
+            }
+          } catch (error) {
+            setIsRedirecting(false)
+            setShowLanding(true)
           }
-        } catch (error) {
-          setIsRedirecting(false)
         }
+        checkOnboarding()
+      } else {
+        setShowLanding(true)
       }
-      checkOnboarding()
     }
-  }, [isMounted, authLoading, user, db, router, isRedirecting])
+  }, [authLoading, user, db, router])
 
   const handleFastLogin = async () => {
     setIsRedirecting(true)
@@ -51,8 +51,8 @@ export default function WelcomePage() {
     }
   }
 
-  // To prevent hydration mismatch, render a consistent shell until mounted
-  if (!isMounted || authLoading || isRedirecting) {
+  // Consistent initial render for both server and client to avoid hydration mismatch
+  if (!showLanding || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
         <div className="animate-in fade-in zoom-in duration-700 ease-out flex flex-col items-center gap-6">
@@ -110,12 +110,8 @@ export default function WelcomePage() {
         </div>
 
         <div className="pt-12 space-y-2 opacity-60">
-          <p className="text-[10px] font-body uppercase tracking-[0.2em] font-bold">
-            The Premier Experience
-          </p>
-          <p className="text-[10px] font-body uppercase tracking-[0.1em]">
-            Exclusively for East Africa
-          </p>
+          <p className="text-[10px] font-body uppercase tracking-[0.2em] font-bold">The Premier Experience</p>
+          <p className="text-[10px] font-body uppercase tracking-[0.1em]">Exclusively for East Africa</p>
         </div>
       </div>
     </div>
