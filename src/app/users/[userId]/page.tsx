@@ -99,8 +99,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           </Button>
         </div>
 
-        {/* Progress Dots */}
-        <div className="absolute bottom-28 inset-x-0 flex justify-center gap-1">
+        {/* Progress Dots - Raised further to avoid being hidden by content */}
+        <div className="absolute bottom-32 inset-x-0 flex justify-center gap-1 z-10">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={cn("h-1 rounded-full transition-all", i === 1 ? "w-6 bg-white" : "w-2 bg-white/40")} />
           ))}
@@ -108,7 +108,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       </div>
 
       {/* Content Section - Straight edges (no curves) raised further */}
-      <div className="relative -mt-24 bg-white px-6 pt-8 space-y-8 min-h-[50vh]">
+      <div className="relative -mt-28 bg-white px-6 pt-8 space-y-8 min-h-[50vh] z-20">
         {/* Name & ID Header */}
         <div className="flex justify-between items-start">
           <div className="space-y-3">
@@ -121,14 +121,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             
             <div className="flex flex-wrap items-center gap-2">
               {/* Dark Green Background for Age */}
-              <span className="bg-[#006400] text-white px-3 py-1.5 rounded-md text-sm font-black uppercase tracking-wide shadow-sm">
+              <span className="bg-[#006400] text-white px-3.5 py-2 rounded-md text-base font-black uppercase tracking-wide shadow-sm">
                 ♀ {age}
               </span>
               {/* Blur Background for Country */}
-              <span className="bg-black/10 backdrop-blur-md text-gray-800 px-3 py-1.5 rounded-md text-sm font-black tracking-wide border border-black/5 shadow-sm">
+              <span className="bg-black/10 backdrop-blur-md text-gray-800 px-3.5 py-2 rounded-md text-base font-black tracking-wide border border-black/5 shadow-sm">
                 {profile.country ? profile.country.charAt(0).toUpperCase() + profile.country.slice(1) : "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-3 py-1.5 rounded-md text-sm font-black tracking-wide">13.66km</span>
+              <span className="bg-black text-[#D4FF00] px-3.5 py-2 rounded-md text-base font-black tracking-wide shadow-sm">13.66km</span>
             </div>
 
             <div 
@@ -153,7 +153,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
               <h2 className="text-2xl font-black text-black">About Me</h2>
               <div className="absolute -bottom-1 left-0 w-full h-2 bg-[#D4FF00]/40 rounded-full -rotate-1" />
             </div>
-            <span className="text-gray-400 text-sm font-bold">Honor</span>
           </div>
           <p className="text-sm font-bold text-gray-500 leading-relaxed italic">
             "{profile.interests || "I'm looking for someone special to share my time with and see where things go..."}"
