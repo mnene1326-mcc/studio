@@ -1,13 +1,21 @@
 "use client"
 
-import { useMemo, use } from "react"
+import { useMemo, use, useState } from "react"
 import { doc } from "firebase/firestore"
 import { useFirestore, useDoc } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, MapPin, Heart, Calendar, Users, MessageSquare, ShieldCheck, BadgeCheck } from "lucide-react"
+import { 
+  ChevronLeft, 
+  MapPin, 
+  MessageSquare, 
+  MoreHorizontal, 
+  Copy, 
+  ChevronRight,
+  User
+} from "lucide-react"
 import Image from "next/image"
-import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 interface UserProfile {
   uid: string
@@ -18,18 +26,20 @@ interface UserProfile {
   gender: string
   dob: string
   interests?: string
+  matchFlowId?: string
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params)
   const router = useRouter()
   const db = useFirestore()
+  const [copied, setCopied] = useState(false)
 
   const userRef = useMemo(() => doc(db, "users", userId), [db, userId])
   const { data: profile, loading } = useDoc<UserProfile>(userRef)
 
   const calculateAge = (dob: string) => {
-    if (!dob) return ""
+    if (!dob) return "20"
     const birthDate = new Date(dob)
     const today = new Date()
     let age = today.getFullYear() - birthDate.getFullYear()
@@ -38,29 +48,30 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
     return age
   }
 
+  const handleCopyId = () => {
+    if (profile?.matchFlowId) {
+      navigator.clipboard.writeText(profile.matchFlowId)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-background">
-        <div className="animate-pulse font-headline text-primary text-3xl">Curating Excellence...</div>
+      <div className="flex-1 flex flex-col items-center justify-center bg-white">
+        <div className="animate-pulse font-headline text-primary text-2xl italic">MatchFlow...</div>
       </div>
     )
   }
 
-  if (!profile) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8">
-        <div className="p-12 bg-white rounded-full shadow-2xl">
-          <Heart className="w-16 h-16 text-muted-foreground/20" />
-        </div>
-        <p className="text-xl font-headline text-muted-foreground">This profile is currently unavailable.</p>
-        <Button onClick={() => router.back()} variant="outline" className="rounded-full px-12 h-14 text-lg">Return to Search</Button>
-      </div>
-    )
-  }
+  if (!profile) return null
+
+  const age = calculateAge(profile.dob)
 
   return (
-    <div className="flex-1 bg-white flex flex-col min-h-screen pb-32">
-      <div className="relative h-[75vh] w-full lg:max-w-3xl lg:mx-auto lg:mt-8 lg:rounded-[4rem] lg:overflow-hidden lg:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.3)]">
+    <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
+      {/* Hero Section */}
+      <div className="relative h-[65vh] w-full">
         <Image
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
           alt={profile.name}
@@ -69,92 +80,138 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           data-ai-hint="person portrait"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent lg:hidden" />
         
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => router.back()} 
-          className="absolute top-8 left-8 rounded-2xl premium-blur w-12 h-12 text-black shadow-xl hover:bg-white/80 transition-all active:scale-90"
-        >
-          <ChevronLeft className="w-8 h-8" />
-        </Button>
+        {/* Top Controls */}
+        <div className="absolute top-12 inset-x-0 px-4 flex justify-between items-center z-20">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.back()} 
+            className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40"
+          >
+            <MoreHorizontal className="w-6 h-6" />
+          </Button>
+        </div>
 
-        <div className="absolute top-8 right-8 premium-blur rounded-2xl px-5 py-2.5 flex items-center gap-2 text-black shadow-xl border border-white/40">
-          <ShieldCheck className="w-5 h-5 text-[#FF3B30]" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verified Elite</span>
+        {/* Floating Thumbnails Overlay */}
+        <div className="absolute bottom-16 inset-x-0 px-4 flex gap-2 overflow-x-auto no-scrollbar pb-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="relative w-16 h-20 rounded-lg overflow-hidden border-2 border-white/50 shadow-lg shrink-0">
+               <Image 
+                src={`https://picsum.photos/seed/${profile.uid}-${i}/200/300`} 
+                alt="moment" 
+                fill 
+                className="object-cover" 
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Progress Dots */}
+        <div className="absolute bottom-10 inset-x-0 flex justify-center gap-1">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className={cn("h-1 rounded-full transition-all", i === 1 ? "w-6 bg-white" : "w-2 bg-white/40")} />
+          ))}
         </div>
       </div>
 
-      <main className="px-8 -mt-24 relative z-10 space-y-10 max-w-3xl mx-auto w-full">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h1 className="text-6xl font-black text-black leading-tight tracking-tighter">
-                {profile.name}{profile.dob ? `, ${calculateAge(profile.dob)}` : ""}
-              </h1>
-              <BadgeCheck className="w-10 h-10 text-[#FF3B30] mt-1" />
+      {/* Content Section */}
+      <div className="relative -mt-8 bg-white rounded-t-[2.5rem] px-6 pt-8 space-y-8 min-h-[50vh]">
+        {/* Name & ID Header */}
+        <div className="flex justify-between items-start">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-black text-black tracking-tight">{profile.name}💜💜</h1>
+              <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                <User className="w-3 h-3 text-black fill-current" />
+              </div>
             </div>
             
-            <div className="flex items-center gap-8 text-black/40 text-sm font-black uppercase tracking-widest">
-              <span className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#FF3B30]" /> 
-                {profile.country}
-              </span>
-              <span className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#FF3B30]" /> 
-                {profile.gender}
-              </span>
+            <div className="flex flex-wrap gap-1.5">
+              <div className="bg-[#FF4D94] rounded-md px-2 py-0.5 flex items-center gap-1 shadow-sm">
+                <span className="text-[10px] text-white font-black leading-none">♀ {age}</span>
+              </div>
+              <div className="bg-[#D4FF00] rounded-md px-2 py-0.5 flex items-center gap-1 shadow-sm">
+                <span className="text-[10px] text-black font-black leading-none">13.66km</span>
+              </div>
+              <div className="bg-black rounded-md px-2 py-0.5 flex items-center gap-1 shadow-sm border border-yellow-400/30">
+                <span className="text-[10px] text-yellow-400 font-black leading-none uppercase">{profile.country || "Kenya"}</span>
+              </div>
+            </div>
+
+            <div 
+              className="flex items-center gap-1 text-[#8B8B8B] text-xs font-bold cursor-pointer active:opacity-60"
+              onClick={handleCopyId}
+            >
+              <span>ID:{profile.matchFlowId || "null"}</span>
+              <Copy className={cn("w-3 h-3 transition-colors", copied ? "text-green-500" : "text-[#8B8B8B]")} />
             </div>
           </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <Badge variant="secondary" className="rounded-2xl px-6 py-3 bg-[#FF3B30]/5 text-[#FF3B30] border-none font-black text-xs tracking-[0.1em] uppercase shadow-sm">
-              Seeking: {profile.lookingFor}
-            </Badge>
+
+          <div className="bg-gray-100 rounded-full px-4 py-2 flex items-center gap-1.5 border border-white shadow-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-xs font-black text-gray-600">Online</span>
           </div>
         </div>
 
-        <section className="bg-white rounded-[3rem] p-10 shadow-2xl shadow-black/5 border border-black/5 space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-8 bg-[#FF3B30] rounded-full"></div>
-            <h3 className="font-black text-3xl text-black italic tracking-tighter leading-none">About Me</h3>
+        {/* About Me Section */}
+        <section className="space-y-4">
+          <div className="flex items-baseline gap-2">
+            <div className="relative">
+              <h2 className="text-2xl font-black text-black">About Me</h2>
+              <div className="absolute -bottom-1 left-0 w-full h-2 bg-[#D4FF00]/40 rounded-full -rotate-1" />
+            </div>
+            <span className="text-gray-400 text-sm font-bold">Honor</span>
+          </div>
+          <p className="text-sm font-bold text-gray-500 leading-relaxed italic">
+            "{profile.interests || "I'm looking for someone special to share my time with and see where things go..."}"
+          </p>
+        </section>
+
+        {/* Moments Section */}
+        <section className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-black text-black">Moments</h2>
+            <ChevronRight className="w-6 h-6 text-gray-300" />
           </div>
           
-          <div className="space-y-6">
-            {profile.interests ? (
-              <p className="text-xl font-body text-black/70 leading-relaxed italic border-l-4 border-red-50 pl-6">
-                "{profile.interests}"
-              </p>
-            ) : (
-              <p className="text-lg font-body text-black/30 italic">
-                This user prefers to keep their biography a mystery.
-              </p>
-            )}
-            
-            <div className="grid grid-cols-1 gap-6 pt-8 border-t border-black/5">
-              <div className="flex items-center gap-5">
-                <div className="p-4 bg-red-50 rounded-[1.5rem] shadow-inner">
-                  <Calendar className="w-6 h-6 text-[#FF3B30]" />
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-black/30 font-black">Date of Birth</p>
-                  <p className="font-headline text-xl text-black font-bold">{profile.dob || "Undisclosed"}</p>
-                </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="aspect-[4/5] relative rounded-2xl overflow-hidden shadow-md">
+                <Image 
+                  src={`https://picsum.photos/seed/moment-${profile.uid}-${i}/300/400`} 
+                  alt="moment" 
+                  fill 
+                  className="object-cover" 
+                />
               </div>
-            </div>
+            ))}
           </div>
         </section>
-      </main>
 
-      <div className="fixed bottom-10 left-8 right-8 z-50 flex justify-center">
+        {/* Bio Text Footer */}
+        <div className="pb-12">
+          <p className="text-[10px] font-bold text-gray-400 leading-relaxed">
+            Little things say everything... dm for fun and serious talks 💦🍑🍆🥰
+          </p>
+        </div>
+      </div>
+
+      {/* Fixed Bottom Action */}
+      <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-50 z-50">
         <Button 
-          className="w-full max-w-md h-20 rounded-[2.5rem] text-2xl font-black shadow-[0_20px_40px_-10px_rgba(255,59,48,0.4)] flex items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 bg-[#FF3B30] hover:bg-red-600 group"
+          className="w-full h-16 rounded-[2rem] bg-black text-[#D4FF00] hover:bg-black/90 text-xl font-black flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
-          <MessageSquare className="w-8 h-8 group-hover:rotate-12 transition-transform" />
-          Message {profile.name}
+          <MessageSquare className="w-7 h-7 fill-current" />
+          Chat
         </Button>
       </div>
     </div>
