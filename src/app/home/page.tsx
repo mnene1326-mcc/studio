@@ -67,7 +67,7 @@ export default function HomePage() {
 
   // Deterministic distance to avoid hydration mismatch
   const getDistance = (uid: string) => {
-    if (!uid || uid.length === 0) return "13.6km"
+    if (!uid) return "13.6km"
     const seed = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
     return seed % 2 === 0 ? ">500km" : "13.6km"
   }
@@ -77,30 +77,30 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
       <main className="px-4 lg:max-w-4xl lg:mx-auto pt-4">
-        {/* Action Cards */}
+        {/* Medium Action Cards */}
         <div className="grid grid-cols-2 gap-2 mt-4 mb-6">
           <div 
             onClick={() => router.push("/mystery-note")}
-            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-28"
+            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-24"
           >
             <div className="bg-white/20 p-2 rounded-xl">
-              <FileText className="w-6 h-6 text-white" />
+              <FileText className="w-5 h-5 text-white" />
             </div>
             <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
           </div>
           
           <div 
             onClick={() => router.push("/tasks")}
-            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-28"
+            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-24"
           >
             <div className="bg-white/10 p-2 rounded-xl">
-              <Target className="w-6 h-6 text-white" />
+              <Target className="w-5 h-5 text-white" />
             </div>
             <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Task<br/>Center</span>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs - Refined Typography */}
         <div className="flex items-center gap-6 mb-4 px-1">
           <button 
             onClick={() => setActiveTab('recommend')}
@@ -144,7 +144,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-1.5">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.id} 
+                key={user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3.5/4.5] group cursor-pointer shadow-xl transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
