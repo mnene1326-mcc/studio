@@ -18,6 +18,7 @@ export default function WelcomePage() {
   const router = useRouter()
   const [isRedirecting, setIsRedirecting] = useState(false)
 
+  // Ensure stable hydration by deferring state-dependent rendering
   useEffect(() => {
     setIsMounted(true)
   }, [])

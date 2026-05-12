@@ -5,19 +5,28 @@ import { useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from '../provider';
 
-// Module-level variable to persist user across tab switches/navigation
+// Client-only cache to prevent flickering during tab navigation
+// We use a global variable that is only initialized on the client side
 let cachedUser: User | null = null;
 let hasInitialized = false;
 
 /**
  * A hook that returns the current Firebase user and loading state.
- * Uses a persistent cache to prevent flickering during tab transitions.
+ * Uses a persistent client-side cache to prevent flickering during transitions.
  */
 export function useUser() {
   const auth = useAuth();
   
-  const [user, setUser] = useState<User | null>(cachedUser);
-  const [loading, setLoading] = useState(!hasInitialized);
+  // Initialize state from cache if available (only on client)
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') return cachedUser;
+    return null;
+  });
+  
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') return !hasInitialized;
+    return true;
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {

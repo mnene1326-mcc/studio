@@ -11,7 +11,7 @@ import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MessageSquare, Send, ChevronLeft, ShoppingBag, User as UserIcon, Gamepad2, LoaderCircle } from "lucide-react"
+import { MessageSquare, Send, ChevronLeft, ShoppingBag, User as UserIcon, Gamepad2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -311,7 +311,7 @@ function ChatsContent() {
         <div className="space-y-3 pb-4">
           {isInitializingChat || (messagesLoading && messages.length === 0) ? (
             <div className="flex justify-center p-8">
-              <LoaderCircle className="w-6 h-6 text-[#FF3B30] animate-spin" />
+              <Loader2 className="w-6 h-6 text-[#FF3B30] animate-spin" />
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-10 opacity-30 italic font-black text-xs">
