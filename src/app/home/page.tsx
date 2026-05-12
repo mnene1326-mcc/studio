@@ -90,9 +90,6 @@ export default function HomePage() {
             </button>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="w-7 h-7 rounded-full">
-              <Search className="w-4 h-4 text-black" />
-            </Button>
             <Button variant="ghost" size="icon" className="w-7 h-7 rounded-full relative">
               <Bell className="w-4 h-4 text-black" />
               <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#FF3B30] rounded-full border border-white" />

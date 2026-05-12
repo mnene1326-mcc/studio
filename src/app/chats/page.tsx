@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo } from "react"
@@ -47,9 +48,16 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
   const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   const { data: partner } = useDoc<UserProfile>(partnerRef)
 
+  // Deterministic status based on UID to avoid hydration mismatch
+  const getStatus = (uid: string) => {
+    const statuses = ["🔥 0.2°C", "💧 9.5°C", "🌸 116.4°C"]
+    const index = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % statuses.length
+    return statuses[index]
+  }
+
   if (!partner) return null
 
-  const randomStatus = ["🔥 0.2°C", "💧 9.5°C", "🌸 116.4°C"][Math.floor(Math.random() * 3)]
+  const randomStatus = getStatus(partner.uid)
 
   return (
     <div 
