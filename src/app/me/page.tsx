@@ -47,7 +47,7 @@ export default function MePage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push("/login")
+      router.push("/")
     }
   }, [user, authLoading, router])
 
@@ -56,15 +56,6 @@ export default function MePage() {
   }, [db, user])
 
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-      router.push("/")
-    } catch (error) {
-      console.error("Error signing out:", error)
-    }
-  }
 
   const handleCopyId = () => {
     if (profile?.matchFlowId) {
@@ -111,7 +102,7 @@ export default function MePage() {
               className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-opacity"
               onClick={handleCopyId}
             >
-              <p className="text-[#8B8B8B] font-bold text-xs tracking-tight">ID:{profile.matchFlowId || "Generating..."}</p>
+              <p className="text-[#8B8B8B] font-bold text-xs tracking-tight">ID:{profile.matchFlowId || "null"}</p>
               {copied ? (
                 <Check className="w-3 h-3 text-green-600" />
               ) : (

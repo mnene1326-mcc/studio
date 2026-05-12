@@ -36,7 +36,9 @@ export default function OnboardingPage() {
   const { toast } = useToast()
 
   const generateMatchFlowId = () => {
-    return Math.floor(1000000 + Math.random() * 998999999).toString()
+    const min = 1000000;
+    const max = 999999999;
+    return Math.floor(Math.random() * (max - min + 1) + min).toString();
   }
 
   const validateAge = (dateString: string) => {

@@ -24,7 +24,10 @@ export default function RegisterPage() {
   const db = useFirestore()
 
   const generateMatchFlowId = () => {
-    return Math.floor(1000000 + Math.random() * 998999999).toString()
+    // Generates a 7 to 9 digit numeric string
+    const min = 1000000; // 7 digits
+    const max = 999999999; // 9 digits
+    return Math.floor(Math.random() * (max - min + 1) + min).toString();
   }
 
   const handleRegister = async (e: React.FormEvent) => {
