@@ -67,8 +67,8 @@ export default function HomePage() {
 
   // Deterministic distance to avoid hydration mismatch
   const getDistance = (uid: string) => {
-    if (!uid) return "13.6km"
-    const seed = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    if (!uid || uid.length === 0) return "13.6km"
+    const seed = uid.charCodeAt(0) + uid.charCodeAt(uid.length - 1)
     return seed % 2 === 0 ? ">500km" : "13.6km"
   }
 
@@ -76,29 +76,8 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen">
+      {/* Sticky Top Bar (Logo + Notification) */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div 
-            onClick={() => router.push("/mystery-note")}
-            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-28"
-          >
-            <div className="bg-white/20 p-2 rounded-xl">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
-          </div>
-          
-          <div 
-            onClick={() => router.push("/tasks")}
-            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-28"
-          >
-            <div className="bg-white/10 p-2 rounded-xl">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Task<br/>Center</span>
-          </div>
-        </div>
-
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-6">
             <button 
@@ -133,7 +112,31 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-4 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-4 lg:max-w-4xl lg:mx-auto">
+        {/* Action Cards (Scrollable) */}
+        <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
+          <div 
+            onClick={() => router.push("/mystery-note")}
+            className="bg-[#FF3B30] rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-red-500/10 cursor-pointer active:scale-95 transition-all border border-white/10 h-28"
+          >
+            <div className="bg-white/20 p-2 rounded-xl">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
+          </div>
+          
+          <div 
+            onClick={() => router.push("/tasks")}
+            className="bg-black rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-black/10 cursor-pointer active:scale-95 transition-all border border-white/5 h-28"
+          >
+            <div className="bg-white/10 p-2 rounded-xl">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Task<br/>Center</span>
+          </div>
+        </div>
+
+        {/* User Grid */}
         {loading ? (
           <div className="grid grid-cols-2 gap-1.5">
             {[1, 2, 3, 4].map((i) => (
