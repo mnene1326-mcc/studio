@@ -91,12 +91,6 @@ export default function MePage() {
               <BadgeCheck className="w-5 h-5 text-[#FF3B30]" />
             </div>
             
-            <div className="flex gap-1.5 py-1">
-              <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-md px-2 py-0.5 flex items-center shadow-sm">
-                <span className="text-[8px] text-white font-black italic tracking-widest">SVIP1</span>
-              </div>
-            </div>
-
             <div 
               className="flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all hover:bg-black/5 rounded-full px-2 py-1 -ml-2"
               onClick={handleCopyId}
