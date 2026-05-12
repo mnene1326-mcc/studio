@@ -119,11 +119,11 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-sm font-black transition-all lowercase",
+                "relative text-sm font-black transition-all",
                 activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
-              recommend
+              Recommend
               {activeTab === 'recommend' && (
                 <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
                    <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
@@ -133,11 +133,11 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-sm font-black transition-all lowercase",
+                "relative text-sm font-black transition-all",
                 activeTab === 'nearby' ? "text-black" : "text-gray-400"
               )}
             >
-              nearby
+              Nearby
               {activeTab === 'nearby' && (
                 <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
                    <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
