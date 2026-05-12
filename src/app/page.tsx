@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -11,21 +10,23 @@ import { Mail, Zap } from "lucide-react"
 import Image from "next/image"
 
 export default function WelcomePage() {
-  const [hasMounted, setHasMounted] = useState(false)
-  const router = useRouter()
+  const [isMounted, setIsMounted] = useState(false)
   const { user, loading } = useUser()
   const db = useFirestore()
   const auth = useAuth()
-  const [isRedirecting, setIsRedirecting] = useState(false)
+  const router = useRouter()
+  const [redirecting, setRedirecting] = useState(false)
 
+  // Ensure hydration stability by only running client-specific logic after mount
   useEffect(() => {
-    setHasMounted(true)
+    setIsMounted(true)
   }, [])
 
+  // Handle automatic redirect for authenticated users
   useEffect(() => {
-    if (hasMounted && !loading && user) {
+    if (isMounted && !loading && user) {
+      setRedirecting(true)
       const checkOnboarding = async () => {
-        setIsRedirecting(true)
         try {
           const userRef = doc(db, "users", user.uid)
           const userSnap = await getDoc(userRef)
@@ -36,37 +37,38 @@ export default function WelcomePage() {
             router.push("/onboarding")
           }
         } catch (error) {
-          setIsRedirecting(false)
+          // If onboarding check fails, allow user to stay on login screen
+          setRedirecting(false)
         }
       }
       checkOnboarding()
     }
-  }, [user, loading, db, router, hasMounted])
+  }, [isMounted, loading, user, db, router])
 
   const handleFastLogin = async () => {
-    setIsRedirecting(true)
+    setRedirecting(true)
     try {
       await signInAnonymously(auth)
       router.push("/onboarding?fast=true")
     } catch (error) {
-      setIsRedirecting(false)
+      setRedirecting(false)
     }
   }
 
-  // To prevent hydration errors, we render a completely consistent state
+  // To prevent hydration errors, render a completely consistent state
   // until the component has mounted on the client.
-  if (!hasMounted) {
+  if (!isMounted) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
+      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
         <h1 className="text-5xl font-logo text-primary">MatchFlow</h1>
       </div>
     )
   }
 
-  // After mount, we can show loading or the full splash screen
-  if (loading || isRedirecting) {
+  // After mount, show animated splash while loading user state or redirecting
+  if (loading || redirecting) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
+      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
         <div className="animate-in fade-in zoom-in duration-700 ease-out">
           <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
         </div>
@@ -75,7 +77,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="relative flex-1 flex flex-col items-center justify-center min-h-screen overflow-hidden">
+    <div className="relative flex-1 flex flex-col items-center justify-center min-h-screen overflow-hidden bg-white">
       {/* Premium Background */}
       <div className="absolute inset-0 z-0">
         <Image 
@@ -86,7 +88,7 @@ export default function WelcomePage() {
           priority
           data-ai-hint="romance background"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white/60 to-white" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center space-y-12 px-8 text-center max-w-lg">

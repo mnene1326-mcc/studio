@@ -1,32 +1,24 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from '../provider';
 
-// Memory cache for user state to prevent flickering on client-side navigation
-let cachedUser: User | null = null;
-let isInitialized = false;
-
+/**
+ * A hook that returns the current Firebase user and loading state.
+ * It ensures a consistent loading state on the server and initial client render
+ * to prevent hydration mismatches.
+ */
 export function useUser() {
   const auth = useAuth();
   
-  // Always start with loading: true and user: null for the initial render
-  // This ensures SSR and initial hydration match perfectly.
+  // Start with loading: true to ensure SSR and initial client hydration match.
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Once mounted on the client, we can immediately check the cache
-    if (isInitialized) {
-      setUser(cachedUser);
-      setLoading(false);
-    }
-
+    // onAuthStateChanged is the source of truth for auth state
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      cachedUser = u;
-      isInitialized = true;
       setUser(u);
       setLoading(false);
     });
