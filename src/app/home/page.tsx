@@ -178,11 +178,11 @@ export default function HomePage() {
                 <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start">
                   <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none">{user.name}</h4>
                   
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-white font-black text-[10px] drop-shadow-md leading-none">
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white font-black text-[9px] leading-none">
                       {calculateAge(user.dob)}
                     </span>
-                    <span className="text-white/80 font-bold text-[10px] lowercase leading-none drop-shadow-sm">
+                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white/90 font-bold text-[9px] lowercase leading-none">
                       {user.country || "kenya"}
                     </span>
                   </div>
