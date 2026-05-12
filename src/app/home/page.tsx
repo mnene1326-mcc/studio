@@ -7,7 +7,7 @@ import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebas
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Heart, Gamepad2, Search, ShoppingBag, User as UserIcon } from "lucide-react"
+import { Heart, Target, Search, ShoppingBag, User as UserIcon, FileText } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -80,29 +80,29 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-1 rounded-2xl backdrop-blur-sm">
+              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
                  <div className="relative">
-                    <Heart className="w-5 h-5 text-black fill-current" />
+                    <FileText className="w-5 h-5 text-black" />
                     <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#4285F4] rounded-full border-2 border-white" />
                  </div>
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-white font-black text-sm leading-none">Voice Chat</h3>
-              <p className="text-white/80 text-[8px] font-bold">Voice chat now</p>
+              <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
+              <p className="text-white/80 text-[8px] font-bold">Send a note</p>
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-1 rounded-2xl backdrop-blur-sm">
-                <Gamepad2 className="w-5 h-5 text-black" />
+              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
+                <Target className="w-5 h-5 text-black" />
               </div>
               <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-white font-black text-sm leading-none">Game Center</h3>
-              <p className="text-white/80 text-[8px] font-bold">Have fun</p>
+              <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
+              <p className="text-white/80 text-[8px] font-bold">Earn rewards</p>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.id} 
+                key={user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
