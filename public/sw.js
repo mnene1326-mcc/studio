@@ -1,12 +1,13 @@
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open('matchflow-cache').then((cache) => {
+    caches.open('matchflow-cache-v1').then((cache) => {
       return cache.addAll([
         '/',
         '/home',
         '/chats',
         '/me',
+        '/globals.css'
       ]);
     })
   );
