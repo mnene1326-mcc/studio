@@ -176,14 +176,14 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
 
                 <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start">
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="text-white font-black text-sm drop-shadow-md truncate">{user.name}</h4>
-                    <span className="text-white font-black text-[10px] drop-shadow-md">{calculateAge(user.dob)}</span>
-                  </div>
+                  <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none">{user.name}</h4>
                   
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-white font-black text-[8px] uppercase tracking-wider drop-shadow-sm opacity-90">
-                      {user.country || "Kenya"}
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-white font-black text-[10px] drop-shadow-md leading-none">
+                      {calculateAge(user.dob)}
+                    </span>
+                    <span className="text-white/80 font-bold text-[10px] lowercase leading-none drop-shadow-sm">
+                      {user.country || "kenya"}
                     </span>
                   </div>
                 </div>

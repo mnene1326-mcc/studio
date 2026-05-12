@@ -124,7 +124,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs font-black text-[#FF4D94] uppercase tracking-wide">♀ {age}</span>
               <span className="text-xs font-black text-gray-400">•</span>
-              <span className="text-xs font-black text-gray-800 uppercase tracking-wide">{profile.country || "Kenya"}</span>
+              <span className="text-xs font-black text-gray-800 lowercase tracking-wide">{profile.country || "kenya"}</span>
               <span className="text-xs font-black text-gray-400">•</span>
               <span className="text-xs font-black text-[#D4FF00] bg-black px-1.5 rounded-sm">13.66km</span>
             </div>
