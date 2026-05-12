@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -122,28 +123,28 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-xl font-black transition-all",
+                "relative text-sm font-black transition-all lowercase",
                 activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
-              Recommend
+              recommend
               {activeTab === 'recommend' && (
-                <div className="absolute -bottom-2 left-0 w-full h-1.5 overflow-hidden">
-                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-1" />
+                <div className="absolute -bottom-1 left-0 w-full h-1 overflow-hidden">
+                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
                 </div>
               )}
             </button>
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-base font-medium transition-all",
+                "relative text-sm font-black transition-all lowercase",
                 activeTab === 'nearby' ? "text-black" : "text-gray-400"
               )}
             >
-              Nearby
+              nearby
               {activeTab === 'nearby' && (
-                <div className="absolute -bottom-2 left-0 w-full h-1.5 overflow-hidden">
-                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-1" />
+                <div className="absolute -bottom-1 left-0 w-full h-1 overflow-hidden">
+                   <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
                 </div>
               )}
             </button>
@@ -184,12 +185,12 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* HI Badge */}
+                {/* Chat Badge */}
                 <div 
                   className="absolute top-3 right-3 bg-[#D4FF00] rounded-2xl px-3 py-1 shadow-md flex items-center justify-center z-20 border border-white/20 active:scale-95 transition-transform"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-black font-black text-sm italic tracking-tighter">Hi</span>
+                  <span className="text-black font-black text-xs italic tracking-tighter uppercase">Chat</span>
                 </div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
@@ -228,17 +229,12 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Floating Action Badge (Game/385) */}
+      {/* Floating Action Badge */}
       <div className="fixed bottom-24 right-4 z-40 space-y-3">
          <div className="bg-white/90 backdrop-blur-md rounded-2xl p-1 shadow-xl border border-white/50 active:scale-95 transition-transform">
             <div className="bg-[#D4FF00] rounded-xl px-2 py-1 flex flex-col items-center">
                <Gamepad2 className="w-5 h-5 text-black" />
                <span className="text-[8px] font-black text-black">Game</span>
-            </div>
-         </div>
-         <div className="bg-white/90 backdrop-blur-md rounded-full p-1 shadow-xl border border-white/50 flex flex-col items-center active:scale-95 transition-transform">
-            <div className="bg-orange-100 rounded-full p-1.5">
-               <span className="text-[10px] font-black text-orange-600">385</span>
             </div>
          </div>
       </div>
