@@ -38,7 +38,7 @@ export default function HomePage() {
   const router = useRouter()
   const { user: currentUser } = useUser()
   const db = useFirestore()
-  const [activeTab, setActiveTab] = useState<'recommend' | 'nearby'>('recommend')
+  const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -64,12 +64,6 @@ export default function HomePage() {
     router.push(`/chats?startWith=${userId}`)
   }
 
-  const getDistance = (uid?: string) => {
-    if (!uid) return "13.6km"
-    const seed = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-    return seed % 2 === 0 ? "13.6km" : "5.2km"
-  }
-
   const getTag = (uid?: string) => {
     if (!uid) return "No"
     const tags = ["No", "A lot", "Never", "Sometimes"]
@@ -84,31 +78,31 @@ export default function HomePage() {
       <main className="px-4 pt-4 space-y-4">
         {/* Top Feature Cards - These will scroll away */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
+          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-24 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
+              <div className="bg-white/30 p-1 rounded-2xl backdrop-blur-sm">
                  <div className="relative">
-                    <Heart className="w-7 h-7 text-black fill-current" />
-                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4285F4] rounded-full border-2 border-white" />
+                    <Heart className="w-5 h-5 text-black fill-current" />
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#4285F4] rounded-full border-2 border-white" />
                  </div>
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-white font-black text-lg leading-none">Voice<br />Chat</h3>
-              <p className="text-white/80 text-[10px] font-bold">Voice chat now</p>
+              <h3 className="text-white font-black text-sm leading-none">Voice Chat</h3>
+              <p className="text-white/80 text-[8px] font-bold">Voice chat now</p>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
+          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-24 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
             <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
-                <Gamepad2 className="w-7 h-7 text-black" />
+              <div className="bg-white/30 p-1 rounded-2xl backdrop-blur-sm">
+                <Gamepad2 className="w-5 h-5 text-black" />
               </div>
               <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-white font-black text-lg leading-none">Game<br />Center</h3>
-              <p className="text-white/80 text-[10px] font-bold">Have fun</p>
+              <h3 className="text-white font-black text-sm leading-none">Game Center</h3>
+              <p className="text-white/80 text-[8px] font-bold">Have fun</p>
             </div>
           </div>
         </div>
@@ -117,28 +111,28 @@ export default function HomePage() {
         <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-4 px-4 py-3 flex items-center justify-between border-b border-transparent">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setActiveTab('recommend')}
+              onClick={() => setActiveTab('Recommend')}
               className={cn(
                 "relative text-sm font-black transition-all",
-                activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
+                activeTab === 'Recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
               Recommend
-              {activeTab === 'recommend' && (
+              {activeTab === 'Recommend' && (
                 <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
                    <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
                 </div>
               )}
             </button>
             <button 
-              onClick={() => setActiveTab('nearby')}
+              onClick={() => setActiveTab('Nearby')}
               className={cn(
                 "relative text-sm font-black transition-all",
-                activeTab === 'nearby' ? "text-black" : "text-gray-400"
+                activeTab === 'Nearby' ? "text-black" : "text-gray-400"
               )}
             >
               Nearby
-              {activeTab === 'nearby' && (
+              {activeTab === 'Nearby' && (
                 <div className="absolute -bottom-1.5 left-0 w-full h-1 overflow-hidden">
                    <div className="w-full h-2 bg-[#D4FF00] rounded-full -rotate-3 translate-y-0.5" />
                 </div>
@@ -206,9 +200,9 @@ export default function HomePage() {
                       </span>
                     </div>
                     
-                    <div className="bg-[#D4FF00] rounded-md px-1.5 py-0.5 shadow-sm">
-                      <span className="text-[8px] text-black font-black leading-none truncate">
-                        {getDistance(user.uid)}
+                    <div className="bg-[#D4FF00] rounded-md px-1.5 py-[1px] shadow-sm">
+                      <span className="text-[8px] text-black font-black leading-none truncate uppercase tracking-tighter">
+                        {user.country || "Kenya"}
                       </span>
                     </div>
 
