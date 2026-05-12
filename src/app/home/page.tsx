@@ -13,6 +13,7 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 interface UserProfile {
+  id: string
   uid: string
   name: string
   photoURL: string
@@ -116,7 +117,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid} 
+                key={user.id} 
                 className="relative overflow-hidden border-none rounded-2xl aspect-[4/5] group cursor-pointer shadow-sm"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
@@ -145,7 +146,9 @@ export default function HomePage() {
                   
                   <div className="flex flex-wrap gap-1">
                     <div className="bg-[#FF4D94] rounded px-1 py-0.25 flex items-center gap-0.5 shadow-sm">
-                      <span className="text-[8px] text-white font-black">♀ {calculateAge(user.dob)}</span>
+                      <span className="text-[8px] text-white font-black">
+                        {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
+                      </span>
                     </div>
                     <div className="bg-[#FF3B30] rounded px-1 py-0.25 shadow-sm">
                       <span className="text-[8px] text-white font-black">1.2km</span>
