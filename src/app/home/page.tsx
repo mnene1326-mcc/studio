@@ -182,8 +182,8 @@ export default function HomePage() {
                     <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white font-black text-[9px] leading-none">
                       {calculateAge(user.dob)}
                     </span>
-                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white/90 font-bold text-[9px] lowercase leading-none">
-                      {user.country || "kenya"}
+                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white/90 font-bold text-[9px] capitalize leading-none">
+                      {user.country || "Kenya"}
                     </span>
                   </div>
                 </div>

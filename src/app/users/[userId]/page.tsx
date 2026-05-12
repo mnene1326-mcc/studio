@@ -123,7 +123,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             
             <div className="flex flex-wrap items-center gap-2">
               <span className="bg-[#FF4D94]/10 text-[#FF4D94] px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wide">♀ {age}</span>
-              <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-[10px] font-black lowercase tracking-wide">{profile.country || "kenya"}</span>
+              <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-[10px] font-black capitalize tracking-wide">{profile.country || "Kenya"}</span>
               <span className="bg-black text-[#D4FF00] px-2 py-1 rounded-md text-[10px] font-black tracking-wide">13.66km</span>
             </div>
 
