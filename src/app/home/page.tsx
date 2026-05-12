@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
-import { Bell, FileText, Target } from "lucide-react"
+import { Bell, FileText, Target, User as UserIcon } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -92,7 +92,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-xs font-black uppercase tracking-widest transition-all",
+                "relative text-sm font-black uppercase tracking-widest transition-all",
                 activeTab === 'recommend' ? "text-black" : "text-gray-400"
               )}
             >
@@ -104,7 +104,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-xs font-black uppercase tracking-widest transition-all",
+                "relative text-sm font-black uppercase tracking-widest transition-all",
                 activeTab === 'nearby' ? "text-black" : "text-gray-400"
               )}
             >
@@ -121,11 +121,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-3 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-2 py-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.5/4.2] rounded-2xl bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3.5/4.5] rounded-[2rem] bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -134,11 +134,11 @@ export default function HomePage() {
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">Try updating your filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-2xl aspect-[3.5/4.2] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
+                className="relative overflow-hidden border-none rounded-[2rem] aspect-[3.5/4.5] group cursor-pointer shadow-xl transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
@@ -149,35 +149,43 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-
+                {/* Top Right "Hi" Badge */}
                 <div 
-                  className="absolute top-2 right-2 premium-blur rounded-full px-3 py-1 shadow-md flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
+                  className="absolute top-3 right-3 bg-[#D4FF00] rounded-2xl px-3 py-1.5 shadow-md flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all z-20 border border-white/20"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-[#FF3B30] font-bold text-[9px] italic tracking-tighter">Chat</span>
+                  <span className="text-black font-black text-sm italic tracking-tighter">Hi</span>
                 </div>
 
-                <div className="absolute inset-x-0 bottom-0 p-2.5 pt-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <span className="text-white font-medium text-xs truncate drop-shadow-md">{user.name}</span>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 shadow border border-white/20">
-                      <div className="w-2 h-2 bg-black rounded-full flex items-center justify-center">
-                         <span className="text-[5px] text-yellow-400 font-bold">✔</span>
-                      </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80" />
+
+                <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1">
+                    <span className="text-white font-black text-sm truncate drop-shadow-md">{user.name} 🥰</span>
+                    <div className="w-3.5 h-3.5 bg-yellow-400 rounded-full flex items-center justify-center shrink-0 border border-white/40">
+                      <UserIcon className="w-2 h-2 text-black fill-current" />
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap gap-1">
-                    <div className="bg-[#FF4D94] rounded-md px-1 py-0.5 flex items-center gap-0.5 shadow-sm border border-white/5">
-                      <span className="text-[7px] text-white font-bold leading-none">
+                  <div className="flex items-center gap-1">
+                    {/* Gender/Age Badge */}
+                    <div className="bg-[#FF4D94] rounded-md px-1.5 py-0.5 flex items-center gap-0.5 shadow-sm">
+                      <span className="text-[8px] text-white font-black leading-none">
                         {user.gender === 'female' ? '♀' : user.gender === 'male' ? '♂' : '⚧'} {calculateAge(user.dob)}
                       </span>
                     </div>
                     
-                    <div className="bg-black/30 backdrop-blur-sm rounded-md px-1 py-0.5 shadow-sm border border-white/5">
-                      <span className="text-[7px] text-white font-bold truncate max-w-[45px] leading-none">
-                        {user.country || "Match"}
+                    {/* Distance Badge */}
+                    <div className="bg-[#D4FF00] rounded-md px-1.5 py-0.5 shadow-sm">
+                      <span className="text-[8px] text-black font-black leading-none truncate max-w-[50px]">
+                        {Math.random() > 0.5 ? ">500km" : "13.6km"}
+                      </span>
+                    </div>
+
+                    {/* Tag Badge */}
+                    <div className="bg-black/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 shadow-sm border border-white/10">
+                      <span className="text-[8px] text-[#D4FF00] font-black leading-none uppercase tracking-tighter">
+                        Sometimes
                       </span>
                     </div>
                   </div>
