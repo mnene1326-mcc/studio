@@ -28,7 +28,6 @@ export default function WelcomePage() {
           if (userSnap.exists() && userSnap.data().onboardingComplete) {
             router.push("/home")
           } else {
-            // Check if they came from fast login via state or just default to onboarding
             router.push("/onboarding")
           }
         } catch (error) {
@@ -71,6 +70,7 @@ export default function WelcomePage() {
           fill 
           className="object-cover opacity-20"
           priority
+          data-ai-hint="romance background"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/60 to-background" />
       </div>
@@ -94,7 +94,7 @@ export default function WelcomePage() {
         <div className="w-full space-y-4 pt-8">
           <Button 
             className="w-full rounded-full h-16 text-lg font-headline bg-primary hover:bg-primary/90 shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95" 
-            onClick={() => router.push("/register")}
+            onClick={() => router.push("/login")}
           >
             <Mail className="w-6 h-6" />
             Continue with Email
