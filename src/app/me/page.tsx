@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -14,7 +13,7 @@ import {
   Check, 
   BadgeCheck, 
   Headphones, 
-  Camera,
+  Pencil,
   CircleDollarSign,
   Wallet,
   ShieldCheck,
@@ -99,9 +98,9 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            {/* Edit Profile Icon */}
+            {/* Edit Profile Icon - Changed to Pencil */}
             <button className="absolute bottom-1 right-1 bg-white p-2.5 rounded-full border border-gray-100 shadow-lg active:scale-90 transition-transform">
-              <Camera className="w-5 h-5 text-[#FF3B30]" />
+              <Pencil className="w-5 h-5 text-[#FF3B30]" />
             </button>
           </div>
 
