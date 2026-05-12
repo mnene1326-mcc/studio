@@ -64,13 +64,6 @@ export default function HomePage() {
     router.push(`/chats?startWith=${userId}`)
   }
 
-  const getTag = (uid?: string) => {
-    if (!uid) return "No"
-    const tags = ["No", "A lot", "Never", "Sometimes"]
-    const index = uid ? uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % tags.length : 0
-    return tags[index]
-  }
-
   if (!isMounted) return null
 
   return (
@@ -191,9 +184,6 @@ export default function HomePage() {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-white font-black text-[8px] uppercase tracking-wider drop-shadow-sm opacity-90">
                       {user.country || "Kenya"}
-                    </span>
-                    <span className="text-white font-black text-[8px] uppercase tracking-wider drop-shadow-sm opacity-90">
-                      • {getTag(user.uid)}
                     </span>
                   </div>
                 </div>

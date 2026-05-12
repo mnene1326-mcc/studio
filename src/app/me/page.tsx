@@ -111,7 +111,6 @@ export default function MePage() {
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-br from-[#FF3B30] to-orange-500 rounded-full blur-sm opacity-50"></div>
             <div className="relative w-20 h-20 rounded-full shadow-xl overflow-hidden bg-muted">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/200/200`} 
