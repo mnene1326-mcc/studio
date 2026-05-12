@@ -100,66 +100,66 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
 
         {/* Progress Dots */}
-        <div className="absolute bottom-36 inset-x-0 flex justify-center gap-1 z-10">
+        <div className="absolute bottom-40 inset-x-0 flex justify-center gap-1 z-10">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={cn("h-1 rounded-full transition-all", i === 1 ? "w-6 bg-white" : "w-2 bg-white/40")} />
           ))}
         </div>
       </div>
 
-      {/* Content Section */}
-      <div className="relative -mt-32 bg-white px-6 pt-8 space-y-5 min-h-[50vh] z-20">
+      {/* Content Section - Higher overlap and straight edges */}
+      <div className="relative -mt-44 bg-white px-6 pt-10 space-y-4 min-h-[50vh] z-20">
         {/* Name & ID Header */}
         <div className="flex justify-between items-start">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-black tracking-tight">{profile.name}💜💜</h1>
-              <div className="w-3.5 h-3.5 bg-yellow-400 rounded-full flex items-center justify-center border border-white shadow-sm">
-                <User className="w-2 h-2 text-black fill-current" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-lg font-black text-black tracking-tight">{profile.name}💜💜</h1>
+              <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center border border-white shadow-sm">
+                <User className="w-1.5 h-1.5 text-black fill-current" />
               </div>
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-[#006400] text-white px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wide shadow-sm">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide shadow-sm">
                 ♀ {age}
               </span>
-              <span className="bg-black/5 backdrop-blur-md text-gray-700 px-2 py-1 rounded-md text-[10px] font-black tracking-wide border border-black/5 shadow-sm">
+              <span className="bg-black/5 backdrop-blur-md text-gray-700 px-2 py-0.5 rounded-md text-[9px] font-black tracking-wide border border-black/5 shadow-sm">
                 {profile.country ? profile.country.charAt(0).toUpperCase() + profile.country.slice(1) : "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-2 py-1 rounded-md text-[10px] font-black tracking-wide shadow-sm">13.66km</span>
+              <span className="bg-black text-[#D4FF00] px-2 py-0.5 rounded-md text-[9px] font-black tracking-wide shadow-sm">13.66km</span>
             </div>
 
             <div 
-              className="flex items-center gap-1 text-[#8B8B8B] text-[9px] font-bold cursor-pointer active:opacity-60"
+              className="flex items-center gap-1 text-[#8B8B8B] text-[8px] font-bold cursor-pointer active:opacity-60"
               onClick={handleCopyId}
             >
               <span>ID:{profile.matchFlowId || "null"}</span>
-              <Copy className={cn("w-2 h-2 transition-colors", copied ? "text-green-500" : "text-[#8B8B8B]")} />
+              <Copy className={cn("w-1.5 h-1.5 transition-colors", copied ? "text-green-500" : "text-[#8B8B8B]")} />
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-full px-2.5 py-1 flex items-center gap-1 border border-black/5 shadow-sm">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[9px] font-black text-gray-500">Online</span>
+          <div className="bg-gray-50 rounded-full px-2 py-0.5 flex items-center gap-1 border border-black/5 shadow-sm">
+            <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-[8px] font-black text-gray-500">Online</span>
           </div>
         </div>
 
         {/* About Me Section */}
-        <section className="space-y-2">
+        <section className="space-y-1.5">
           <div className="flex items-baseline gap-2">
             <div className="relative">
-              <h2 className="text-base font-black text-black">About Me</h2>
-              <div className="absolute -bottom-0.5 left-0 w-full h-1 bg-[#D4FF00]/40 rounded-full -rotate-1" />
+              <h2 className="text-sm font-black text-black">About Me</h2>
+              <div className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-[#D4FF00]/40 rounded-full -rotate-1" />
             </div>
           </div>
-          <p className="text-[11px] font-bold text-gray-500 leading-relaxed italic">
+          <p className="text-[10px] font-bold text-gray-500 leading-relaxed italic">
             "{profile.interests || "I'm looking for someone special to share my time with and see where things go..."}"
           </p>
         </section>
 
         {/* Bio Text Footer */}
         <div className="pb-8">
-          <p className="text-[9px] font-bold text-gray-400 leading-relaxed">
+          <p className="text-[8px] font-bold text-gray-400 leading-relaxed">
             Little things say everything... dm for fun and serious talks 💦🍑🍆🥰
           </p>
         </div>
@@ -168,10 +168,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       {/* Fixed Bottom Action */}
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-50 z-50">
         <Button 
-          className="w-full h-14 rounded-[2rem] bg-[#FF3B30] text-white hover:bg-red-600 text-base font-bold flex items-center justify-center gap-2.5 shadow-xl transition-all active:scale-95 uppercase tracking-widest"
+          className="w-full h-14 rounded-[2rem] bg-[#FF3B30] text-white hover:bg-red-600 text-sm font-bold flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 uppercase tracking-widest"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
-          <MessageSquare className="w-6 h-6 fill-current" />
+          <MessageSquare className="w-5 h-5 fill-current" />
           CHAT
         </Button>
       </div>

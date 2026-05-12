@@ -23,7 +23,7 @@ export default function WelcomePage() {
   }, [])
 
   useEffect(() => {
-    if (!loading && user && hasMounted) {
+    if (hasMounted && !loading && user) {
       const checkOnboarding = async () => {
         setIsRedirecting(true)
         try {
@@ -54,8 +54,8 @@ export default function WelcomePage() {
     }
   }
 
-  // To prevent hydration errors, always render the splash/loading state
-  // until the component has mounted on the client.
+  // To prevent hydration errors, we render a consistent splash screen 
+  // until the component has mounted and we know the auth state.
   if (!hasMounted || loading || isRedirecting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
