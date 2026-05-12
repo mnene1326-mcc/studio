@@ -74,8 +74,8 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Red Background Header Section */}
-      <div className="absolute top-0 left-0 w-full h-[400px] bg-[#FF3B30]" />
+      {/* Red Background Header Section - Adjusted height to not touch Verify Now */}
+      <div className="absolute top-0 left-0 w-full h-[340px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
         <header className="relative pt-16 pb-8 px-6 flex flex-col items-center">
