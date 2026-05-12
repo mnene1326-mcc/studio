@@ -72,7 +72,7 @@ export default function HomePage() {
             <div className="bg-white/20 p-2 rounded-xl">
               <FileText className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white font-black text-sm uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
+            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Mystery<br/>Note</span>
           </div>
           
           <div 
@@ -82,7 +82,7 @@ export default function HomePage() {
             <div className="bg-white/10 p-2 rounded-xl">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white font-black text-sm uppercase tracking-tighter leading-tight">Task<br/>Center</span>
+            <span className="text-white font-black text-xs uppercase tracking-tighter leading-tight">Task<br/>Center</span>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-sm font-semibold transition-all",
+                "relative text-xs font-black uppercase tracking-widest transition-all",
                 activeTab === 'recommend' ? "text-black" : "text-gray-400"
               )}
             >
@@ -104,7 +104,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-sm font-semibold transition-all",
+                "relative text-xs font-black uppercase tracking-widest transition-all",
                 activeTab === 'nearby' ? "text-black" : "text-gray-400"
               )}
             >
@@ -121,11 +121,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-4 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-3 py-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.5/4] rounded-2xl bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3.5/4.2] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -138,7 +138,7 @@ export default function HomePage() {
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-2xl aspect-[3.5/4] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
+                className="relative overflow-hidden border-none rounded-2xl aspect-[3.5/4.2] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
@@ -177,7 +177,7 @@ export default function HomePage() {
                     
                     <div className="bg-black/30 backdrop-blur-sm rounded-md px-1 py-0.5 shadow-sm border border-white/5">
                       <span className="text-[7px] text-white font-bold truncate max-w-[45px] leading-none">
-                        {user.interests?.split(',')[0] || user.country || "Match"}
+                        {user.country || "Match"}
                       </span>
                     </div>
                   </div>
