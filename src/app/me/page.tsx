@@ -75,8 +75,8 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Red Background Header Section */}
-      <div className="absolute top-0 left-0 w-full h-[340px] bg-[#FF3B30]" />
+      {/* Red Background Header Section - Adjusted height to go halfway through buttons */}
+      <div className="absolute top-0 left-0 w-full h-[320px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
         <header className="relative pt-16 pb-8 px-6 flex flex-col items-center">
@@ -88,7 +88,7 @@ export default function MePage() {
             </div>
           </div>
 
-          {/* Avatar Middle Top */}
+          {/* Avatar Middle Top - Removed Border */}
           <div className="relative mb-4">
             <div className="relative w-28 h-28 rounded-full shadow-2xl overflow-hidden bg-muted">
               <Image 
@@ -99,7 +99,7 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            {/* Edit Profile Icon - Pencil */}
+            {/* Edit Profile Icon - Changed to Pencil */}
             <button className="absolute bottom-1 right-1 bg-white p-2.5 rounded-full border border-gray-100 shadow-lg active:scale-90 transition-transform">
               <Pencil className="w-5 h-5 text-[#FF3B30]" />
             </button>
@@ -126,7 +126,7 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Recharge & Income Grid */}
+          {/* Recharge & Income Grid - Positioned over the edge of the red background */}
           <div className="grid grid-cols-2 gap-4">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 border border-white/20 rounded-3xl shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"

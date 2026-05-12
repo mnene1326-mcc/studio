@@ -52,16 +52,16 @@ export default function WelcomePage() {
     }
   }
 
-  // Hydration guard: return the same HTML on server and first client render
+  // Hydration guard: return a stable initial shell
   if (!isMounted) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen" />
+      <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen" />
     )
   }
 
   if (authLoading || isRedirecting) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
+      <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
         <div className="animate-in fade-in zoom-in duration-500 ease-out flex flex-col items-center gap-6">
           <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
           <div className="flex flex-col items-center gap-2">
@@ -74,7 +74,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="relative flex-1 flex flex-col items-center justify-center min-h-screen overflow-hidden bg-white">
+    <div className="relative flex-1 flex flex-col items-center justify-center min-h-screen overflow-hidden bg-background">
       <div className="absolute inset-0 z-0">
         <Image 
           src="https://picsum.photos/seed/welcome/1200/1800" 

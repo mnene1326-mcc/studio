@@ -69,7 +69,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
-      <div className="relative h-[65vh] w-full">
+      <div className="relative h-[60vh] w-full">
         <Image
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
           alt={profile.name}
@@ -97,14 +97,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           </Button>
         </div>
 
-        <div className="absolute bottom-44 inset-x-0 flex justify-center gap-1 z-10">
+        <div className="absolute bottom-36 inset-x-0 flex justify-center gap-1 z-10">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className={cn("h-0.5 rounded-full transition-all", i === 1 ? "w-4 bg-white" : "w-1.5 bg-white/40")} />
           ))}
         </div>
       </div>
 
-      <div className="relative -mt-44 bg-white px-6 pt-8 space-y-4 min-h-[50vh] z-20 rounded-t-[3rem]">
+      <div className="relative -mt-36 bg-white px-6 pt-8 space-y-4 min-h-[50vh] z-20 rounded-t-[3rem]">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-1">
@@ -140,7 +140,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
 
         <section className="space-y-0.5">
-          <h2 className="text-[10px] font-black text-black uppercase tracking-tighter">About Me</h2>
+          <h2 className="text-[9px] font-black text-black uppercase tracking-tighter">About Me</h2>
           <p className="text-[8px] font-bold text-gray-500 leading-relaxed italic">
             "{profile.interests || "I'm looking for someone special to share my time with..."}"
           </p>
