@@ -125,7 +125,7 @@ export default function HomePage() {
         {loading ? (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.8/5] rounded-[2.5rem] bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3.8/5] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -138,7 +138,7 @@ export default function HomePage() {
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-[2.5rem] aspect-[3.8/5] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
+                className="relative overflow-hidden border-none rounded-2xl aspect-[3.8/5] group cursor-pointer shadow-xl shadow-black/5 hover:shadow-2xl hover:shadow-red-500/5 transition-all duration-500"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
