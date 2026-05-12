@@ -53,7 +53,7 @@ export default function WelcomePage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-background min-h-screen">
         <div className="animate-in fade-in zoom-in duration-700 ease-out">
-          <h1 className="text-7xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
+          <h1 className="text-6xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
         </div>
       </div>
     )
