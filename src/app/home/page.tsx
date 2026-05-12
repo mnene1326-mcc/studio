@@ -7,7 +7,7 @@ import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebas
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, Search, ShoppingBag, User as UserIcon, FileText } from "lucide-react"
+import { Target, Search, ShoppingBag, FileText } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -69,9 +69,7 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
       {/* Unified Red Header Section */}
-      <div className="bg-[#FF3B30]">
-        <div className="h-2" /> 
-        
+      <div className="bg-[#FF3B30] pt-2">
         <div className="px-4 pb-3">
           {/* Top Feature Cards */}
           <div className="grid grid-cols-2 gap-3">
@@ -105,13 +103,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tab Navigation - Unified Red Background */}
-        <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-3 flex items-center justify-between">
+        {/* Tab Navigation - Unified Red Background, No curves on ends */}
+        <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
               onClick={() => setActiveTab('Recommend')}
               className={cn(
-                "relative text-base font-black transition-all",
+                "relative text-base font-black transition-all uppercase tracking-tight",
                 activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
               )}
             >
@@ -120,7 +118,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
-                "relative text-base font-black transition-all",
+                "relative text-base font-black transition-all uppercase tracking-tight",
                 activeTab === 'Nearby' ? "text-white scale-105" : "text-white/60"
               )}
             >
@@ -153,7 +151,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.id || user.uid} 
+                key={user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
@@ -165,24 +163,26 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* Chat Button */}
+                {/* Enhanced Red Chat Button */}
                 <div 
-                  className="absolute top-3 right-3 bg-[#FF3B30] rounded-2xl px-4 py-1.5 shadow-md flex items-center justify-center z-20 border border-white/10 active:scale-95 transition-transform"
+                  className="absolute top-3 right-3 bg-[#FF3B30] rounded-2xl px-5 py-2 shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-white font-bold text-[10px] tracking-wide uppercase">CHAT</span>
+                  <span className="text-white font-bold text-[11px] tracking-widest uppercase">CHAT</span>
                 </div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
 
                 <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start">
-                  <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none">{user.name}</h4>
+                  <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none mb-2">{user.name}</h4>
                   
-                  <div className="flex items-center gap-1 mt-1.5">
-                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white font-black text-[9px] leading-none">
+                  <div className="flex items-center gap-1.5">
+                    {/* Green Background for Age */}
+                    <span className="bg-[#00D100] px-2 py-0.5 rounded-md text-white font-black text-[9px] leading-none shadow-sm">
                       {calculateAge(user.dob)}
                     </span>
-                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white/90 font-bold text-[9px] leading-none">
+                    {/* Blur Background for Country */}
+                    <span className="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-md text-white font-bold text-[9px] border border-white/20 leading-none shadow-sm">
                       {user.country ? user.country.charAt(0).toUpperCase() + user.country.slice(1) : "Kenya"}
                     </span>
                   </div>
