@@ -7,7 +7,7 @@ import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebas
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Heart, Target, Search, ShoppingBag, User as UserIcon, FileText } from "lucide-react"
+import { Target, Search, ShoppingBag, User as UserIcon, FileText } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -67,7 +67,7 @@ export default function HomePage() {
   const getTag = (uid?: string) => {
     if (!uid) return "No"
     const tags = ["No", "A lot", "Never", "Sometimes"]
-    const index = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % tags.length
+    const index = uid ? uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % tags.length : 0
     return tags[index]
   }
 
@@ -75,83 +75,88 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Top Background Fill for Red Header */}
-      <div className="bg-[#FF3B30] h-6 w-full fixed top-0 z-50 md:hidden" />
-      
-      <main className="px-4 pt-4 space-y-4">
-        {/* Top Feature Cards - These will scroll away */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-200 relative overflow-hidden group active:scale-95 transition-all">
-            <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
-                 <div className="relative">
-                    <FileText className="w-5 h-5 text-black" />
-                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#4285F4] rounded-full border-2 border-white" />
-                 </div>
+      {/* Top Section with continuous Red Background */}
+      <div className="bg-[#FF3B30]">
+        {/* Safe area fill for status bar */}
+        <div className="h-safe-top w-full pt-8" />
+        
+        <div className="px-4 py-4 space-y-4">
+          {/* Top Feature Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
+              <div className="flex items-start justify-between">
+                <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
+                   <div className="relative">
+                      <FileText className="w-5 h-5 text-black" />
+                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#4285F4] rounded-full border-2 border-white" />
+                   </div>
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
+                <p className="text-white/80 text-[8px] font-bold">Send a note</p>
               </div>
             </div>
-            <div className="space-y-0.5">
-              <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
-              <p className="text-white/80 text-[8px] font-bold">Send a note</p>
+
+            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all">
+              <div className="flex items-start justify-between">
+                <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
+                  <Target className="w-5 h-5 text-black" />
+                </div>
+                <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
+                <p className="text-white/80 text-[8px] font-bold">Earn rewards</p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-200 relative overflow-hidden group active:scale-95 transition-all">
-            <div className="flex items-start justify-between">
-              <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
-                <Target className="w-5 h-5 text-black" />
-              </div>
-              <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
+          {/* Tab Navigation - Sticky at top with Red Background and No Curves */}
+          <div className="sticky top-0 z-40 bg-[#FF3B30] -mx-4 px-4 py-2 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setActiveTab('Recommend')}
+                className={cn(
+                  "relative text-base font-black transition-all",
+                  activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
+                )}
+              >
+                Recommend
+                {activeTab === 'Recommend' && (
+                  <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
+                     <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
+                  </div>
+                )}
+              </button>
+              <button 
+                onClick={() => setActiveTab('Nearby')}
+                className={cn(
+                  "relative text-base font-black transition-all",
+                  activeTab === 'Nearby' ? "text-white" : "text-white/60"
+                )}
+              >
+                Nearby
+                {activeTab === 'Nearby' && (
+                  <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
+                     <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
+                  </div>
+                )}
+              </button>
             </div>
-            <div className="space-y-0.5">
-              <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
-              <p className="text-white/80 text-[8px] font-bold">Earn rewards</p>
+            <div className="flex items-center gap-3">
+               <div className="relative">
+                  <ShoppingBag className="w-6 h-6 text-white" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#D4FF00] rounded-full border-2 border-[#FF3B30]" />
+               </div>
+               <Search className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Tab Navigation - Sticky at top with Red Background and No Curves */}
-        <div className="sticky top-0 z-40 bg-[#FF3B30] -mx-4 px-4 py-4 flex items-center justify-between shadow-md">
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setActiveTab('Recommend')}
-              className={cn(
-                "relative text-base font-black transition-all",
-                activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
-              )}
-            >
-              Recommend
-              {activeTab === 'Recommend' && (
-                <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
-                   <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
-                </div>
-              )}
-            </button>
-            <button 
-              onClick={() => setActiveTab('Nearby')}
-              className={cn(
-                "relative text-base font-black transition-all",
-                activeTab === 'Nearby' ? "text-white" : "text-white/60"
-              )}
-            >
-              Nearby
-              {activeTab === 'Nearby' && (
-                <div className="absolute -bottom-2 left-0 w-full h-1 overflow-hidden">
-                   <div className="w-full h-2 bg-[#D4FF00] rounded-full" />
-                </div>
-              )}
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="relative">
-                <ShoppingBag className="w-6 h-6 text-white" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#D4FF00] rounded-full border-2 border-[#FF3B30]" />
-             </div>
-             <Search className="w-6 h-6 text-white" />
-          </div>
-        </div>
-
-        {/* User Grid */}
+      {/* User Grid */}
+      <main className="px-4 pt-4">
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
@@ -166,7 +171,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid || user.id} 
+                key={user.id || user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
