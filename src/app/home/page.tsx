@@ -63,11 +63,11 @@ export default function HomePage() {
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-6 pb-2 border-b border-black/5">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-xl font-black transition-all",
+                "relative text-lg font-black transition-all",
                 activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -79,7 +79,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-xl font-black transition-all",
+                "relative text-lg font-black transition-all",
                 activeTab === 'nearby' ? "text-black scale-105" : "text-gray-400"
               )}
             >
