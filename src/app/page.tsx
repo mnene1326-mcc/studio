@@ -1,9 +1,11 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUser, useFirestore } from "@/firebase"
+import { useUser, useFirestore, useAuth } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
+import { signInAnonymously } from "firebase/auth"
 import { Button } from "@/components/ui/button"
 import { Heart, Mail, Zap, Loader2 } from "lucide-react"
 import Image from "next/image"
@@ -12,6 +14,7 @@ export default function WelcomePage() {
   const router = useRouter()
   const { user, loading } = useUser()
   const db = useFirestore()
+  const auth = useAuth()
   const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export default function WelcomePage() {
           if (userSnap.exists() && userSnap.data().onboardingComplete) {
             router.push("/home")
           } else {
+            // Check if they came from fast login via state or just default to onboarding
             router.push("/onboarding")
           }
         } catch (error) {
@@ -34,6 +38,17 @@ export default function WelcomePage() {
       checkOnboarding()
     }
   }, [user, loading, db, router])
+
+  const handleFastLogin = async () => {
+    setIsRedirecting(true)
+    try {
+      await signInAnonymously(auth)
+      router.push("/onboarding?fast=true")
+    } catch (error) {
+      console.error("Fast login failed", error)
+      setIsRedirecting(false)
+    }
+  }
 
   if (loading || isRedirecting) {
     return (
@@ -88,7 +103,7 @@ export default function WelcomePage() {
           <Button 
             variant="outline" 
             className="w-full rounded-full h-16 text-lg font-headline border-2 border-primary/20 text-primary hover:bg-primary/5 shadow-md flex items-center justify-center gap-3 transition-all active:scale-95" 
-            onClick={() => router.push("/login")}
+            onClick={handleFastLogin}
           >
             <Zap className="w-6 h-6 fill-primary/10" />
             Fast Login
