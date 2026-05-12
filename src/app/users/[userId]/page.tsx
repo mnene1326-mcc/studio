@@ -122,8 +122,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-[#FF4D94]/10 text-[#FF4D94] px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wide">♀ {age}</span>
-              <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-[10px] font-black capitalize tracking-wide">{profile.country || "Kenya"}</span>
+              <span className="bg-black/5 text-[#FF3B30] px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wide">♀ {age}</span>
+              <span className="bg-black/5 text-gray-800 px-2 py-1 rounded-md text-[10px] font-black tracking-wide">{profile.country ? profile.country.charAt(0).toUpperCase() + profile.country.slice(1) : "Kenya"}</span>
               <span className="bg-black text-[#D4FF00] px-2 py-1 rounded-md text-[10px] font-black tracking-wide">13.66km</span>
             </div>
 
@@ -167,11 +167,11 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       {/* Fixed Bottom Action */}
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-50 z-50">
         <Button 
-          className="w-full h-16 rounded-[2rem] bg-black text-[#D4FF00] hover:bg-black/90 text-xl font-black flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95"
+          className="w-full h-16 rounded-[2rem] bg-[#FF3B30] text-white hover:bg-red-600 text-xl font-bold flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 uppercase"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
           <MessageSquare className="w-7 h-7 fill-current" />
-          Chat
+          CHAT
         </Button>
       </div>
     </div>

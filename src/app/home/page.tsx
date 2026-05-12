@@ -165,12 +165,12 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* Chat Badge */}
+                {/* Chat Button */}
                 <div 
-                  className="absolute top-3 right-3 bg-[#D4FF00] rounded-2xl px-3 py-1 shadow-md flex items-center justify-center z-20 border border-white/20 active:scale-95 transition-transform"
+                  className="absolute top-3 right-3 bg-[#FF3B30] rounded-2xl px-4 py-1.5 shadow-md flex items-center justify-center z-20 border border-white/10 active:scale-95 transition-transform"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-black font-black text-xs italic tracking-tighter uppercase">Chat</span>
+                  <span className="text-white font-bold text-[10px] tracking-wide uppercase">CHAT</span>
                 </div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
@@ -182,8 +182,8 @@ export default function HomePage() {
                     <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white font-black text-[9px] leading-none">
                       {calculateAge(user.dob)}
                     </span>
-                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white/90 font-bold text-[9px] capitalize leading-none">
-                      {user.country || "Kenya"}
+                    <span className="bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded text-white/90 font-bold text-[9px] leading-none">
+                      {user.country ? user.country.charAt(0).toUpperCase() + user.country.slice(1) : "Kenya"}
                     </span>
                   </div>
                 </div>
