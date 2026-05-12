@@ -62,7 +62,7 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen">
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-6 pt-4 pb-2 border-b border-black/5">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-4 pt-4 pb-2 border-b border-black/5">
         {/* Action Cards Row */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div 
@@ -92,7 +92,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('recommend')}
               className={cn(
-                "relative text-sm font-black transition-all",
+                "relative text-lg font-black transition-all",
                 activeTab === 'recommend' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -104,7 +104,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('nearby')}
               className={cn(
-                "relative text-sm font-black transition-all",
+                "relative text-lg font-black transition-all",
                 activeTab === 'nearby' ? "text-black scale-105" : "text-gray-400"
               )}
             >
@@ -121,11 +121,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-6 py-2 lg:max-w-4xl lg:mx-auto">
+      <main className="px-4 py-2 lg:max-w-4xl lg:mx-auto">
         {loading ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3.8/4.2] rounded-2xl bg-muted animate-pulse" />
+              <div key={i} className="aspect-[3.5/4.2] rounded-2xl bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (

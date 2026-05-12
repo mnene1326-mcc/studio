@@ -1,14 +1,14 @@
 
+const CACHE_NAME = 'matchflow-v1';
+const ASSETS = [
+  '/',
+  '/manifest.json'
+];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open('matchflow-cache-v1').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/home',
-        '/chats',
-        '/me',
-        '/globals.css'
-      ]);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
     })
   );
 });
