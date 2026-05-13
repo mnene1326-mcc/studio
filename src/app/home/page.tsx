@@ -7,7 +7,7 @@ import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
+import { Target, RotateCw, FileText, ChevronDown, BadgeCheck, MessageSquare } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -61,7 +61,7 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(displayLimit + 20) // Fetch extra to account for client-side filtering
+    limit(displayLimit + 20)
   ), [db, displayLimit])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
@@ -100,8 +100,10 @@ export default function HomePage() {
     const tenMinutes = 10 * 60 * 1000
 
     return [...baseList].sort((a, b) => {
-      const aOnline = a.updatedAt?.toMillis ? (now - a.updatedAt.toMillis()) < tenMinutes : false
-      const bOnline = b.updatedAt?.toMillis ? (now - b.updatedAt.toMillis()) < tenMinutes : false
+      const aAt = a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : 0
+      const bAt = b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : 0
+      const aOnline = (now - aAt) < tenMinutes
+      const bOnline = (now - bAt) < tenMinutes
       
       if (aOnline && !bOnline) return -1
       if (!aOnline && bOnline) return 1
@@ -179,7 +181,8 @@ export default function HomePage() {
               {filteredUsers.map((user, idx) => {
                 const now = Date.now()
                 const tenMinutes = 10 * 60 * 1000
-                const isOnline = user.updatedAt?.toMillis ? (now - user.updatedAt.toMillis()) < tenMinutes : false
+                const userAt = user.updatedAt?.seconds ? user.updatedAt.seconds * 1000 : 0
+                const isOnline = (now - userAt) < tenMinutes
 
                 return (
                   <Card 
@@ -205,7 +208,16 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    <div className="absolute top-4 right-4 bg-[#00A2FF] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
+                    <div 
+                      className="absolute top-4 right-4 bg-[#00A2FF] px-4 py-2 rounded-full z-30 text-white font-black text-[9px] uppercase tracking-widest shadow-lg flex items-center gap-1.5 active:scale-95 transition-transform"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/chats?startWith=${user.uid}`);
+                      }}
+                    >
+                      <MessageSquare className="w-3.1 h-3.1 fill-current" />
+                      CHAT
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
                     <div className="absolute inset-x-0 bottom-0 p-5">
                       <div className="flex items-center gap-1.5 mb-2">

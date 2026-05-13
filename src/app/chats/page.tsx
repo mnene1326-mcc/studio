@@ -58,6 +58,27 @@ interface UserProfile {
   blockedBy?: string[]
 }
 
+/**
+ * Safely converts a Firestore timestamp (live or cached) to milliseconds.
+ */
+const toMillisSafe = (ts: any): number => {
+  if (!ts) return 0;
+  if (typeof ts.toMillis === 'function') return ts.toMillis();
+  if (ts.seconds !== undefined) return ts.seconds * 1000;
+  if (typeof ts === 'number') return ts;
+  return 0;
+};
+
+/**
+ * Safely converts a Firestore timestamp (live or cached) to a Date object.
+ */
+const toDateSafe = (ts: any): Date => {
+  if (!ts) return new Date(0);
+  if (typeof ts.toDate === 'function') return ts.toDate();
+  if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
+  return new Date(ts);
+};
+
 function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: { chat: Chat, currentUserUid: string, blocking: string[], blockedBy: string[], onDelete: (chat: Chat) => void }) {
   const router = useRouter()
   const db = useFirestore()
@@ -106,7 +127,7 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
         <div className="flex justify-between items-center mb-0.5">
           <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
           <span className="text-[10px] text-gray-400 font-bold">
-            {chat.lastMessageAt?.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "..."}
+            {chat.lastMessageAt ? format(toDateSafe(chat.lastMessageAt), "HH:mm") : "..."}
           </span>
         </div>
         <p className="text-xs text-gray-500 truncate font-bold">
@@ -155,7 +176,6 @@ function ChatsContent() {
     
     return [...userChatsRaw]
       .filter(chat => {
-        // Step 1: Optimized Frugal Logic - Only show chats in the list if they have a last message (sent)
         if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
         const clearedAt = chat.clearedAt?.[currentUser.uid]
@@ -166,7 +186,7 @@ function ChatsContent() {
         if (!clearedAt) return true
         const lastAt = chat.lastMessageAt
         if (!lastAt) return true
-        return lastAt.toMillis() > clearedAt.toMillis()
+        return toMillisSafe(lastAt) > toMillisSafe(clearedAt)
       })
   }, [userChatsRaw, currentUser?.uid, currentUserProfile])
 
@@ -230,7 +250,6 @@ function ChatsContent() {
 
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
-    // We order DESC to get the latest messages first, and to enable native flex-col-reverse anchoring
     return query(
       collection(db, "chats", chatId, "messages"), 
       orderBy("timestamp", "desc"),
@@ -241,11 +260,10 @@ function ChatsContent() {
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const messages = useMemo(() => {
-    // Keep them DESC [newest...oldest] for flex-col-reverse native bottom anchoring
     if (!currentUser?.uid || !currentChatData) return messagesRaw
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
     if (!clearedAt) return messagesRaw
-    return messagesRaw.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
+    return messagesRaw.filter(m => toMillisSafe(m.timestamp) > toMillisSafe(clearedAt))
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
   const handleSendMessage = (text: string) => {
@@ -412,14 +430,8 @@ function ChatsContent() {
         </div>
       </header>
 
-      {/* 
-          Using column-reverse means the browser handles the "pinned to bottom" behavior naturally.
-          New messages (at the start of the DESC array) appear at the bottom.
-          Older messages (at the end of the DESC array) appear at the top.
-      */}
       <main className="flex-1 overflow-y-auto bg-white no-scrollbar">
         <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
-          {/* Messages Map: These are visually rendered from bottom to top */}
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
               {msg.senderId !== currentUser.uid && (
@@ -439,7 +451,6 @@ function ChatsContent() {
             </div>
           ))}
 
-          {/* Pagination: Visually at the top because it's at the end of the column-reverse flow */}
           {messagesRaw.length >= messagesLimit && (
             <div className="flex justify-center py-4">
                <Button 
@@ -454,7 +465,6 @@ function ChatsContent() {
             </div>
           )}
 
-          {/* Conversation Starter Info: Visually near the oldest messages */}
           <div className="text-center py-4">
             <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
               Conversation Started
