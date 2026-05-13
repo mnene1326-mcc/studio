@@ -3,16 +3,22 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { doc } from "firebase/firestore"
+import { doc, updateDoc, increment } from "firebase/firestore"
 import { useFirestore, useUser, useDoc } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, X, Coins, Gift, Zap, Star, CheckCircle2, Trophy, Flame } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 
 export default function TaskCenterPage() {
   const router = useRouter()
   const db = useFirestore()
   const { user } = useUser()
+  const { toast } = useToast()
+  
+  // Starting with some mock progress that can be updated
   const [checkedDays, setCheckedDays] = useState([true, true, false, false, false, false, false])
 
   const userRef = useMemo(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
@@ -39,9 +45,45 @@ export default function TaskCenterPage() {
     { title: "Daily Login", reward: "2", icon: CheckCircle2, color: "text-green-500", progress: "1/1" },
   ]
 
+  const handleCheckIn = () => {
+    if (!user || !userRef) return
+
+    const nextDayIndex = checkedDays.findIndex(d => !d)
+    if (nextDayIndex === -1) {
+      toast({
+        title: "All Caught Up!",
+        description: "You've completed this week's check-ins. Great job!",
+      })
+      return
+    }
+
+    const rewardAmount = parseInt(days[nextDayIndex].reward)
+    
+    // Optimistically update UI
+    const newChecked = [...checkedDays]
+    newChecked[nextDayIndex] = true
+    setCheckedDays(newChecked)
+
+    // Persist to Firestore
+    updateDoc(userRef, {
+      coins: increment(rewardAmount)
+    }).catch(async () => {
+      const permissionError = new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+      } satisfies SecurityRuleContext)
+      errorEmitter.emit('permission-error', permissionError)
+    })
+
+    toast({
+      title: "Check-in Successful!",
+      description: `You earned ${rewardAmount} coins. Keep it up!`,
+    })
+  }
+
   return (
     <div className="flex-1 bg-[#F8F9FA] min-h-screen pb-10">
-      <header className="bg-[#FF3B30] h-56 relative px-4 pt-12">
+      <header className="bg-[#FF3B30] h-32 relative px-4 pt-12">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white rounded-full hover:bg-white/20">
             <ChevronLeft className="w-6 h-6" />
@@ -51,31 +93,18 @@ export default function TaskCenterPage() {
             <X className="w-6 h-6" />
           </Button>
         </div>
-
-        <div className="absolute -bottom-8 left-4 right-4 bg-white shadow-xl p-6 flex items-center justify-between rounded-2xl border border-black/5 z-10">
-          <div className="flex items-center gap-4">
-            <div className="bg-yellow-400 p-3 rounded-2xl">
-              <Coins className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">My Balance</p>
-              <p className="text-3xl font-black text-black leading-none">{profile?.coins || 0}</p>
-            </div>
-          </div>
-          <Button className="rounded-full bg-yellow-400 hover:bg-yellow-500 text-white font-black text-xs uppercase tracking-widest px-8 h-12">
-            Withdraw
-          </Button>
-        </div>
       </header>
 
-      <main className="mt-16 px-4 space-y-6">
+      <main className="mt-8 px-4 space-y-6">
         <section className="bg-white p-6 rounded-3xl shadow-sm border border-black/5">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-yellow-500" />
               <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily Check-in</h2>
             </div>
-            <span className="text-[10px] font-black text-gray-400">Streak: 2 Days</span>
+            <span className="text-[10px] font-black text-gray-400">
+              Streak: {checkedDays.filter(d => d).length} Days
+            </span>
           </div>
           
           <div className="grid grid-cols-4 gap-3">
@@ -101,7 +130,10 @@ export default function TaskCenterPage() {
               </div>
             ))}
           </div>
-          <Button className="w-full mt-6 h-14 rounded-full bg-[#FF3B30] text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-red-200">
+          <Button 
+            onClick={handleCheckIn}
+            className="w-full mt-6 h-14 rounded-full bg-[#FF3B30] text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-red-200 active:scale-95 transition-all"
+          >
             Check-in Now
           </Button>
         </section>
