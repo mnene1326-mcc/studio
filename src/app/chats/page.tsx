@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc, increment, Timestamp } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc, increment } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -80,7 +80,7 @@ function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentU
     timerRef.current = setTimeout(() => {
       isLongPress.current = true
       onDelete(chat)
-    }, 500) // Reduced to 500ms for snappier feel
+    }, 500)
   }
 
   const handleTouchEnd = () => {
@@ -113,7 +113,7 @@ function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentU
         <div className="flex justify-between items-center mb-0.5">
           <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
           <span className="text-[10px] text-gray-400 font-bold">
-            {chat.lastMessageAt?.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "Just now"}
+            {chat.lastMessageAt?.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "..."}
           </span>
         </div>
         <p className="text-xs text-gray-500 truncate font-bold">
@@ -140,9 +140,15 @@ function ChatsContent() {
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
+  // Optimization: Limit chat list to 50 recent conversations
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
-    return query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid))
+    return query(
+      collection(db, "chats"), 
+      where("participants", "array-contains", currentUser.uid),
+      orderBy("lastMessageAt", "desc"),
+      limit(50)
+    )
   }, [db, currentUser?.uid])
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
@@ -156,11 +162,6 @@ function ChatsContent() {
         const lastAt = chat.lastMessageAt
         if (!lastAt) return true
         return lastAt.toMillis() > clearedAt.toMillis()
-      })
-      .sort((a, b) => {
-        const timeA = a.lastMessageAt?.toMillis?.() || 0
-        const timeB = b.lastMessageAt?.toMillis?.() || 0
-        return timeB - timeA
       })
   }, [userChatsRaw, currentUser?.uid])
 
@@ -213,9 +214,14 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db])
 
+  // Optimization: Limit message history to latest 100 messages
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
-    return query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(100))
+    return query(
+      collection(db, "chats", chatId, "messages"), 
+      orderBy("timestamp", "asc"), 
+      limit(100)
+    )
   }, [db, chatId])
 
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)

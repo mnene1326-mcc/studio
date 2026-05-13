@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -46,7 +47,12 @@ export default function HomePage() {
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  const usersQuery = useMemoFirebase(() => query(collection(db, "users"), where("onboardingComplete", "==", true), limit(100)), [db])
+  // Optimization: Limit to top 100 users to prevent cost spikes
+  const usersQuery = useMemoFirebase(() => query(
+    collection(db, "users"), 
+    where("onboardingComplete", "==", true), 
+    limit(100)
+  ), [db])
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
 
   const handleRefresh = () => {
@@ -76,18 +82,16 @@ export default function HomePage() {
       return true;
     })
 
-    // Sort: Online first, then shuffle rest
     const now = Date.now()
-    const fiveMinutes = 5 * 60 * 1000
+    const tenMinutes = 10 * 60 * 1000
 
     return [...baseList].sort((a, b) => {
-      const aOnline = a.updatedAt?.toMillis ? (now - a.updatedAt.toMillis()) < fiveMinutes : false
-      const bOnline = b.updatedAt?.toMillis ? (now - b.updatedAt.toMillis()) < fiveMinutes : false
+      const aOnline = a.updatedAt?.toMillis ? (now - a.updatedAt.toMillis()) < tenMinutes : false
+      const bOnline = b.updatedAt?.toMillis ? (now - b.updatedAt.toMillis()) < tenMinutes : false
       
       if (aOnline && !bOnline) return -1
       if (!aOnline && bOnline) return 1
       
-      // Shuffle logic based on refreshSeed
       return (Math.sin(a.uid.length + refreshSeed) - Math.sin(b.uid.length + refreshSeed))
     });
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
@@ -152,14 +156,14 @@ export default function HomePage() {
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-30">
             <RotateCw className="w-12 h-12" />
-            <p className="font-black text-sm uppercase tracking-widest">No users found in this category</p>
+            <p className="font-black text-sm uppercase tracking-widest">No users found</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {filteredUsers.map((user, idx) => {
               const now = Date.now()
-              const fiveMinutes = 5 * 60 * 1000
-              const isOnline = user.updatedAt?.toMillis ? (now - user.updatedAt.toMillis()) < fiveMinutes : false
+              const tenMinutes = 10 * 60 * 1000
+              const isOnline = user.updatedAt?.toMillis ? (now - user.updatedAt.toMillis()) < tenMinutes : false
 
               return (
                 <Card 
