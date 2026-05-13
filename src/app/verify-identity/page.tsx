@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef } from "react"
@@ -9,7 +10,7 @@ import { ChevronLeft, Camera, ShieldCheck, CheckCircle2, AlertCircle, Loader2, S
 import { verifyIdentity } from "@/ai/flows/verify-identity-flow"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
+import imageCompression from "browser-image-compression"
 
 export default function VerifyIdentityPage() {
   const router = useRouter()
@@ -27,15 +28,31 @@ export default function VerifyIdentityPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setCapturedImage(reader.result as string)
-        setStep('capture')
+      try {
+        // Step 5: High Traffic Strategy - Local Image Compression
+        const options = {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 800,
+          useWebWorker: true,
+        }
+        const compressedFile = await imageCompression(file, options)
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setCapturedImage(reader.result as string)
+          setStep('capture')
+        }
+        reader.readAsDataURL(compressedFile)
+      } catch (err) {
+        console.error("Compression error:", err)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to process image."
+        })
       }
-      reader.readAsDataURL(file)
     }
   }
 

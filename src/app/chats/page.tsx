@@ -155,7 +155,7 @@ function ChatsContent() {
     
     return [...userChatsRaw]
       .filter(chat => {
-        // Only show chats in the list if they have a last message (sent)
+        // Step 1: Optimized Frugal Logic - Only show chats in the list if they have a last message (sent)
         if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
         const clearedAt = chat.clearedAt?.[currentUser.uid]
@@ -230,7 +230,7 @@ function ChatsContent() {
 
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
-    // We order DESC to get the latest messages first, and to enable flex-col-reverse
+    // We order DESC to get the latest messages first, and to enable native flex-col-reverse anchoring
     return query(
       collection(db, "chats", chatId, "messages"), 
       orderBy("timestamp", "desc"),
@@ -241,7 +241,7 @@ function ChatsContent() {
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const messages = useMemo(() => {
-    // Keep them DESC [newest...oldest] for flex-col-reverse
+    // Keep them DESC [newest...oldest] for flex-col-reverse native bottom anchoring
     if (!currentUser?.uid || !currentChatData) return messagesRaw
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
     if (!clearedAt) return messagesRaw
