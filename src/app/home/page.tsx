@@ -76,7 +76,20 @@ export default function HomePage() {
       return true;
     })
 
-    return [...baseList].sort(() => Math.random() - 0.5);
+    // Sort: Online first, then shuffle rest
+    const now = Date.now()
+    const fiveMinutes = 5 * 60 * 1000
+
+    return [...baseList].sort((a, b) => {
+      const aOnline = a.updatedAt?.toMillis ? (now - a.updatedAt.toMillis()) < fiveMinutes : false
+      const bOnline = b.updatedAt?.toMillis ? (now - b.updatedAt.toMillis()) < fiveMinutes : false
+      
+      if (aOnline && !bOnline) return -1
+      if (!aOnline && bOnline) return 1
+      
+      // Shuffle logic based on refreshSeed
+      return (Math.sin(a.uid.length + refreshSeed) - Math.sin(b.uid.length + refreshSeed))
+    });
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
   if (!isMounted) return null
@@ -143,36 +156,41 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {filteredUsers.map((user, idx) => (
-              <Card 
-                key={`${user.uid}-${refreshSeed}`} 
-                className="relative overflow-hidden border-none aspect-[1/1.2] rounded-3xl group cursor-pointer shadow-xl" 
-                onClick={() => router.push(`/users/${user.uid}`)}
-              >
-                <Image 
-                  src={user.photoURL} 
-                  alt={user.name} 
-                  fill 
-                  className="object-cover transition-transform group-hover:scale-105" 
-                  data-ai-hint="person profile"
-                />
-                
-                <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
-                  <span className="text-[8px] font-black text-white uppercase tracking-tighter">Online</span>
-                </div>
+            {filteredUsers.map((user, idx) => {
+              const now = Date.now()
+              const fiveMinutes = 5 * 60 * 1000
+              const isOnline = user.updatedAt?.toMillis ? (now - user.updatedAt.toMillis()) < fiveMinutes : false
 
-                <div className="absolute top-4 right-4 bg-[#00A2FF] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
-                <div className="absolute inset-x-0 bottom-0 p-5">
-                  <h4 className="text-white font-black text-sm truncate mb-2">{user.name}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-[#006400] px-3 py-1 rounded-full text-white font-black text-[10px]">{calculateAge(user.dob)}</span>
-                    <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white font-bold text-[10px] border border-white/20">{user.country || "Kenya"}</span>
+              return (
+                <Card 
+                  key={`${user.uid}-${refreshSeed}-${idx}`} 
+                  className="relative overflow-hidden border-none aspect-[1/1.2] rounded-3xl group cursor-pointer shadow-xl" 
+                  onClick={() => router.push(`/users/${user.uid}`)}
+                >
+                  <Image 
+                    src={user.photoURL} 
+                    alt={user.name} 
+                    fill 
+                    className="object-cover transition-transform group-hover:scale-105" 
+                    data-ai-hint="person profile"
+                  />
+                  
+                  {isOnline && (
+                    <div className="absolute top-4 left-4 z-20 w-3 h-3 rounded-full bg-green-500 border-2 border-white/50 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                  )}
+
+                  <div className="absolute top-4 right-4 bg-[#00A2FF] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-x-0 bottom-0 p-5">
+                    <h4 className="text-white font-black text-sm truncate mb-2">{user.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-[#006400] px-3 py-1 rounded-full text-white font-black text-[10px]">{calculateAge(user.dob)}</span>
+                      <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white font-bold text-[10px] border border-white/20">{user.country || "Kenya"}</span>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              )
+            })}
           </div>
         )}
       </main>

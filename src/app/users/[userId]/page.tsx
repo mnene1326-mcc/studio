@@ -53,23 +53,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
     }
   }
 
-  if (loading) return null
-  if (!profile) return null
-
+  if (loading || !profile) return null
   const age = calculateAge(profile.dob)
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
       <div className="relative h-[60vh] w-full">
-        <Image
-          src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
-          alt={profile.name}
-          fill
-          className="object-cover"
-          data-ai-hint="person portrait"
-          priority
-        />
-        
+        <Image src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} alt={profile.name} fill className="object-cover" priority data-ai-hint="person portrait" />
         <div className="absolute top-12 inset-x-0 px-6 flex justify-between items-center z-20">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
             <ChevronLeft className="w-6 h-6" />
@@ -89,40 +79,21 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
                 <User className="w-2 h-2 text-black" />
               </div>
             </div>
-            
             <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-[#006400] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
-                {profile.gender === 'female' ? '♀' : '♂'} {age}
-              </span>
-              <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black border border-black/5 uppercase tracking-widest">
-                {profile.country || "Kenya"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-gray-400 text-[10px] font-black cursor-pointer uppercase tracking-widest" onClick={handleCopyId}>
-              <span>ID: {profile.matchFlowId || "---"}</span>
-              <Copy className={cn("w-3 h-3", copied ? "text-green-500" : "text-gray-300")} />
+              <span className="bg-[#006400] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">{profile.gender === 'female' ? '♀' : '♂'} {age}</span>
+              <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black border border-black/5 uppercase tracking-widest">{profile.country || "Kenya"}</span>
             </div>
           </div>
         </div>
-
         <section className="space-y-2 pt-2">
           <h2 className="text-[10px] font-black text-black uppercase tracking-[0.2em] opacity-30">About Me</h2>
-          <p className="text-sm font-medium text-gray-600 leading-relaxed italic">
-            "{profile.interests || `I'm passionate about meeting authentic people, exploring new cultures, and finding deep connections that go beyond the surface.`}"
-          </p>
+          <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{profile.interests || `I'm passionate about meeting authentic people and finding deep connections.`}"</p>
         </section>
-
-        <div className="pt-6 border-t border-black/5">
-          <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] text-center leading-relaxed">
-            Respectful vibes only ✨ Serious connections welcome 🥰
-          </p>
-        </div>
       </div>
 
       <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-[#FF3B30] text-white text-sm font-black flex items-center justify-center gap-3 shadow-2xl premium-shadow uppercase tracking-widest active:scale-95 transition-all"
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white text-sm font-black flex items-center justify-center gap-3 shadow-2xl premium-shadow uppercase tracking-widest active:scale-95 transition-all"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
           <MessageSquare className="w-5 h-5 fill-current" />

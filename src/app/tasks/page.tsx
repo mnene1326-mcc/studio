@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react"
@@ -48,13 +47,10 @@ export default function TaskCenterPage() {
     { title: "Daily Login", reward: "2", icon: CheckCircle2, color: "text-green-500", progress: "1/1" },
   ]
 
-  // Check if user has already checked in today
   const hasCheckedInToday = useMemo(() => {
     if (!profile?.lastCheckInDate) return false
-    
     const lastDate = profile.lastCheckInDate.toDate()
     const today = new Date()
-    
     return (
       lastDate.getDate() === today.getDate() &&
       lastDate.getMonth() === today.getMonth() &&
@@ -66,32 +62,23 @@ export default function TaskCenterPage() {
 
   const handleCheckIn = () => {
     if (!user || !userRef || hasCheckedInToday) return
-
     const streakIndex = currentStreak % 7
     const rewardAmount = days[streakIndex].reward
     
-    // Persist to Firestore: update coins, update last check-in date, and increment streak
     updateDoc(userRef, {
       coins: increment(rewardAmount),
       lastCheckInDate: serverTimestamp(),
       checkInStreak: increment(1)
     }).catch(async () => {
-      const permissionError = new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'update',
-      } satisfies SecurityRuleContext)
-      errorEmitter.emit('permission-error', permissionError)
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userRef.path, operation: 'update' }))
     })
 
-    toast({
-      title: "Check-in Successful!",
-      description: `You earned ${rewardAmount} coins. Keep it up!`,
-    })
+    toast({ title: "Check-in Successful!", description: `You earned ${rewardAmount} coins. Keep it up!` })
   }
 
   return (
     <div className="flex-1 bg-[#F8F9FA] min-h-screen pb-10">
-      <header className="bg-[#FF3B30] h-32 relative px-4 pt-12">
+      <header className="bg-[#00A2FF] h-32 relative px-4 pt-12">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white rounded-full hover:bg-white/20">
             <ChevronLeft className="w-6 h-6" />
@@ -110,31 +97,16 @@ export default function TaskCenterPage() {
               <Trophy className="w-5 h-5 text-yellow-500" />
               <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily Check-in</h2>
             </div>
-            <span className="text-[10px] font-black text-gray-400">
-              Total: {currentStreak} Days
-            </span>
+            <span className="text-[10px] font-black text-gray-400">Total: {currentStreak} Days</span>
           </div>
           
           <div className="grid grid-cols-4 gap-3">
             {days.map((d, i) => {
-              // A day is "checked" if currentStreak covers it (simplistic streak visualization)
               const isChecked = i < (currentStreak % 7) || (currentStreak > 0 && currentStreak % 7 === 0 && i < 7)
-              // If user just checked in today, highlight the most recent day in the 1-7 cycle
               const isToday = hasCheckedInToday && (i === (currentStreak - 1) % 7)
-
               return (
-                <div 
-                  key={i} 
-                  className={cn(
-                    "aspect-square rounded-2xl flex flex-col items-center justify-center border-2 transition-all",
-                    (isChecked || isToday)
-                      ? "bg-green-50 border-green-200" 
-                      : "bg-gray-50 border-transparent"
-                  )}
-                >
-                  {(isChecked || isToday) ? (
-                    <CheckCircle2 className="w-6 h-6 text-green-500" />
-                  ) : (
+                <div key={i} className={cn("aspect-square rounded-2xl flex flex-col items-center justify-center border-2 transition-all", (isChecked || isToday) ? "bg-green-50 border-green-200" : "bg-gray-50 border-transparent")}>
+                  {(isChecked || isToday) ? <CheckCircle2 className="w-6 h-6 text-green-500" /> : (
                     <>
                       <Coins className="w-5 h-5 text-yellow-500 mb-1" />
                       <span className="text-[10px] font-black text-gray-500">+{d.reward}</span>
@@ -149,12 +121,7 @@ export default function TaskCenterPage() {
           <Button 
             onClick={handleCheckIn}
             disabled={hasCheckedInToday}
-            className={cn(
-              "w-full mt-6 h-14 rounded-full text-white font-black uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all",
-              hasCheckedInToday 
-                ? "bg-gray-300 shadow-none cursor-default" 
-                : "bg-[#FF3B30] shadow-red-200"
-            )}
+            className={cn("w-full mt-6 h-14 rounded-full text-white font-black uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all", hasCheckedInToday ? "bg-gray-300 shadow-none cursor-default" : "bg-[#00A2FF] shadow-blue-100")}
           >
             {hasCheckedInToday ? "Already Checked-in" : "Check-in Now"}
           </Button>
@@ -169,22 +136,13 @@ export default function TaskCenterPage() {
             {newcomerTasks.map((task, i) => (
               <div key={i} className="bg-white p-5 flex items-center justify-between rounded-2xl border border-black/5 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}>
-                    <task.icon className="w-6 h-6" />
-                  </div>
+                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}><task.icon className="w-6 h-6" /></div>
                   <div>
                     <p className="text-sm font-black text-black">{task.title}</p>
                     <p className="text-xs font-bold text-yellow-500">+{task.reward} Coins</p>
                   </div>
                 </div>
-                <Button 
-                  variant={task.done ? "ghost" : "outline"} 
-                  disabled={task.done}
-                  className={cn(
-                    "rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest",
-                    task.done ? "text-green-500" : "border-pink-200 text-pink-500 hover:bg-pink-50"
-                  )}
-                >
+                <Button variant={task.done ? "ghost" : "outline"} disabled={task.done} className={cn("rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest", task.done ? "text-green-500" : "border-pink-200 text-pink-500 hover:bg-pink-50")}>
                   {task.done ? "Done" : "Go"}
                 </Button>
               </div>
@@ -201,20 +159,13 @@ export default function TaskCenterPage() {
             {dailyTasks.map((task, i) => (
               <div key={i} className="bg-white p-5 flex items-center justify-between rounded-2xl border border-black/5 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}>
-                    <task.icon className="w-6 h-6" />
-                  </div>
+                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}><task.icon className="w-6 h-6" /></div>
                   <div>
                     <p className="text-sm font-black text-black">{task.title}</p>
                     <p className="text-xs font-bold text-yellow-500">+{task.reward} Coins • {task.progress}</p>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest border-blue-200 text-blue-500 hover:bg-blue-50"
-                >
-                  Go
-                </Button>
+                <Button variant="outline" className="rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest border-blue-200 text-blue-500 hover:bg-blue-50">Go</Button>
               </div>
             ))}
           </div>
