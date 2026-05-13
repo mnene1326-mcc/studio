@@ -4,7 +4,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, X, Coins, Gift, Zap, Star, CheckCircle2 } from "lucide-react"
+import { ChevronLeft, X, Coins, Gift, Zap, Star, CheckCircle2, Trophy, Flame } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function TaskCenterPage() {
@@ -27,10 +27,15 @@ export default function TaskCenterPage() {
     { title: "First Match Chat", reward: "5", icon: Zap, color: "text-purple-500", done: false },
   ]
 
+  const dailyTasks = [
+    { title: "Send 3 Gifts", reward: "15", icon: Flame, color: "text-orange-500", progress: "0/3" },
+    { title: "Daily Login", reward: "2", icon: CheckCircle2, color: "text-green-500", progress: "1/1" },
+  ]
+
   return (
     <div className="flex-1 bg-[#F8F9FA] min-h-screen pb-10">
       {/* Straight Header - Architectural Look */}
-      <header className="bg-[#FF3B30] h-48 relative px-4 pt-12">
+      <header className="bg-[#FF3B30] h-56 relative px-4 pt-12">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white rounded-full hover:bg-white/20">
             <ChevronLeft className="w-6 h-6" />
@@ -42,28 +47,31 @@ export default function TaskCenterPage() {
         </div>
 
         {/* Coin Balance Card Overlay */}
-        <div className="absolute -bottom-6 left-4 right-4 bg-white shadow-xl p-5 flex items-center justify-between rounded-2xl border border-black/5">
-          <div className="flex items-center gap-3">
-            <div className="bg-yellow-400 p-2 rounded-xl">
-              <Coins className="w-6 h-6 text-white" />
+        <div className="absolute -bottom-8 left-4 right-4 bg-white shadow-xl p-6 flex items-center justify-between rounded-2xl border border-black/5 z-10">
+          <div className="flex items-center gap-4">
+            <div className="bg-yellow-400 p-3 rounded-2xl">
+              <Coins className="w-7 h-7 text-white" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">My Balance</p>
-              <p className="text-2xl font-black text-black leading-none">450</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">My Balance</p>
+              <p className="text-3xl font-black text-black leading-none">450</p>
             </div>
           </div>
-          <Button className="rounded-full bg-yellow-400 hover:bg-yellow-500 text-white font-black text-xs uppercase tracking-widest px-6">
+          <Button className="rounded-full bg-yellow-400 hover:bg-yellow-500 text-white font-black text-xs uppercase tracking-widest px-8 h-12">
             Withdraw
           </Button>
         </div>
       </header>
 
-      <main className="mt-12 px-4 space-y-6">
+      <main className="mt-16 px-4 space-y-6">
         {/* Daily Check-in */}
         <section className="bg-white p-6 rounded-3xl shadow-sm border border-black/5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-black text-black uppercase tracking-widest">Daily Check-in</h2>
-            <span className="text-[10px] font-black text-gray-400">Total: 7 Days</span>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-500" />
+              <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily Check-in</h2>
+            </div>
+            <span className="text-[10px] font-black text-gray-400">Streak: 2 Days</span>
           </div>
           
           <div className="grid grid-cols-4 gap-3">
@@ -78,10 +86,10 @@ export default function TaskCenterPage() {
                 )}
               >
                 {checkedDays[i] ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-6 h-6 text-green-500" />
                 ) : (
                   <>
-                    <Coins className="w-4 h-4 text-yellow-500 mb-1" />
+                    <Coins className="w-5 h-5 text-yellow-500 mb-1" />
                     <span className="text-[10px] font-black text-gray-500">+{d.reward}</span>
                   </>
                 )}
@@ -89,7 +97,7 @@ export default function TaskCenterPage() {
               </div>
             ))}
           </div>
-          <Button className="w-full mt-6 h-12 rounded-full bg-[#FF3B30] text-white font-black uppercase tracking-widest text-xs">
+          <Button className="w-full mt-6 h-14 rounded-full bg-[#FF3B30] text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-red-200">
             Check-in Now
           </Button>
         </section>
@@ -100,27 +108,56 @@ export default function TaskCenterPage() {
             <div className="w-1 h-4 bg-pink-500 rounded-full" />
             <h2 className="text-xs font-black text-black uppercase tracking-widest">Newcomer tasks</h2>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {newcomerTasks.map((task, i) => (
-              <div key={i} className="bg-white p-4 flex items-center justify-between rounded-2xl border border-black/5">
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-2 rounded-xl bg-gray-50", task.color)}>
-                    <task.icon className="w-5 h-5" />
+              <div key={i} className="bg-white p-5 flex items-center justify-between rounded-2xl border border-black/5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}>
+                    <task.icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-black">{task.title}</p>
-                    <p className="text-[10px] font-bold text-yellow-500">+{task.reward} Coins</p>
+                    <p className="text-sm font-black text-black">{task.title}</p>
+                    <p className="text-xs font-bold text-yellow-500">+{task.reward} Coins</p>
                   </div>
                 </div>
                 <Button 
                   variant={task.done ? "ghost" : "outline"} 
                   disabled={task.done}
                   className={cn(
-                    "rounded-full px-5 h-8 text-[10px] font-black uppercase tracking-widest",
+                    "rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest",
                     task.done ? "text-green-500" : "border-pink-200 text-pink-500 hover:bg-pink-50"
                   )}
                 >
                   {task.done ? "Done" : "Go"}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Daily Tasks */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 px-2">
+            <div className="w-1 h-4 bg-blue-500 rounded-full" />
+            <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily tasks</h2>
+          </div>
+          <div className="space-y-3">
+            {dailyTasks.map((task, i) => (
+              <div key={i} className="bg-white p-5 flex items-center justify-between rounded-2xl border border-black/5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}>
+                    <task.icon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-black">{task.title}</p>
+                    <p className="text-xs font-bold text-yellow-500">+{task.reward} Coins • {task.progress}</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest border-blue-200 text-blue-500 hover:bg-blue-50"
+                >
+                  Go
                 </Button>
               </div>
             ))}

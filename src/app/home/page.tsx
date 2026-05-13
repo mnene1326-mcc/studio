@@ -68,45 +68,45 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Straight Header - Architectural Look */}
-      <div className="bg-[#FF3B30] pt-2 pb-6">
-        <div className="px-4 pb-4">
+      {/* Architectural Header - Perfectly Straight */}
+      <div className="bg-[#FF3B30] pt-2 pb-8">
+        <div className="px-4 pb-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-5 flex flex-col justify-between h-36 rounded-2xl shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-6 flex flex-col justify-between h-40 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2 rounded-xl backdrop-blur-md">
-                  <FileText className="w-6 h-6 text-black" />
+                <div className="bg-white/30 p-2.5 rounded-2xl backdrop-blur-md">
+                  <FileText className="w-7 h-7 text-black" />
                 </div>
               </div>
-              <div className="space-y-0.5">
-                <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
-                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Send a note</p>
+              <div className="space-y-1">
+                <h3 className="text-white font-black text-lg leading-none">Mystery Note</h3>
+                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Send a note</p>
               </div>
             </div>
 
             <div 
               onClick={() => router.push('/tasks')}
-              className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-5 flex flex-col justify-between h-36 rounded-2xl shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all cursor-pointer"
+              className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-6 flex flex-col justify-between h-40 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2 rounded-xl backdrop-blur-md">
-                  <Target className="w-6 h-6 text-black" />
+                <div className="bg-white/30 p-2.5 rounded-2xl backdrop-blur-md">
+                  <Target className="w-7 h-7 text-black" />
                 </div>
               </div>
-              <div className="space-y-0.5">
-                <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
-                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Earn rewards</p>
+              <div className="space-y-1">
+                <h3 className="text-white font-black text-lg leading-none">Task Center</h3>
+                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Earn rewards</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="sticky top-0 z-40 px-4 pt-2 flex items-center justify-between">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-10">
             <button 
               onClick={() => setActiveTab('Recommend')}
               className={cn(
-                "relative text-lg font-black transition-all tracking-tight",
+                "relative text-xl font-black transition-all tracking-tight",
                 activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50"
               )}
             >
@@ -115,25 +115,25 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
-                "relative text-lg font-black transition-all tracking-tight",
+                "relative text-xl font-black transition-all tracking-tight",
                 activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50"
               )}
             >
               Nearby
             </button>
           </div>
-          <div className="flex items-center gap-4">
-             <ShoppingBag className="w-6 h-6 text-white" />
-             <Search className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-5">
+             <ShoppingBag className="w-7 h-7 text-white" />
+             <Search className="w-7 h-7 text-white" />
           </div>
         </div>
       </div>
 
-      <main className="px-4 pt-6">
+      <main className="px-4 pt-8">
         {loading && filteredUsers.length === 0 ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={`skeleton-${i}`} className="aspect-[1/1.2] bg-muted animate-pulse rounded-2xl" />
+              <div key={`skeleton-${i}`} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -141,7 +141,7 @@ export default function HomePage() {
             <p className="font-bold">Finding matches for you...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
