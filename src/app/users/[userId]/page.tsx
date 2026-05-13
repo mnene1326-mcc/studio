@@ -21,7 +21,6 @@ interface UserProfile {
   name: string
   photoURL: string
   country: string
-  lookingFor: string
   gender: string
   dob: string
   interests?: string
@@ -55,21 +54,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white">
-        <div className="animate-pulse font-logo text-primary text-xl">MatchFlow</div>
-      </div>
-    )
-  }
-
+  if (loading) return null
   if (!profile) return null
 
   const age = calculateAge(profile.dob)
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
-      {/* Immersive Profile Image Section */}
       <div className="relative h-[55vh] w-full">
         <Image
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
@@ -81,59 +72,38 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         />
         
         <div className="absolute top-10 inset-x-0 px-4 flex justify-between items-center z-20">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => router.back()} 
-            className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 w-8 h-8"
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 w-8 h-8"
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
+            <MoreHorizontal className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
-      {/* Profile Details Section with Compact Typography */}
       <div className="relative -mt-24 bg-white px-6 pt-6 space-y-4 min-h-[50vh] z-20 rounded-t-[2.5rem] shadow-2xl">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
               <h1 className="text-sm font-black text-black tracking-tight">{profile.name}</h1>
               <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
-                <User className="w-1.5 h-1.5 text-black fill-current" />
+                <User className="w-1.5 h-1.5 text-black" />
               </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[8px] font-black uppercase">
+              <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[8px] font-black">
                 {profile.gender === 'female' ? '♀' : '♂'} {age}
               </span>
               <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-[8px] font-black border border-black/5">
                 {profile.country || "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-2 py-0.5 rounded-md text-[8px] font-black shadow-sm">13.6km</span>
             </div>
 
-            <div 
-              className="flex items-center gap-1 text-gray-400 text-[8px] font-bold cursor-pointer"
-              onClick={handleCopyId}
-            >
+            <div className="flex items-center gap-1 text-gray-400 text-[8px] font-bold cursor-pointer" onClick={handleCopyId}>
               <span>ID:{profile.matchFlowId || "---"}</span>
               <Copy className={cn("w-2.5 h-2.5", copied ? "text-green-500" : "text-gray-300")} />
             </div>
-          </div>
-
-          <div className="bg-gray-50 rounded-full px-2 py-0.5 flex items-center gap-1 border border-black/5 shadow-sm">
-            <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[7px] font-black text-gray-500 uppercase tracking-tighter">Online</span>
           </div>
         </div>
 
@@ -153,7 +123,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t z-50">
         <Button 
-          className="w-full h-11 rounded-full bg-[#FF3B30] text-white hover:bg-red-600 text-[10px] font-black flex items-center justify-center gap-2 shadow-xl active:scale-95 uppercase tracking-widest"
+          className="w-full h-11 rounded-full bg-[#FF3B30] text-white text-[10px] font-black flex items-center justify-center gap-2 shadow-xl uppercase tracking-widest"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
           <MessageSquare className="w-3.5 h-3.5 fill-current" />

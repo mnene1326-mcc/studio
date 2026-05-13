@@ -22,7 +22,6 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
 
 interface UserProfile {
   name: string
@@ -62,24 +61,18 @@ export default function MePage() {
     }
   }
 
-  if (authLoading || profileLoading) {
-    return (
-      <div className="flex-1 pb-20 bg-white flex flex-col items-center justify-center">
-        <div className="text-center animate-pulse font-logo text-primary text-lg">MatchFlow</div>
-      </div>
-    )
-  }
+  if (authLoading || profileLoading) return null
 
   if (!user || !profile) return null
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Premium Red header background that layers halfway behind the action buttons */}
+      {/* Premium Red Header - Layered halfway behind the cards */}
       <div className="absolute top-0 left-0 w-full h-[220px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
         <header className="relative pt-10 pb-6 px-6 flex flex-col items-center text-center">
-          {/* Top Right Visitor Count Badge */}
+          {/* Top Right Visitor Count */}
           <div className="absolute top-4 right-6">
             <div className="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
               <span className="text-[9px] font-black text-white">12.5k Visitors</span>
@@ -87,7 +80,7 @@ export default function MePage() {
           </div>
 
           <div className="relative mb-3">
-            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted border-none">
+            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
                 alt={profile.name} 
@@ -96,7 +89,6 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            {/* Centered edit button with pencil icon */}
             <button className="absolute bottom-0 right-0 bg-white p-2.5 rounded-full shadow-lg active:scale-90 transition-transform border border-black/5">
               <Pencil className="w-3.5 h-3.5 text-[#FF3B30]" />
             </button>
@@ -104,7 +96,7 @@ export default function MePage() {
 
           <div className="flex items-center justify-center gap-1.5 mb-0.5">
             <h2 className="text-lg font-black text-white tracking-tight">{profile.name}</h2>
-            <BadgeCheck className="w-3.5 h-3.5 text-white fill-white/10" />
+            <BadgeCheck className="w-3.5 h-3.5 text-white" />
           </div>
 
           <div 
@@ -121,7 +113,7 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Action buttons layering over the red background */}
+          {/* Action cards layered over the red background */}
           <div className="grid grid-cols-2 gap-4 relative z-20">
             <Button 
               className="h-16 bg-white hover:bg-gray-50 border-none rounded-2xl shadow-xl flex flex-col items-center justify-center gap-0.5 text-[#FF3B30] active:scale-95 transition-all"
@@ -140,11 +132,7 @@ export default function MePage() {
 
           <div className="bg-white rounded-[2rem] p-1.5 shadow-sm border border-black/5 overflow-hidden">
             <div className="flex flex-col">
-              <Button 
-                variant="ghost" 
-                className="h-14 justify-between rounded-[1.5rem] px-4 hover:bg-gray-50 active:bg-gray-100"
-                asChild
-              >
+              <Button variant="ghost" className="h-14 justify-between rounded-[1.5rem] px-4" asChild>
                 <Link href="#">
                   <div className="flex items-center gap-3">
                     <div className="bg-green-50 p-2 rounded-xl">
@@ -156,11 +144,7 @@ export default function MePage() {
                 </Link>
               </Button>
 
-              <Button 
-                variant="ghost" 
-                className="h-14 justify-between rounded-[1.5rem] px-4 hover:bg-gray-50 active:bg-gray-100"
-                asChild
-              >
+              <Button variant="ghost" className="h-14 justify-between rounded-[1.5rem] px-4" asChild>
                 <Link href="#">
                   <div className="flex items-center gap-3">
                     <div className="bg-blue-50 p-2 rounded-xl">
@@ -172,11 +156,7 @@ export default function MePage() {
                 </Link>
               </Button>
 
-              <Button 
-                variant="ghost" 
-                className="h-14 justify-between rounded-[1.5rem] px-4 hover:bg-gray-50 active:bg-gray-100"
-                asChild
-              >
+              <Button variant="ghost" className="h-14 justify-between rounded-[1.5rem] px-4" asChild>
                 <Link href="/settings">
                   <div className="flex items-center gap-3">
                     <div className="bg-gray-50 p-2 rounded-xl">

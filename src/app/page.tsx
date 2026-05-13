@@ -1,31 +1,24 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
-import { Loader2 } from "lucide-react"
 
 /**
- * Stabilized Entry Point for MatchFlow.
- * Handles both the splash screen and redirect logic in a single Client Component
- * with a robust hydration strategy to prevent mismatch errors.
+ * Silent Entry Point for MatchFlow.
+ * Handles instant redirection based on auth status without a splash screen.
  */
-export default function WelcomePage() {
-  const [isMounted, setIsMounted] = useState(false)
+export default function EntryPage() {
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (isMounted && !authLoading) {
+    if (!authLoading) {
       if (user) {
-        const checkOnboarding = async () => {
+        const checkStatus = async () => {
           try {
             const userRef = doc(db, "users", user.uid)
             const userSnap = await getDoc(userRef)
@@ -38,23 +31,13 @@ export default function WelcomePage() {
             router.replace("/login")
           }
         }
-        checkOnboarding()
+        checkStatus()
       } else {
         router.replace("/login")
       }
     }
-  }, [isMounted, authLoading, user, db, router])
+  }, [authLoading, user, db, router])
 
-  // Initial shell must be identical on server and client
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-      <div className="flex flex-col items-center gap-6">
-        <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Entering MatchFlow...</p>
-        </div>
-      </div>
-    </div>
-  )
+  // Minimal empty shell to avoid hydration mismatches
+  return null
 }

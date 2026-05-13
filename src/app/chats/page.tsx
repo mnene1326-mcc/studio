@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo } from "react"
@@ -5,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
+import { FirestorePermissionError } from "@/firebase/errors"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -34,8 +35,6 @@ interface UserProfile {
   uid: string
   name: string
   photoURL: string
-  interests?: string
-  lookingFor?: string
 }
 
 function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: string }) {
@@ -46,97 +45,28 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
   const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   const { data: partner } = useDoc<UserProfile>(partnerRef)
 
-  const getStatus = (uid: string) => {
-    const statuses = ["🔥 0.2°C", "💧 9.5°C", "🌸 116.4°C"]
-    const index = uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % statuses.length
-    return statuses[index]
-  }
-
   if (!partner) return null
-
-  const randomStatus = getStatus(partner.uid)
 
   return (
     <div 
       className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98]"
       onClick={() => router.push(`/chats?startWith=${partnerId}`)}
     >
-      <div className="relative">
-        <Avatar className="w-12 h-12 border-none shadow-sm">
-          <AvatarImage src={partner.photoURL || `https://picsum.photos/seed/${partner.uid}/200/200`} />
-          <AvatarFallback className="bg-[#FF3B30] text-white font-black text-xs">{partner.name?.[0] || '?'}</AvatarFallback>
-        </Avatar>
-        <div className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-green-500 border border-white rounded-full" />
-      </div>
+      <Avatar className="w-12 h-12 border-none shadow-sm">
+        <AvatarImage src={partner.photoURL || `https://picsum.photos/seed/${partner.uid}/200/200`} />
+        <AvatarFallback className="bg-[#FF3B30] text-white font-black text-xs">{partner.name?.[0] || '?'}</AvatarFallback>
+      </Avatar>
       
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <div className="flex items-center gap-1 overflow-hidden">
-            <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
-            <span className="text-[8px] text-gray-400 font-bold shrink-0">{randomStatus}</span>
-          </div>
+          <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
           <span className="text-[9px] text-gray-400 font-bold">
             {chat.lastMessageAt && chat.lastMessageAt.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "Just now"}
           </span>
         </div>
-        <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-500 truncate font-bold flex-1 pr-4">
-            {chat.lastMessage || "hi love..."}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function DraggableGameButton() {
-  const [pos, setPos] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    setPos({ x: window.innerWidth - 70, y: window.innerHeight - 180 })
-  }, [])
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setIsDragging(true)
-    setDragOffset({
-      x: e.clientX - pos.x,
-      y: e.clientY - pos.y
-    })
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return
-    const newX = e.clientX - dragOffset.x
-    const newY = e.clientY - dragOffset.y
-    const margin = 20
-    const safeX = Math.max(margin, Math.min(newX, window.innerWidth - 60))
-    const safeY = Math.max(margin, Math.min(newY, window.innerHeight - 100))
-    setPos({ x: safeX, y: safeY })
-  }
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    setIsDragging(false)
-    e.currentTarget.releasePointerCapture(e.pointerId)
-  }
-
-  return (
-    <div 
-      className="fixed z-50 touch-none"
-      style={{ left: pos.x, top: pos.y }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-    >
-      <div className="relative group cursor-pointer active:scale-95 transition-transform">
-        <div className="bg-[#FF3B30] p-3 rounded-full shadow-lg flex items-center justify-center">
-          <Gamepad2 className="w-6 h-6 text-white" />
-        </div>
-        <div className="absolute -bottom-1 -left-1 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded-md border border-white shadow-sm pointer-events-none">
-          Game
-        </div>
+        <p className="text-xs text-gray-500 truncate font-bold">
+          {chat.lastMessage || "Start talking..."}
+        </p>
       </div>
     </div>
   )
@@ -155,10 +85,7 @@ function ChatsContent() {
 
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
-    return query(
-      collection(db, "chats"),
-      where("participants", "array-contains", currentUser.uid)
-    )
+    return query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid))
   }, [db, currentUser?.uid])
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
@@ -238,9 +165,7 @@ function ChatsContent() {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
         <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-8 pb-4 flex items-center justify-between shadow-lg">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-logo text-white drop-shadow-sm">Chat</h1>
-          </div>
+          <h1 className="text-2xl font-logo text-white drop-shadow-sm">Chat</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
                 <ShoppingBag className="w-6 h-6" />
@@ -259,16 +184,14 @@ function ChatsContent() {
                    <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
                    <div className="flex-1 space-y-2">
                      <div className="h-4 w-1/3 bg-muted animate-pulse rounded" />
-                     <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
                    </div>
                  </div>
                ))}
              </div>
           ) : userChats.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-20 px-8 space-y-4 opacity-40 italic">
-              <MessageSquare className="w-12 h-12 text-muted-foreground" />
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-20 px-8 space-y-4 opacity-40">
+              <MessageSquare className="w-12 h-12" />
               <p className="font-black text-lg">No active chats...</p>
-              <Button onClick={() => router.push("/home")} variant="outline" className="rounded-full h-9 text-xs border-[#FF3B30] text-[#FF3B30] font-black">Find Someone</Button>
             </div>
           ) : (
             <div className="bg-white">
@@ -278,7 +201,6 @@ function ChatsContent() {
             </div>
           )}
         </main>
-        <DraggableGameButton />
         <BottomNav />
       </div>
     )
@@ -290,7 +212,7 @@ function ChatsContent() {
         <Button variant="ghost" size="icon" onClick={() => router.push("/chats")} className="rounded-full w-8 h-8">
           <ChevronLeft className="w-6 h-6" />
         </Button>
-        <Avatar className="w-10 h-10 border border-[#FF3B30]">
+        <Avatar className="w-10 h-10">
           <AvatarImage src={chatPartner?.photoURL} />
           <AvatarFallback className="font-black text-xs">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
@@ -298,41 +220,32 @@ function ChatsContent() {
           {partnerLoading ? (
             <div className="h-4 w-24 bg-muted animate-pulse rounded" />
           ) : (
-            <>
-              <h3 className="font-black text-sm leading-tight">{chatPartner?.name || 'Loading...'}</h3>
-              <p className="text-[8px] text-green-500 font-bold">● Online</p>
-            </>
+            <h3 className="font-black text-sm leading-tight">{chatPartner?.name || 'Loading...'}</h3>
           )}
         </div>
       </header>
 
       <ScrollArea className="flex-1 p-3 bg-white/50">
         <div className="space-y-3 pb-4">
-          {isInitializingChat || (messagesLoading && messages.length === 0) ? (
+          {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
             <div className="flex justify-center p-8">
               <Loader2 className="w-6 h-6 text-[#FF3B30] animate-spin" />
             </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center py-10 opacity-30 italic font-black text-xs">
-              Start the conversation...
-            </div>
-          ) : (
-            messages.map((msg) => (
-              <div key={msg.id} className={cn("flex", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
-                <div className={cn(
-                  "max-w-[80%] p-3 rounded-[1.5rem] text-xs font-black shadow-sm",
-                  msg.senderId === currentUser.uid 
-                    ? 'bg-[#FF3B30] text-white rounded-br-none' 
-                    : 'bg-white text-black border border-gray-100 rounded-bl-none'
-                )}>
-                  {msg.text}
-                  <div className="text-[8px] mt-1 opacity-60 text-right italic font-bold">
-                    {msg.timestamp?.toDate ? format(msg.timestamp.toDate(), "HH:mm") : ""}
-                  </div>
+          ) : messages.map((msg) => (
+            <div key={msg.id} className={cn("flex", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
+              <div className={cn(
+                "max-w-[80%] p-3 rounded-[1.5rem] text-xs font-black shadow-sm",
+                msg.senderId === currentUser.uid 
+                  ? 'bg-[#FF3B30] text-white rounded-br-none' 
+                  : 'bg-white text-black border border-gray-100 rounded-bl-none'
+              )}>
+                {msg.text}
+                <div className="text-[8px] mt-1 opacity-60 text-right italic font-bold">
+                  {msg.timestamp?.toDate ? format(msg.timestamp.toDate(), "HH:mm") : ""}
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       </ScrollArea>
 
@@ -346,7 +259,7 @@ function ChatsContent() {
         />
         <Button 
           size="icon" 
-          className="rounded-full w-10 h-10 bg-[#FF3B30] hover:bg-red-600 text-white shrink-0" 
+          className="rounded-full w-10 h-10 bg-[#FF3B30] text-white" 
           disabled={!newMessage.trim() || !chatId}
           onClick={() => handleSendMessage(newMessage)}
         >
