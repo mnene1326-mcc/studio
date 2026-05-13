@@ -285,8 +285,7 @@ function ChatsContent() {
           ) : userChats.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 space-y-4 opacity-40">
               <ShoppingBag className="w-16 h-16 mb-4" />
-              <p className="font-black text-xl">No connections yet...</p>
-              <Button onClick={() => router.push('/home')} className="rounded-full px-8 bg-[#FF3B30]">Find Matches</Button>
+              <p className="font-black text-xl">No chats yet...</p>
             </div>
           ) : (
             <div className="bg-white">

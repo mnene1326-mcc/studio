@@ -2,8 +2,8 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { collection, query, where, limit } from "firebase/firestore"
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query, where, limit, doc } from "firebase/firestore"
+import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -45,19 +45,41 @@ export default function HomePage() {
     setIsMounted(true)
   }, [])
 
+  // Fetch current user's profile to determine gender filtering
+  const currentUserProfileRef = useMemoFirebase(() => {
+    return currentUser?.uid ? doc(db, "users", currentUser.uid) : null
+  }, [db, currentUser?.uid])
+  
+  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
+
   const usersQuery = useMemoFirebase(() => {
     return query(
       collection(db, "users"), 
       where("onboardingComplete", "==", true),
-      limit(20)
+      limit(40) // Fetch more to allow for filtering
     )
   }, [db])
 
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
 
   const filteredUsers = useMemo(() => {
-    return users.filter(u => u.uid !== currentUser?.uid)
-  }, [users, currentUser])
+    if (!users) return []
+    return users.filter(u => {
+      // Don't show self
+      if (u.uid === currentUser?.uid) return false
+
+      // Gender filtering: Male see Female, Female see Male
+      if (currentUserProfile?.gender === 'male') {
+        return u.gender === 'female'
+      }
+      if (currentUserProfile?.gender === 'female') {
+        return u.gender === 'male'
+      }
+
+      // If current user gender not set or 'other', show all except self
+      return true
+    })
+  }, [users, currentUser?.uid, currentUserProfile?.gender])
 
   const handleChatClick = (e: React.MouseEvent, userId: string) => {
     e.stopPropagation()
@@ -138,7 +160,7 @@ export default function HomePage() {
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center opacity-30">
-            <p className="font-bold">Finding matches for you...</p>
+            <p className="font-bold">No users found matching your preference...</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
