@@ -21,7 +21,7 @@ export async function getAccessToken() {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    return { error: 'PesaPal credentials (KEY/SECRET) are missing in Vercel environment variables.' };
+    return { error: 'PesaPal credentials (KEY/SECRET) are missing in environment variables.' };
   }
 
   try {
@@ -48,6 +48,23 @@ export async function getAccessToken() {
   }
 }
 
+export async function getIPNList(token: string) {
+  try {
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Queues/GetIPNs`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    return await safeJson(response);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
 export async function registerIPN(token: string) {
   const appUrl = 'https://matchflow-iota.vercel.app';
   const ipnUrl = `${appUrl}/api/pesapal-ipn`;
@@ -68,7 +85,7 @@ export async function registerIPN(token: string) {
 
     const data = await safeJson(response);
     if (!response.ok || data.error || !data.ipn_id) {
-      return { error: data.message || `API Registration Restricted (Status: ${response.status}). Manual registration required.` };
+      return { error: data.message || `API Registration Restricted (Status: ${response.status}).` };
     }
 
     return { ipn_id: data.ipn_id };
@@ -103,10 +120,10 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
   try {
     const ipnId = process.env.PESAPAL_IPN_ID;
 
-    if (!ipnId || ipnId === 'YOUR_IPN_ID') {
+    if (!ipnId) {
       return { 
         success: false, 
-        error: 'MISSING_IPN_ID: You must go to your PesaPal Dashboard -> IPN Settings, save your listener URL, copy the ID generated, and add it to Vercel as PESAPAL_IPN_ID.' 
+        error: 'MISSING_IPN_ID: You must get your IPN ID from the PesaPal dashboard and add it to Vercel.' 
       };
     }
 
@@ -150,7 +167,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
 
     const data = await safeJson(response);
     if (!response.ok || !data.redirect_url || data.error) {
-      return { success: false, error: data.message || 'Payment initiation failed. Ensure IPN ID is valid.' };
+      return { success: false, error: data.message || 'Payment initiation failed.' };
     }
 
     return { success: true, redirectUrl: data.redirect_url, merchantReference };
