@@ -1,76 +1,85 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useUser, useFirestore } from "@/firebase"
-import { doc, getDoc } from "firebase/firestore"
-import { Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Heart, Mail, Zap } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 /**
  * Entry Point for MatchFlow.
- * Displays a welcome screen and handles authentication redirection.
- * Uses a hydration check to ensure the server and initial client render match perfectly.
+ * Displays the welcome screen with branding and access options.
+ * Uses a hydration check to ensure stable rendering.
  */
-export default function EntryPage() {
+export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
-  const { user, loading: authLoading } = useUser()
-  const db = useFirestore()
-  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (mounted && !authLoading) {
-      // Small delay to allow the user to see the welcome branding
-      const timer = setTimeout(() => {
-        if (user) {
-          const checkStatus = async () => {
-            try {
-              const userRef = doc(db, "users", user.uid)
-              const userSnap = await getDoc(userRef)
-              if (userSnap.exists() && userSnap.data().onboardingComplete) {
-                router.replace("/home")
-              } else {
-                router.replace("/onboarding")
-              }
-            } catch (error) {
-              router.replace("/login")
-            }
-          }
-          checkStatus()
-        } else {
-          router.replace("/login")
-        }
-      }, 1500)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [mounted, authLoading, user, db, router])
-
   // To prevent hydration mismatch, the server and first client render MUST be identical.
-  // We render a simple white screen until the component has mounted on the client.
+  // We return null until mounted on the client to ensure a clean transition.
   if (!mounted) {
-    return (
-      <div className="flex-1 bg-white min-h-screen" />
-    )
+    return null
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-      <div className="animate-in fade-in zoom-in duration-700 ease-out flex flex-col items-center gap-6">
-        <h1 className="text-5xl font-logo text-[#FF3B30] drop-shadow-sm">
-          MatchFlow
-        </h1>
+    <div className="relative flex-1 flex flex-col min-h-screen bg-black overflow-hidden">
+      {/* Background Image with Premium Gradients */}
+      <div className="absolute inset-0 z-0">
+        <Image 
+          src="https://picsum.photos/seed/matchwelcome/800/1200" 
+          alt="Welcome" 
+          fill 
+          className="object-cover opacity-60 grayscale-[0.2]"
+          data-ai-hint="couple romance"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+      </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="w-8 h-8 text-[#FF3B30] animate-spin" />
-          <p className="text-[10px] font-black text-[#FF3B30]/60 uppercase tracking-widest">
-            Connecting...
+      {/* Content Layer */}
+      <div className="relative z-10 flex-1 flex flex-col justify-end p-8 pb-16 space-y-8">
+        <div className="space-y-3 text-center mb-10">
+          <div className="relative inline-block">
+            <Heart className="w-16 h-16 text-[#FF3B30] mx-auto fill-current drop-shadow-[0_0_15px_rgba(255,59,48,0.5)] animate-pulse" />
+          </div>
+          <h1 className="text-6xl font-logo text-white drop-shadow-lg tracking-tight">
+            MatchFlow
+          </h1>
+          <p className="text-white/60 font-black text-[10px] uppercase tracking-[0.4em] ml-1">
+            Connect with Heart
           </p>
         </div>
+
+        <div className="space-y-4 max-w-sm mx-auto w-full">
+          <Button 
+            asChild
+            className="w-full h-15 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
+          >
+            <Link href="/login" className="flex items-center justify-center gap-3">
+              <Mail className="w-5 h-5" />
+              Continue with Email
+            </Link>
+          </Button>
+
+          <Button 
+            asChild
+            variant="outline"
+            className="w-full h-15 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
+          >
+            <Link href="/onboarding?fast=true" className="flex items-center justify-center gap-3">
+              <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
+              Fast Login
+            </Link>
+          </Button>
+        </div>
+
+        <p className="text-[9px] text-center text-white/30 font-bold px-8 leading-relaxed max-w-xs mx-auto">
+          By entering, you confirm you are 18+ and agree to our <span className="underline text-white/50">Terms</span> and <span className="underline text-white/50">Privacy Policy</span>.
+        </p>
       </div>
     </div>
   )
