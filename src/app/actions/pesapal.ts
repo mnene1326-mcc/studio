@@ -3,7 +3,6 @@
 
 /**
  * @fileOverview PesaPal v3 Live Production actions.
- * Refactored to return error objects instead of throwing for better production UX.
  */
 
 const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3';
@@ -13,7 +12,7 @@ async function safeJson(response: Response) {
   try {
     return JSON.parse(text);
   } catch (e) {
-    return { error: true, message: `PesaPal returned non-JSON response (Status: ${response.status}).` };
+    return { error: true, message: `PesaPal returned non-JSON response (Status: ${response.status}).`, raw: text.substring(0, 200) };
   }
 }
 
@@ -22,7 +21,7 @@ export async function getAccessToken() {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    return { error: 'PesaPal credentials (KEY/SECRET) are missing in Vercel settings.' };
+    return { error: 'PesaPal credentials (KEY/SECRET) are missing in Vercel environment variables.' };
   }
 
   try {
@@ -53,25 +52,29 @@ export async function registerIPN(token: string) {
   const appUrl = 'https://matchflow-iota.vercel.app';
   const ipnUrl = `${appUrl}/api/pesapal-ipn`;
 
-  const response = await fetch(`${PESAPAL_BASE_URL}/api/Queues/RegisterIPN`, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      url: ipnUrl,
-      ipn_notification_type: 'GET',
-    }),
-  });
+  try {
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Queues/RegisterIPN`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        url: ipnUrl,
+        ipn_notification_type: 'GET',
+      }),
+    });
 
-  const data = await safeJson(response);
-  if (!response.ok || data.error) {
-    return { error: data.message || 'IPN Registration Restricted. Use manual method.' };
+    const data = await safeJson(response);
+    if (!response.ok || data.error || !data.ipn_id) {
+      return { error: data.message || `API Registration Restricted (Status: ${response.status}). Manual registration required.` };
+    }
+
+    return { ipn_id: data.ipn_id };
+  } catch (err: any) {
+    return { error: `Registration request failed: ${err.message}` };
   }
-
-  return { ipn_id: data.ipn_id };
 }
 
 export async function getTransactionStatus(orderTrackingId: string) {

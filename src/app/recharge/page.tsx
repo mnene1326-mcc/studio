@@ -63,8 +63,13 @@ export default function RechargePage() {
       if (result.success && result.redirectUrl) {
         window.location.href = result.redirectUrl
       } else {
-        setErrorMessage(result.error || "Initialization failed")
+        setErrorMessage(result.error || "Payment initialization failed. Please check your network or try again later.")
         setLoading(false)
+        toast({
+          variant: "destructive",
+          title: "Payment Error",
+          description: result.error || "Unable to start payment."
+        })
       }
     } catch (error: any) {
       setErrorMessage("An unexpected error occurred. Please try again.")
@@ -89,7 +94,7 @@ export default function RechargePage() {
           {errorMessage && (
             <Alert variant="destructive" className="rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-300">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle className="font-black uppercase text-[10px] tracking-widest">Setup Required</AlertTitle>
+              <AlertTitle className="font-black uppercase text-[10px] tracking-widest">Payment Notice</AlertTitle>
               <AlertDescription className="text-xs font-bold leading-relaxed">
                 {errorMessage}
               </AlertDescription>
