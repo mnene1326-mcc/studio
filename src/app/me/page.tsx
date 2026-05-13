@@ -74,7 +74,7 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Red header background that layers halfway behind the buttons */}
+      {/* Premium Red header background that layers halfway behind the action buttons */}
       <div className="absolute top-0 left-0 w-full h-[220px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
@@ -86,7 +86,7 @@ export default function MePage() {
           </div>
 
           <div className="relative mb-3">
-            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted">
+            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted border-none">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
                 alt={profile.name} 
