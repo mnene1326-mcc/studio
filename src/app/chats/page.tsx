@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limitToLast, updateDoc, increment, orderBy } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -141,6 +141,7 @@ function ChatsContent() {
   const { user: currentUser } = useUser()
   const db = useFirestore()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
@@ -159,7 +160,7 @@ function ChatsContent() {
       collection(db, "chats"), 
       where("participants", "array-contains", currentUser.uid),
       orderBy("lastMessageAt", "desc"),
-      limit(chatListLimit)
+      limitToLast(chatListLimit)
     )
   }, [db, currentUser?.uid, chatListLimit])
 
@@ -247,8 +248,8 @@ function ChatsContent() {
     if (!chatId) return null
     return query(
       collection(db, "chats", chatId, "messages"), 
-      orderBy("timestamp", "desc"),
-      limit(messagesLimit)
+      orderBy("timestamp", "asc"),
+      limitToLast(messagesLimit)
     )
   }, [db, chatId, messagesLimit])
 
@@ -262,9 +263,13 @@ function ChatsContent() {
     return messagesRaw.filter(m => toMillisSafe(m.timestamp) > clearedAtMillis)
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
   useEffect(() => {
-    if (scrollContainerRef.current && messages.length > 0) {
-      scrollContainerRef.current.scrollTop = 0
+    if (messages.length > 0) {
+      scrollToBottom()
     }
   }, [messages.length])
 
@@ -297,10 +302,6 @@ function ChatsContent() {
         lastMessage: text.trim(), 
         lastMessageAt: serverTimestamp()
       })
-      
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = 0
-      }
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
     }
@@ -440,26 +441,7 @@ function ChatsContent() {
       </header>
 
       <main ref={scrollContainerRef} className="flex-1 overflow-y-auto no-scrollbar bg-white">
-        <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
-          {messages.map((msg) => (
-            <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
-              {msg.senderId !== currentUser.uid && (
-                <Avatar className="w-8 h-8 shrink-0">
-                  <AvatarImage src={chatPartner?.photoURL} />
-                  <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
-                </Avatar>
-              )}
-              <div className={cn(
-                "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
-                msg.senderId === currentUser.uid 
-                  ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
-                  : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
-              )}>
-                {msg.text}
-              </div>
-            </div>
-          ))}
-
+        <div className="flex flex-col min-h-full px-4 py-6 space-y-6">
           {messagesRaw.length >= messagesLimit && messagesRaw.length > 0 && (
             <div className="flex justify-center py-4">
                <Button 
@@ -479,6 +461,27 @@ function ChatsContent() {
               <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
             </div>
           )}
+
+          {messages.map((msg) => (
+            <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
+              {msg.senderId !== currentUser.uid && (
+                <Avatar className="w-8 h-8 shrink-0">
+                  <AvatarImage src={chatPartner?.photoURL} />
+                  <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
+                </Avatar>
+              )}
+              <div className={cn(
+                "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
+                msg.senderId === currentUser.uid 
+                  ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
+                  : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
+              )}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+
+          <div ref={messagesEndRef} />
 
           {isBlocked && (
             <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
