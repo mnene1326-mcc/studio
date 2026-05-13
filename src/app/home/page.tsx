@@ -117,7 +117,11 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen relative">
-      <div className="absolute top-0 left-0 right-0 h-28 bg-[#00A2FF] z-0" />
+      <div className="absolute top-0 left-0 right-0 h-28 bg-[#00A2FF] z-0 overflow-hidden">
+        <div className="absolute -right-2 -top-2 opacity-15 rotate-[15deg] select-none pointer-events-none">
+          <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
+        </div>
+      </div>
       
       <div className="relative z-10">
         <div className="px-4 pt-4 pb-2">
