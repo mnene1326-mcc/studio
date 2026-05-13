@@ -13,12 +13,13 @@ async function processIPN(req: Request) {
   const orderTrackingId = url.searchParams.get('OrderTrackingId');
   const orderMerchantReference = url.searchParams.get('OrderMerchantReference');
 
-  // If parameters are missing, it's likely a validation ping from PesaPal or a manual visit.
-  // We return 200 OK with a friendly message to satisfy dashboard validation.
+  // If parameters are missing, it's likely a validation ping from PesaPal dashboard.
+  // We return a 200 OK with a specific message to pass their validation check.
   if (!orderTrackingId || !orderMerchantReference) {
+    console.log('PesaPal validation ping received at IPN endpoint.');
     return NextResponse.json({ 
       status: 'OK', 
-      message: 'MatchFlow IPN endpoint is active and waiting for data.' 
+      message: 'MatchFlow IPN listener is active and verified.' 
     }, { status: 200 });
   }
 
@@ -51,7 +52,7 @@ async function processIPN(req: Request) {
       status: 'OK', 
       orderTrackingId, 
       merchantReference: orderMerchantReference 
-    });
+    }, { status: 200 });
   } catch (e: any) {
     console.error('IPN Processing Error:', e.message);
     // Still return 200 so PesaPal doesn't keep retrying if it's a logical error

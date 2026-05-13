@@ -12,14 +12,13 @@ export async function GET() {
   try {
     // Step 1: Auth
     const token = await getAccessToken().catch(err => {
-      throw new Error(`Auth Failed: ${err.message}. Ensure your Live Keys are in Environment Variables.`);
+      throw new Error(`Auth Failed: ${err.message}. Ensure your Live Keys are in Vercel Environment Variables.`);
     });
 
     // Step 2: Register IPN via API
-    // Note: If this fails with a JSON error, it usually means PesaPal's automated 
-    // registration is down. In that case, use the manual dashboard method.
+    // Note: Automated registration often fails if PesaPal requires manual dashboard registration.
     const ipnId = await registerIPN(token).catch(err => {
-      throw new Error(`Automated Registration Failed: ${err.message}`);
+      throw new Error(`Automated Registration Unavailable: ${err.message}`);
     });
 
     return NextResponse.json({
@@ -27,18 +26,20 @@ export async function GET() {
       message: 'IPN Registered successfully via API.',
       ipn_id: ipnId,
       ipn_url: ipnUrl,
-      next_step: 'Add the "ipn_id" above to your Environment Variables as PESAPAL_IPN_ID and redeploy.'
+      next_step: 'Copy the IPN ID above and add it to Vercel as PESAPAL_IPN_ID, then redeploy.'
     });
   } catch (error: any) {
     return NextResponse.json({
-      status: 'Setup Note',
-      error: error.message,
-      manual_solution: {
-        instructions: "If automated registration fails, please register manually in the PesaPal Dashboard.",
-        website_domain: "matchflow-iota.vercel.app",
-        ipn_listener_url: ipnUrl,
-        what_to_do: "After saving in the dashboard, copy the IPN ID provided there and add it to Vercel as PESAPAL_IPN_ID."
-      }
-    }, { status: 200 }); // Return 200 so you can read the manual instructions in the browser
+      status: 'Action Required',
+      reason: error.message,
+      manual_steps: [
+        "1. Go to PesaPal Dashboard -> IPN Settings.",
+        `2. Website Domain: matchflow-iota.vercel.app`,
+        `3. IPN Listener URL: ${ipnUrl}`,
+        "4. Click SAVE.",
+        "5. Copy the 'IPN ID' generated in the table on that page.",
+        "6. Add it to Vercel as PESAPAL_IPN_ID and redeploy."
+      ]
+    }, { status: 200 });
   }
 }
