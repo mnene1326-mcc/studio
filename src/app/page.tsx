@@ -20,7 +20,6 @@ export default function WelcomePage() {
   }, [])
 
   // To prevent hydration mismatch, the server and first client render MUST be identical.
-  // We return null until mounted on the client to ensure a clean transition.
   if (!mounted) {
     return null
   }
@@ -30,34 +29,38 @@ export default function WelcomePage() {
       {/* Background Image with Premium Gradients */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="https://picsum.photos/seed/matchwelcome/800/1200" 
+          src="https://picsum.photos/seed/matchwelcome/1000/1500" 
           alt="Welcome" 
           fill 
           className="object-cover opacity-60 grayscale-[0.2]"
           data-ai-hint="couple romance"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
       </div>
 
       {/* Content Layer */}
-      <div className="relative z-10 flex-1 flex flex-col justify-end p-8 pb-16 space-y-8">
-        <div className="space-y-3 text-center mb-10">
-          <div className="relative inline-block">
-            <Heart className="w-16 h-16 text-[#FF3B30] mx-auto fill-current drop-shadow-[0_0_15px_rgba(255,59,48,0.5)] animate-pulse" />
+      <div className="relative z-10 flex-1 flex flex-col px-8 pt-20 pb-16">
+        {/* Branding Section - Centered in the upper half */}
+        <div className="flex-1 flex flex-col items-center justify-center space-y-6 mb-12">
+          <div className="relative">
+            <Heart className="w-20 h-20 text-[#FF3B30] fill-current drop-shadow-[0_0_20px_rgba(255,59,48,0.6)] animate-pulse" />
           </div>
-          <h1 className="text-6xl font-logo text-white drop-shadow-lg tracking-tight">
-            MatchFlow
-          </h1>
-          <p className="text-white/60 font-black text-[10px] uppercase tracking-[0.4em] ml-1">
-            Connect with Heart
-          </p>
+          <div className="text-center space-y-2">
+            <h1 className="text-7xl font-logo text-white drop-shadow-2xl tracking-tight">
+              MatchFlow
+            </h1>
+            <p className="text-white/70 font-black text-[11px] uppercase tracking-[0.5em] ml-1">
+              Connect with Heart
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-4 max-w-sm mx-auto w-full">
+        {/* Action Section - Spaced at the bottom */}
+        <div className="w-full max-w-sm mx-auto space-y-5">
           <Button 
             asChild
-            className="w-full h-15 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
+            className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
           >
             <Link href="/login" className="flex items-center justify-center gap-3">
               <Mail className="w-5 h-5" />
@@ -68,18 +71,18 @@ export default function WelcomePage() {
           <Button 
             asChild
             variant="outline"
-            className="w-full h-15 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
+            className="w-full h-16 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
           >
             <Link href="/onboarding?fast=true" className="flex items-center justify-center gap-3">
               <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
-              Fast Login
+              Fast matching
             </Link>
           </Button>
-        </div>
 
-        <p className="text-[9px] text-center text-white/30 font-bold px-8 leading-relaxed max-w-xs mx-auto">
-          By entering, you confirm you are 18+ and agree to our <span className="underline text-white/50">Terms</span> and <span className="underline text-white/50">Privacy Policy</span>.
-        </p>
+          <p className="text-[10px] text-center text-white/40 font-bold px-4 leading-relaxed mt-6">
+            By entering, you confirm you are 18+ and agree to our <span className="underline text-white/60">Terms</span> and <span className="underline text-white/60">Privacy Policy</span>.
+          </p>
+        </div>
       </div>
     </div>
   )
