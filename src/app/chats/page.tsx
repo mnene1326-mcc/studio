@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -144,6 +144,7 @@ function ChatsContent() {
     return query(
       collection(db, "chats"), 
       where("participants", "array-contains", currentUser.uid),
+      orderBy("lastMessageAt", "desc"),
       limit(chatListLimit)
     )
   }, [db, currentUser?.uid, chatListLimit])
@@ -168,11 +169,6 @@ function ChatsContent() {
         const lastAt = chat.lastMessageAt
         if (!lastAt) return true
         return lastAt.toMillis() > clearedAt.toMillis()
-      })
-      .sort((a, b) => {
-        const timeA = a.lastMessageAt?.toMillis() || 0
-        const timeB = b.lastMessageAt?.toMillis() || 0
-        return timeB - timeA
       })
   }, [userChatsRaw, currentUser?.uid, currentUserProfile])
 
@@ -238,6 +234,7 @@ function ChatsContent() {
     if (!chatId) return null
     return query(
       collection(db, "chats", chatId, "messages"), 
+      orderBy("timestamp", "desc"),
       limit(messagesLimit)
     )
   }, [db, chatId, messagesLimit])
