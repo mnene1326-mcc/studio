@@ -6,7 +6,6 @@ import { DocumentReference, onSnapshot } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
-// Global cache to persist document data across navigation
 const docCache = new Map<string, any>();
 
 export function useDoc<T = any>(ref: DocumentReference | null) {
@@ -43,11 +42,16 @@ export function useDoc<T = any>(ref: DocumentReference | null) {
         setLoading(false);
       },
       (err) => {
-        const permissionError = new FirestorePermissionError({
-          path: ref.path,
-          operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        if (err.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError({
+            path: ref.path,
+            operation: 'get',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        } else {
+          console.error(`Firestore Error (${ref.path}):`, err);
+        }
+        
         setError(err);
         setLoading(false);
       }

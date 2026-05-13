@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc, increment } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -96,7 +96,6 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
     router.push(`/chats?startWith=${partnerId}`)
   }
 
-  // Filter out chats with blocked users
   if (!partner || blocking.includes(partner.uid) || blockedBy.includes(partner.uid)) return null
 
   return (
@@ -153,7 +152,6 @@ function ChatsContent() {
     return query(
       collection(db, "chats"), 
       where("participants", "array-contains", currentUser.uid),
-      orderBy("lastMessageAt", "desc"),
       limit(chatListLimit)
     )
   }, [db, currentUser?.uid, chatListLimit])
@@ -165,18 +163,22 @@ function ChatsContent() {
     const blocking = currentUserProfile.blocking || []
     const blockedBy = currentUserProfile.blockedBy || []
     
-    return userChatsRaw
+    return [...userChatsRaw]
       .filter(chat => {
         const clearedAt = chat.clearedAt?.[currentUser.uid]
         const partnerId = chat.participants.find(p => p !== currentUser.uid)
         
-        // Hide chats from blocked users
         if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
 
         if (!clearedAt) return true
         const lastAt = chat.lastMessageAt
         if (!lastAt) return true
         return lastAt.toMillis() > clearedAt.toMillis()
+      })
+      .sort((a, b) => {
+        const timeA = a.lastMessageAt?.toMillis() || 0
+        const timeB = b.lastMessageAt?.toMillis() || 0
+        return timeB - timeA
       })
   }, [userChatsRaw, currentUser?.uid, currentUserProfile])
 
@@ -226,21 +228,22 @@ function ChatsContent() {
           const newChatDoc = await addDoc(chatsRef, chatData)
           if (isMounted) setChatId(newChatDoc.id)
         }
-      } catch (err) {
-        if (isMounted) errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'chats', operation: 'list' }))
+      } catch (err: any) {
+        if (isMounted) {
+          toast({ variant: "destructive", title: "Chat Error", description: err.message || "Failed to initialize chat." })
+        }
       } finally {
         if (isMounted) setIsInitializingChat(false)
       }
     }
     findOrCreateChat()
     return () => { isMounted = false }
-  }, [currentUser?.uid, startWithId, db])
+  }, [currentUser?.uid, startWithId, db, toast])
 
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
     return query(
       collection(db, "chats", chatId, "messages"), 
-      orderBy("timestamp", "desc"),
       limit(messagesLimit)
     )
   }, [db, chatId, messagesLimit])
@@ -248,11 +251,11 @@ function ChatsContent() {
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const messages = useMemo(() => {
-    const reversed = [...messagesRaw].sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0))
-    if (!currentUser?.uid || !currentChatData) return reversed
+    const sorted = [...messagesRaw].sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0))
+    if (!currentUser?.uid || !currentChatData) return sorted
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
-    if (!clearedAt) return reversed
-    return reversed.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
+    if (!clearedAt) return sorted
+    return sorted.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
   const handleSendMessage = (text: string) => {
@@ -270,8 +273,8 @@ function ChatsContent() {
       }
       
       const userRef = doc(db, "users", currentUser.uid)
-      updateDoc(userRef, { coins: increment(-15) }).catch(() => {
-         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userRef.path, operation: 'update' }))
+      updateDoc(userRef, { coins: increment(-15) }).catch((err) => {
+         toast({ variant: "destructive", title: "Error", description: err.message })
       })
     }
 
@@ -293,8 +296,8 @@ function ChatsContent() {
         [`clearedAt.${currentUser.uid}`]: serverTimestamp()
       })
       toast({ title: "Chat deleted", description: "The conversation has been cleared from your view." })
-    } catch (err) {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `chats/${chatToDelete.id}`, operation: 'update' }))
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message })
     } finally {
       setChatToDelete(null)
     }
