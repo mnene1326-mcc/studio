@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -6,7 +7,7 @@ import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, Search, ShoppingBag, FileText } from "lucide-react"
+import { Target, RotateCw, FileText } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
@@ -37,37 +38,39 @@ export default function HomePage() {
   const db = useFirestore()
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => { setIsMounted(true) }, [])
 
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  // Fetch all onboarded users to allow for client-side tab filtering
   const usersQuery = useMemoFirebase(() => query(collection(db, "users"), where("onboardingComplete", "==", true), limit(100)), [db])
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
+  }
 
   const filteredUsers = useMemo(() => {
     if (!users || !currentUserProfile) return users || []
     
     return users.filter(u => {
-      // Don't show the current user in the list
       if (u.uid === currentUser?.uid) return false
       
-      // Basic gender preference filtering: Males see Females, Females see Males
       const genderMatch = currentUserProfile.gender === 'male' 
         ? u.gender === 'female' 
         : (currentUserProfile.gender === 'female' ? u.gender === 'male' : true);
       
       if (!genderMatch) return false;
 
-      // Tab specific filtering logic
       if (activeTab === 'Nearby') {
-        // 'Nearby' shows only users from the same country
         return u.country === currentUserProfile.country;
       }
       
-      // 'Recommend' shows users from all countries
       return true;
     })
   }, [users, currentUser?.uid, currentUserProfile, activeTab])
@@ -76,7 +79,6 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Straight Architectural Header */}
       <div className="bg-[#FF3B30] pt-4 pb-4">
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-4">
@@ -113,9 +115,10 @@ export default function HomePage() {
               Nearby
             </button>
           </div>
-          <div className="flex items-center gap-5 text-white">
-            <ShoppingBag className="w-6 h-6" />
-            <Search className="w-6 h-6" />
+          <div className="flex items-center text-white">
+            <button onClick={handleRefresh} className={cn("p-2 transition-transform", isRefreshing && "animate-spin")}>
+              <RotateCw className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </div>
@@ -127,7 +130,7 @@ export default function HomePage() {
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-30">
-            <Search className="w-12 h-12" />
+            <RotateCw className="w-12 h-12" />
             <p className="font-black text-sm uppercase tracking-widest">No users found in this category</p>
           </div>
         ) : (

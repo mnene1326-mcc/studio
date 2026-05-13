@@ -1,8 +1,9 @@
+
 "use client"
 
-import { useEffect, useState, Suspense, useMemo } from "react"
+import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc, increment } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc, increment, Timestamp } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
@@ -11,6 +12,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   Send, 
   ChevronLeft, 
@@ -24,7 +35,8 @@ import {
   Gift, 
   Video, 
   Hash,
-  Gamepad2
+  Gamepad2,
+  Trash2
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -42,6 +54,7 @@ interface Chat {
   lastMessage?: string
   lastMessageAt?: any
   createdAt: any
+  clearedAt?: Record<string, any>
 }
 
 interface UserProfile {
@@ -52,20 +65,36 @@ interface UserProfile {
   coins?: number
 }
 
-function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: string }) {
+function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentUserUid: string, onDelete: (chat: Chat) => void }) {
   const router = useRouter()
   const db = useFirestore()
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
   const partnerId = chat.participants.find(id => id !== currentUserUid)
   
   const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   const { data: partner } = useDoc<UserProfile>(partnerRef)
 
+  const handleTouchStart = () => {
+    timerRef.current = setTimeout(() => {
+      onDelete(chat)
+    }, 800)
+  }
+
+  const handleTouchEnd = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }
+
   if (!partner) return null
 
   return (
     <div 
-      className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50"
+      className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50 select-none"
       onClick={() => router.push(`/chats?startWith=${partnerId}`)}
+      onMouseDown={handleTouchStart}
+      onMouseUp={handleTouchEnd}
+      onMouseLeave={handleTouchEnd}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
         <AvatarImage src={partner.photoURL} className="object-cover" />
@@ -98,6 +127,7 @@ function ChatsContent() {
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
+  const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
@@ -110,12 +140,26 @@ function ChatsContent() {
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
 
   const userChats = useMemo(() => {
-    return [...userChatsRaw].sort((a, b) => {
-      const timeA = a.lastMessageAt?.toMillis?.() || 0
-      const timeB = b.lastMessageAt?.toMillis?.() || 0
-      return timeB - timeA
-    })
-  }, [userChatsRaw])
+    if (!currentUser?.uid) return []
+    return userChatsRaw
+      .filter(chat => {
+        const clearedAt = chat.clearedAt?.[currentUser.uid]
+        if (!clearedAt) return true
+        const lastAt = chat.lastMessageAt
+        if (!lastAt) return true
+        // If last message is before we cleared it, hide it
+        return lastAt.toMillis() > clearedAt.toMillis()
+      })
+      .sort((a, b) => {
+        const timeA = a.lastMessageAt?.toMillis?.() || 0
+        const timeB = b.lastMessageAt?.toMillis?.() || 0
+        return timeB - timeA
+      })
+  }, [userChatsRaw, currentUser?.uid])
+
+  const currentChatData = useMemo(() => {
+    return userChatsRaw.find(c => c.id === chatId)
+  }, [userChatsRaw, chatId])
 
   const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
   const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
@@ -167,12 +211,18 @@ function ChatsContent() {
     return query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"), limit(100))
   }, [db, chatId])
 
-  const { data: messages, loading: messagesLoading } = useCollection<Message>(messagesQuery)
+  const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
+
+  const messages = useMemo(() => {
+    if (!currentUser?.uid || !currentChatData) return messagesRaw
+    const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
+    if (!clearedAt) return messagesRaw
+    return messagesRaw.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
+  }, [messagesRaw, currentUser?.uid, currentChatData])
 
   const handleSendMessage = (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile) return
     
-    // Monetization: Males pay 15 coins, Females are free
     if (currentUserProfile.gender === 'male') {
       const currentCoins = currentUserProfile.coins || 0
       if (currentCoins < 15) {
@@ -192,8 +242,28 @@ function ChatsContent() {
 
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
     addDoc(collection(db, "chats", chatId, "messages"), msgData)
-    updateDoc(doc(db, "chats", chatId), { lastMessage: text.trim(), lastMessageAt: serverTimestamp() })
+    updateDoc(doc(db, "chats", chatId), { 
+      lastMessage: text.trim(), 
+      lastMessageAt: serverTimestamp(),
+      // Ensure the chat is no longer "cleared" for either user when a new message is sent
+      [`clearedAt.${currentUser.uid}`]: null
+    })
     setNewMessage("")
+  }
+
+  const handleSoftDelete = async () => {
+    if (!chatToDelete || !currentUser?.uid) return
+    try {
+      const chatRef = doc(db, "chats", chatToDelete.id)
+      await updateDoc(chatRef, {
+        [`clearedAt.${currentUser.uid}`]: serverTimestamp()
+      })
+      toast({ title: "Chat deleted", description: "The conversation has been cleared from your view." })
+    } catch (err) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: `chats/${chatToDelete.id}`, operation: 'update' }))
+    } finally {
+      setChatToDelete(null)
+    }
   }
 
   if (!currentUser) return null
@@ -234,11 +304,42 @@ function ChatsContent() {
           ) : (
             <div className="bg-white">
               {userChats.map(chat => (
-                <ChatListItem key={chat.id} chat={chat} currentUserUid={currentUser.uid} />
+                <ChatListItem 
+                  key={chat.id} 
+                  chat={chat} 
+                  currentUserUid={currentUser.uid} 
+                  onDelete={setChatToDelete}
+                />
               ))}
             </div>
           )}
         </main>
+
+        <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
+          <AlertDialogContent className="rounded-[2.5rem] border-none p-8 max-w-[85vw]">
+            <AlertDialogHeader className="items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-[#FF3B30]" />
+              </div>
+              <AlertDialogTitle className="text-xl font-black text-black">Delete Chat?</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm font-bold text-gray-500 leading-relaxed">
+                This will remove the conversation from your list. The other person will still see it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row gap-3 mt-6">
+              <AlertDialogCancel className="flex-1 rounded-full h-14 border-2 border-gray-100 font-black text-gray-400 uppercase tracking-widest text-[10px] mt-0">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleSoftDelete}
+                className="flex-1 rounded-full h-14 bg-[#FF3B30] hover:bg-[#E6352B] font-black text-white uppercase tracking-widest text-[10px]"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <BottomNav />
       </div>
     )
