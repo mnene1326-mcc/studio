@@ -117,14 +117,18 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
-      <div className="absolute top-0 left-0 right-0 h-36 bg-[#00A2FF] z-0 overflow-hidden">
-        <div className="absolute -right-2 top-4 opacity-15 select-none pointer-events-none">
-          <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
+      {/* Background Layers */}
+      <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
+        <div className="h-[144px] bg-[#00A2FF] relative overflow-hidden">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 select-none pointer-events-none">
+            <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
+          </div>
         </div>
+        <div className="h-[136px] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-b border-gray-100" />
       </div>
       
       <div className="relative z-10 pt-16">
-        <div className="bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.03)] border-b border-gray-100">
+        <div>
           <div className="px-4 pt-6 pb-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
