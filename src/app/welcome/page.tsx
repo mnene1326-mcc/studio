@@ -107,7 +107,7 @@ export default function WelcomePage() {
               ) : (
                 <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
               )}
-              Fast matching
+              Fast login
             </div>
           </Button>
 

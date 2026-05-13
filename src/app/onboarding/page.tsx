@@ -119,7 +119,7 @@ function OnboardingContent() {
       <header className="text-center space-y-2 mt-8">
         <Heart className="w-12 h-12 text-[#00A2FF] mx-auto fill-current" />
         <h1 className="text-3xl font-black text-black tracking-tight">
-          {isFast ? "Fast Access" : "Create Profile"}
+          {isFast ? "Fast Login" : "Create Profile"}
         </h1>
         <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
           {isFast ? `Step ${step} of 2` : `Step ${step} of 3`}
