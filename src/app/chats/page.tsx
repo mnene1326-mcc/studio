@@ -36,7 +36,8 @@ import {
   Video, 
   Hash,
   Gamepad2,
-  Trash2
+  Trash2,
+  ChevronDown
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -136,20 +137,24 @@ function ChatsContent() {
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
+  
+  // Pagination State
+  const [chatListLimit, setChatListLimit] = useState(20)
+  const [messagesLimit, setMessagesLimit] = useState(20)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
-  // Optimization: Limit chat list to 50 recent conversations
+  // Cost Optimization: Limit chat list to 20 recent conversations initially
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
     return query(
       collection(db, "chats"), 
       where("participants", "array-contains", currentUser.uid),
       orderBy("lastMessageAt", "desc"),
-      limit(50)
+      limit(chatListLimit)
     )
-  }, [db, currentUser?.uid])
+  }, [db, currentUser?.uid, chatListLimit])
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
 
@@ -214,23 +219,25 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db])
 
-  // Optimization: Limit message history to latest 100 messages
+  // Cost Optimization: Limit message history to 20 latest messages initially
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
     return query(
       collection(db, "chats", chatId, "messages"), 
-      orderBy("timestamp", "asc"), 
-      limit(100)
+      orderBy("timestamp", "desc"), // Order by desc to get LATEST first with limit
+      limit(messagesLimit)
     )
-  }, [db, chatId])
+  }, [db, chatId, messagesLimit])
 
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const messages = useMemo(() => {
-    if (!currentUser?.uid || !currentChatData) return messagesRaw
+    // Reverse messages back to chronological for display
+    const reversed = [...messagesRaw].sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0))
+    if (!currentUser?.uid || !currentChatData) return reversed
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
-    if (!clearedAt) return messagesRaw
-    return messagesRaw.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
+    if (!clearedAt) return reversed
+    return reversed.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
   const handleSendMessage = (text: string) => {
@@ -284,7 +291,7 @@ function ChatsContent() {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
         <header className="sticky top-0 z-40 bg-[#00A2FF] px-4 pt-8 pb-3 flex items-center justify-between">
-          <h1 className="text-3xl font-logo text-white tracking-tight">Chat</h1>
+          <h1 className="text-2xl font-logo text-white tracking-tight">Chat</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20" onClick={() => router.push('/recharge')}>
                 <ShoppingBag className="w-6 h-6" />
@@ -323,6 +330,19 @@ function ChatsContent() {
                   onDelete={setChatToDelete}
                 />
               ))}
+              
+              {userChatsRaw.length >= chatListLimit && (
+                <div className="p-4 flex justify-center">
+                   <Button 
+                    variant="ghost" 
+                    className="text-[10px] font-black uppercase text-gray-400 gap-2"
+                    onClick={() => setChatListLimit(prev => prev + 20)}
+                   >
+                     <ChevronDown className="w-4 h-4" />
+                     Show older chats
+                   </Button>
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -386,6 +406,22 @@ function ChatsContent() {
 
       <ScrollArea className="flex-1 bg-white">
         <div className="pb-48 pt-4">
+          
+          {/* Load More Messages */}
+          {messagesRaw.length >= messagesLimit && (
+            <div className="flex justify-center my-4">
+               <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2"
+                onClick={() => setMessagesLimit(prev => prev + 20)}
+               >
+                 <ChevronDown className="w-3 h-3 rotate-180" />
+                 Load previous messages
+               </Button>
+            </div>
+          )}
+
           <div className="text-center my-6">
             <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
               {format(new Date(), "HH:mm")}
