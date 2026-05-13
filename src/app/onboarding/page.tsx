@@ -24,7 +24,7 @@ const LOOKING_FOR_OPTIONS = [
 
 const RANDOM_NAMES = [
   "Amani", "Zahara", "Kwame", "Jabari", "Malik", "Zendaya", "Tunde", "Folami", "Nala", "Simba", 
-  "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu", "User 102", "User 441", "User 982", "User 773"
+  "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu", "Alpha", "Echo", "Sierra", "Victor"
 ];
 
 function OnboardingContent() {
@@ -52,8 +52,8 @@ function OnboardingContent() {
 
   const generateRandomDOB = () => {
     const currentYear = new Date().getFullYear();
-    const maxYear = currentYear - 18;
-    const minYear = currentYear - 45;
+    const maxYear = currentYear - 19;
+    const minYear = currentYear - 40;
     const year = Math.floor(Math.random() * (maxYear - minYear + 1) + minYear);
     const month = Math.floor(Math.random() * 12);
     const day = Math.floor(Math.random() * 28) + 1;
@@ -70,6 +70,7 @@ function OnboardingContent() {
     if (!user) return
     setLoading(true)
 
+    // Fast Login specific: Generate random name and DOB (18+)
     const finalName = isFast ? RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)] : name;
     const finalDob = isFast ? generateRandomDOB() : dob;
     const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
@@ -78,13 +79,12 @@ function OnboardingContent() {
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
 
-    // Default coins/diamonds based on gender for a fresh start
-    const initialCoins = gender === 'male' ? 500 : (existingData?.coins || 0)
-    const initialDiamonds = gender === 'female' ? 500 : (existingData?.diamonds || 0)
+    const initialCoins = gender === 'male' ? 150 : (existingData?.coins || 0)
+    const initialDiamonds = gender === 'female' ? 150 : (existingData?.diamonds || 0)
 
     const updateData: any = {
       uid: user.uid,
-      email: user.email || `anonymous_${user.uid}@matchflow.app`,
+      email: user.email || `anon_${user.uid}@matchflow.app`,
       name: finalName,
       gender,
       dob: finalDob,
@@ -97,12 +97,15 @@ function OnboardingContent() {
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
       matchFlowId: existingData?.matchFlowId || generateMatchFlowId(),
-      isDeleted: false
+      isDeleted: false,
+      isVerified: false,
+      blocking: [],
+      blockedBy: []
     }
 
     try {
       await setDoc(userRef, updateData, { merge: true })
-      router.push("/home")
+      router.replace("/home")
     } catch (serverError) {
       const permissionError = new FirestorePermissionError({
         path: userRef.path,
@@ -197,7 +200,7 @@ function OnboardingContent() {
                 onClick={isFast ? handleComplete : () => setStep(3)}
                 disabled={isFast ? (!country || loading) : (!dob || !country)}
               >
-                {isFast ? (loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Let's Go!") : "Continue"}
+                {isFast ? (loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete") : "Continue"}
               </Button>
               <Button variant="ghost" className="text-muted-foreground font-black text-xs" onClick={() => setStep(1)}>
                 Back

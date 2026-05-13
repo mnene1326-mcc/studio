@@ -22,7 +22,6 @@ export default function WelcomePage() {
     setMounted(true)
   }, [])
 
-  // Check if logged in and onboarding is complete before skipping
   useEffect(() => {
     if (!authLoading && user) {
       const checkRedirect = async () => {
@@ -32,7 +31,6 @@ export default function WelcomePage() {
           if (snap.exists() && snap.data().onboardingComplete) {
             router.replace("/home")
           }
-          // Note: We don't auto-redirect to onboarding here to avoid losing query params like ?fast=true
         } catch (e) {
           // Stay on welcome
         }
@@ -45,6 +43,7 @@ export default function WelcomePage() {
     setLoading(true)
     try {
       await signInAnonymously(auth)
+      // We use push here so that onboarding gets the ?fast=true param
       router.push("/onboarding?fast=true")
     } catch (error) {
       setLoading(false)
