@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/utils"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 interface UserProfile {

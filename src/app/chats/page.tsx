@@ -41,7 +41,7 @@ import {
   Lock
 } from "lucide-react"
 import { format } from "date-fns"
-import { cn } from "@/utils"
+import { cn } from "@/lib/utils"
 
 interface Message {
   id: string
