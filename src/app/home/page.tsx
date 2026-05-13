@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -7,7 +6,7 @@ import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, RotateCw, FileText, ChevronDown } from "lucide-react"
+import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,6 +21,7 @@ interface UserProfile {
   dob: string
   onboardingComplete: boolean
   updatedAt?: any
+  isVerified?: boolean
 }
 
 function calculateAge(dob: string) {
@@ -194,10 +194,18 @@ export default function HomePage() {
                       <div className="absolute top-4 left-4 z-20 w-3 h-3 rounded-full bg-green-500 border-2 border-white/50 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
                     )}
 
+                    {user.isVerified && (
+                      <div className="absolute top-4 left-10 z-20">
+                         <BadgeCheck className="w-4 h-4 text-blue-400 fill-white" />
+                      </div>
+                    )}
+
                     <div className="absolute top-4 right-4 bg-[#00A2FF] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
                     <div className="absolute inset-x-0 bottom-0 p-5">
-                      <h4 className="text-white font-black text-sm truncate mb-2">{user.name}</h4>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <h4 className="text-white font-black text-sm truncate">{user.name}</h4>
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="bg-[#006400] px-3 py-1 rounded-full text-white font-black text-[10px]">{calculateAge(user.dob)}</span>
                         <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white font-bold text-[10px] border border-white/20">{user.country || "Kenya"}</span>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -29,6 +28,7 @@ interface UserProfile {
   matchFlowId?: string
   coins?: number
   diamonds?: number
+  isVerified?: boolean
 }
 
 export default function MePage() {
@@ -82,7 +82,7 @@ export default function MePage() {
 
           <div className="flex items-center justify-center gap-1.5 mb-1">
             <h2 className="text-xl font-black text-white tracking-tight">{profile.name}</h2>
-            <BadgeCheck className="w-4 h-4 text-white" />
+            {profile.isVerified && <BadgeCheck className="w-4 h-4 text-white fill-blue-500" />}
           </div>
 
           <div className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all" onClick={handleCopyId}>
@@ -119,14 +119,17 @@ export default function MePage() {
           <div className="bg-white rounded-3xl p-2 shadow-sm border border-black/5 overflow-hidden">
             <div className="flex flex-col">
               <Button variant="ghost" className="h-16 justify-between px-5 rounded-none" asChild>
-                <Link href="#">
+                <Link href="/verify-identity">
                   <div className="flex items-center gap-4">
                     <div className="bg-green-50 p-2.5 rounded-xl">
                       <ShieldCheck className="w-5 h-5 text-green-600" />
                     </div>
                     <span className="font-black text-xs text-black">Identity Verification</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <div className="flex items-center gap-2">
+                    {profile.isVerified && <span className="text-[10px] font-black text-green-500 uppercase">Verified</span>}
+                    <ChevronRight className="w-4 h-4 text-gray-300" />
+                  </div>
                 </Link>
               </Button>
 

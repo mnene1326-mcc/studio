@@ -10,7 +10,8 @@ import {
   MessageSquare, 
   MoreHorizontal, 
   Copy, 
-  User
+  User,
+  BadgeCheck
 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -24,6 +25,7 @@ interface UserProfile {
   dob: string
   interests?: string
   matchFlowId?: string
+  isVerified?: boolean
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
@@ -75,6 +77,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-black text-black tracking-tight leading-none">{profile.name}</h1>
+              {profile.isVerified && <BadgeCheck className="w-5 h-5 text-[#00A2FF] fill-white" />}
               <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                 <User className="w-2 h-2 text-black" />
               </div>
