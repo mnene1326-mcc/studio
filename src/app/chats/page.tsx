@@ -374,9 +374,7 @@ function ChatsContent() {
                 <Trash2 className="w-8 h-8 text-[#00A2FF]" />
               </div>
               <AlertDialogTitle className="text-xl font-black text-black">Delete Chat?</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm font-bold text-gray-500 leading-relaxed">
-                This will remove the conversation from your list. The other person will still see it.
-              </AlertDialogDescription>
+              <AlertDialogDescription />
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-3 mt-6">
               <AlertDialogCancel className="flex-1 rounded-full h-14 border-2 border-gray-100 font-black text-gray-400 uppercase tracking-widest text-[10px] mt-0">
