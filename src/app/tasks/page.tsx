@@ -1,15 +1,22 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { doc } from "firebase/firestore"
+import { useFirestore, useUser, useDoc } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, X, Coins, Gift, Zap, Star, CheckCircle2, Trophy, Flame } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function TaskCenterPage() {
   const router = useRouter()
+  const db = useFirestore()
+  const { user } = useUser()
   const [checkedDays, setCheckedDays] = useState([true, true, false, false, false, false, false])
+
+  const userRef = useMemo(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
+  const { data: profile } = useDoc(userRef)
 
   const days = [
     { day: "1st", reward: "2" },
@@ -34,7 +41,6 @@ export default function TaskCenterPage() {
 
   return (
     <div className="flex-1 bg-[#F8F9FA] min-h-screen pb-10">
-      {/* Straight Header - Architectural Look */}
       <header className="bg-[#FF3B30] h-56 relative px-4 pt-12">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white rounded-full hover:bg-white/20">
@@ -46,7 +52,6 @@ export default function TaskCenterPage() {
           </Button>
         </div>
 
-        {/* Coin Balance Card Overlay */}
         <div className="absolute -bottom-8 left-4 right-4 bg-white shadow-xl p-6 flex items-center justify-between rounded-2xl border border-black/5 z-10">
           <div className="flex items-center gap-4">
             <div className="bg-yellow-400 p-3 rounded-2xl">
@@ -54,7 +59,7 @@ export default function TaskCenterPage() {
             </div>
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">My Balance</p>
-              <p className="text-3xl font-black text-black leading-none">450</p>
+              <p className="text-3xl font-black text-black leading-none">{profile?.coins || 0}</p>
             </div>
           </div>
           <Button className="rounded-full bg-yellow-400 hover:bg-yellow-500 text-white font-black text-xs uppercase tracking-widest px-8 h-12">
@@ -64,7 +69,6 @@ export default function TaskCenterPage() {
       </header>
 
       <main className="mt-16 px-4 space-y-6">
-        {/* Daily Check-in */}
         <section className="bg-white p-6 rounded-3xl shadow-sm border border-black/5">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -102,7 +106,6 @@ export default function TaskCenterPage() {
           </Button>
         </section>
 
-        {/* Newcomer Tasks */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 px-2">
             <div className="w-1 h-4 bg-pink-500 rounded-full" />
@@ -135,7 +138,6 @@ export default function TaskCenterPage() {
           </div>
         </section>
 
-        {/* Daily Tasks */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 px-2">
             <div className="w-1 h-4 bg-blue-500 rounded-full" />

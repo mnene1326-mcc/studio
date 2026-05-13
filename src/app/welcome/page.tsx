@@ -1,17 +1,33 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Heart, Mail, Zap } from "lucide-react"
-import Link from "next/link"
+import { Heart, Mail, Zap, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { signInAnonymously } from "firebase/auth"
+import { useAuth } from "@/firebase"
 import Image from "next/image"
 
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const auth = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleFastLogin = async () => {
+    setLoading(true)
+    try {
+      await signInAnonymously(auth)
+      router.push("/onboarding?fast=true")
+    } catch (error) {
+      setLoading(false)
+    }
+  }
 
   if (!mounted) {
     return <div className="flex-1 bg-black min-h-screen" />
@@ -48,24 +64,29 @@ export default function WelcomePage() {
 
         <div className="w-full max-w-sm space-y-5 mb-6">
           <Button 
-            asChild
+            onClick={() => router.push("/login")}
             className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
           >
-            <Link href="/login" className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               <Mail className="w-5 h-5" />
               Continue with Email
-            </Link>
+            </div>
           </Button>
 
           <Button 
-            asChild
+            disabled={loading}
+            onClick={handleFastLogin}
             variant="outline"
             className="w-full h-16 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
           >
-            <Link href="/onboarding?fast=true" className="flex items-center justify-center gap-3">
-              <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
+            <div className="flex items-center justify-center gap-3">
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
+              )}
               Fast matching
-            </Link>
+            </div>
           </Button>
 
           <div className="pt-8">

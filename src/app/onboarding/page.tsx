@@ -41,7 +41,6 @@ function OnboardingContent() {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Calculate the maximum date allowed (must be at least 18 years ago)
   const maxDate = useMemo(() => {
     const d = new Date()
     d.setFullYear(d.getFullYear() - 18)
@@ -101,7 +100,7 @@ function OnboardingContent() {
 
     const updateData: any = {
       uid: user.uid,
-      email: user.email || "anonymous@matchflow.app",
+      email: user.email || "guest@matchflow.app",
       name: finalName,
       gender,
       dob: finalDob,
@@ -109,6 +108,7 @@ function OnboardingContent() {
       lookingFor: finalLookingFor,
       onboardingComplete: true,
       photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
+      coins: existingData?.coins || 100, // Initialize with 100 coins
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
     }

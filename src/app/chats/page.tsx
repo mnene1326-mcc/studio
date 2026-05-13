@@ -3,14 +3,15 @@
 
 import { useEffect, useState, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, limit, updateDoc, increment } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
+import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useToast } from "@/hooks/use-toast"
 import { 
   Send, 
   ChevronLeft, 
@@ -19,7 +20,7 @@ import {
   Loader2, 
   Mic, 
   Smile, 
-  Image as ImageIcon, 
+  ImageIcon, 
   Phone, 
   Gift, 
   Video, 
@@ -27,7 +28,6 @@ import {
   Gamepad2,
   MoreVertical
 } from "lucide-react"
-import { Input } from "@/components/ui/input"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -51,8 +51,10 @@ interface UserProfile {
   name: string
   photoURL: string
   country?: string
+  gender?: string
   dob?: string
   interests?: string
+  coins?: number
 }
 
 function MatchInfoCard({ profile }: { profile: UserProfile }) {
@@ -80,7 +82,7 @@ function MatchInfoCard({ profile }: { profile: UserProfile }) {
           {profile.country || "Kenya"}
         </span>
         <span className="bg-orange-300 text-white px-3 py-1 rounded-full text-[10px] font-black">
-          Change the world with o...
+          Personality match!
         </span>
       </div>
 
@@ -106,7 +108,7 @@ function MatchInfoCard({ profile }: { profile: UserProfile }) {
            <p className="text-sm font-black text-[#66BB6A]">Personality similarity: 84%</p>
         </div>
         <p className="text-xs font-bold text-gray-500 leading-relaxed">
-          Can chat with her/him 🚲Cycling 🐶Dogs 📚History
+          Matches your interests!
         </p>
       </div>
     </div>
@@ -168,6 +170,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
 function ChatsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { toast } = useToast()
   const startWithId = searchParams.get("startWith")
   const { user: currentUser } = useUser()
   const db = useFirestore()
@@ -175,6 +178,9 @@ function ChatsContent() {
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
+
+  const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
+  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
@@ -245,7 +251,28 @@ function ChatsContent() {
   const { data: messages, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const handleSendMessage = (text: string) => {
-    if (!text.trim() || !chatId || !currentUser?.uid) return
+    if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile) return
+    
+    // Coin deduction logic for male users
+    if (currentUserProfile.gender === 'male') {
+      const currentCoins = currentUserProfile.coins || 0
+      if (currentCoins < 15) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient Coins",
+          description: "Sending a message costs 15 coins. Visit the Task Center to earn more!",
+        })
+        return
+      }
+      
+      const userRef = doc(db, "users", currentUser.uid)
+      updateDoc(userRef, {
+        coins: increment(-15)
+      }).catch(() => {
+         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userRef.path, operation: 'update' }))
+      })
+    }
+
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
     addDoc(collection(db, "chats", chatId, "messages"), msgData)
     updateDoc(doc(db, "chats", chatId), { lastMessage: text.trim(), lastMessageAt: serverTimestamp() })
@@ -257,7 +284,7 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
-        <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-10 pb-4 flex items-center justify-between shadow-lg">
+        <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-10 pb-4 flex items-center justify-between">
           <h1 className="text-2xl font-logo text-white drop-shadow-sm">MatchFlow</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
@@ -302,7 +329,6 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-gray-50 relative overflow-hidden">
-      {/* Premium Header Matching Reference */}
       <header className="bg-white px-4 h-16 flex items-center justify-between shadow-sm z-50 pt-2">
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" onClick={() => router.push("/chats")} className="rounded-full text-gray-500 font-bold px-2">
@@ -312,7 +338,7 @@ function ChatsContent() {
         </div>
         
         <h3 className="font-black text-sm tracking-tight text-center flex-1">
-          {chatPartner?.name || 'shiru♡♡'}
+          {chatPartner?.name || 'MatchFlow User'}
         </h3>
 
         <div className="flex items-center gap-3">
@@ -360,9 +386,7 @@ function ChatsContent() {
         </div>
       </ScrollArea>
 
-      {/* Action Footer Matching Reference */}
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pt-2 pb-safe">
-        {/* Floating Game Icon */}
         <div className="absolute -top-16 right-4">
           <div className="bg-white/90 backdrop-blur-md p-2.5 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
             <Gamepad2 className="w-6 h-6 text-blue-500" />
@@ -370,7 +394,6 @@ function ChatsContent() {
           </div>
         </div>
 
-        {/* Suggestion Chips */}
         <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar items-center">
           <Button variant="outline" className="h-9 px-4 rounded-full border-green-500 text-green-600 font-black text-xs shrink-0 hover:bg-green-50">
             Can we talk?
@@ -378,12 +401,8 @@ function ChatsContent() {
           <Button variant="outline" className="h-9 px-4 rounded-full border-green-500 text-green-600 font-black text-xs shrink-0 hover:bg-green-50">
             hey dear are you single?
           </Button>
-          <Button className="h-9 px-6 rounded-full bg-green-500 text-white font-black text-xs shrink-0 ml-auto">
-            Next
-          </Button>
         </div>
 
-        {/* Input Bar */}
         <div className="px-4 py-2 flex items-center gap-3">
           <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
             <Mic className="w-6 h-6" />
@@ -410,7 +429,6 @@ function ChatsContent() {
           </Button>
         </div>
 
-        {/* Bottom Tool Row */}
         <div className="px-6 py-2 flex items-center justify-between text-gray-400">
           <ImageIcon className="w-6 h-6" />
           <Phone className="w-6 h-6" />
