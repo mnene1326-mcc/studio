@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { getAccessToken, registerIPN } from '@/app/actions/pesapal';
 
@@ -11,29 +12,33 @@ export async function GET() {
   try {
     // Step 1: Auth
     const token = await getAccessToken().catch(err => {
-      throw new Error(`Auth Failed: ${err.message}`);
+      throw new Error(`Auth Failed: ${err.message}. Ensure your Live Keys are in Environment Variables.`);
     });
 
-    // Step 2: Register IPN
+    // Step 2: Register IPN via API
+    // Note: If this fails with a JSON error, it usually means PesaPal's automated 
+    // registration is down. In that case, use the manual dashboard method.
     const ipnId = await registerIPN(token).catch(err => {
-      throw new Error(`IPN Registration Failed: ${err.message}`);
+      throw new Error(`Automated Registration Failed: ${err.message}`);
     });
 
     return NextResponse.json({
       status: 'Success',
-      message: 'IPN Registered successfully (Live Production).',
+      message: 'IPN Registered successfully via API.',
       ipn_id: ipnId,
       ipn_url: ipnUrl,
       next_step: 'Add the "ipn_id" above to your Environment Variables as PESAPAL_IPN_ID and redeploy.'
     });
   } catch (error: any) {
     return NextResponse.json({
-      status: 'Setup Error',
+      status: 'Setup Note',
       error: error.message,
-      debug: {
-        ipn_endpoint: ipnUrl,
-        tip: '1. Ensure your keys in Vercel are LIVE keys. 2. If you registered manually in the dashboard, just copy the ID from there.'
+      manual_solution: {
+        instructions: "If automated registration fails, please register manually in the PesaPal Dashboard.",
+        website_domain: "matchflow-iota.vercel.app",
+        ipn_listener_url: ipnUrl,
+        what_to_do: "After saving in the dashboard, copy the IPN ID provided there and add it to Vercel as PESAPAL_IPN_ID."
       }
-    }, { status: 500 });
+    }, { status: 200 }); // Return 200 so you can read the manual instructions in the browser
   }
 }

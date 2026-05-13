@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -12,9 +13,13 @@ async function processIPN(req: Request) {
   const orderTrackingId = url.searchParams.get('OrderTrackingId');
   const orderMerchantReference = url.searchParams.get('OrderMerchantReference');
 
+  // If parameters are missing, it's likely a validation ping from PesaPal or a manual visit.
+  // We return 200 OK to satisfy dashboard validation.
   if (!orderTrackingId || !orderMerchantReference) {
-    console.error('IPN Missing parameters:', { orderTrackingId, orderMerchantReference });
-    return NextResponse.json({ status: 'Invalid parameters' }, { status: 400 });
+    return NextResponse.json({ 
+      status: 'OK', 
+      message: 'MatchFlow IPN endpoint is active and waiting for data.' 
+    });
   }
 
   try {
@@ -49,7 +54,8 @@ async function processIPN(req: Request) {
     });
   } catch (e: any) {
     console.error('IPN Processing Error:', e.message);
-    return NextResponse.json({ status: 'Processing Error', message: e.message }, { status: 500 });
+    // Still return 200 so PesaPal doesn't keep retrying failed logic pings
+    return NextResponse.json({ status: 'Processing Error', message: e.message });
   }
 }
 
