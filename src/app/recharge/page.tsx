@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, Loader2, CreditCard } from "lucide-react"
+import { ChevronLeft, Menu, Check, Loader2, CreditCard, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { initiatePayment } from "@/app/actions/pesapal"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface UserProfile {
   uid: string
@@ -42,6 +43,7 @@ export default function RechargePage() {
   const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
   const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
@@ -50,20 +52,22 @@ export default function RechargePage() {
     if (!user || !profile) return
     
     setLoading(true)
+    setErrorMessage(null)
+    
     try {
       const pkg = PACKAGES.find(p => p.amount === selectedPackage)
       if (!pkg) throw new Error("Invalid package selected")
 
       const result = await initiatePayment(pkg.price, profile.email, user.uid)
       
-      // Redirect to PesaPal Payment Page
-      window.location.href = result.redirectUrl
+      if (result.success && result.redirectUrl) {
+        window.location.href = result.redirectUrl
+      } else {
+        setErrorMessage(result.error || "Initialization failed")
+        setLoading(false)
+      }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Payment Error",
-        description: error.message || "Failed to initiate payment. Ensure PesaPal keys are configured.",
-      })
+      setErrorMessage("An unexpected error occurred. Please try again.")
       setLoading(false)
     }
   }
@@ -82,6 +86,16 @@ export default function RechargePage() {
 
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
+          {errorMessage && (
+            <Alert variant="destructive" className="rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-300">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="font-black uppercase text-[10px] tracking-widest">Setup Required</AlertTitle>
+              <AlertDescription className="text-xs font-bold leading-relaxed">
+                {errorMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-1">
              <h2 className="text-sm font-black text-black">My Balance</h2>
              <div className="flex items-center gap-4 py-4">

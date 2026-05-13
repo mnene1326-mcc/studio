@@ -3,6 +3,7 @@
 
 /**
  * @fileOverview PesaPal v3 Live Production actions.
+ * Refactored to return error objects instead of throwing for better production UX.
  */
 
 const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3';
@@ -12,7 +13,7 @@ async function safeJson(response: Response) {
   try {
     return JSON.parse(text);
   } catch (e) {
-    throw new Error(`PesaPal returned non-JSON response (Status: ${response.status}). This usually means a configuration error or invalid keys.`);
+    return { error: true, message: `PesaPal returned non-JSON response (Status: ${response.status}).` };
   }
 }
 
@@ -21,27 +22,31 @@ export async function getAccessToken() {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error('PesaPal credentials (KEY/SECRET) are missing in Vercel settings.');
+    return { error: 'PesaPal credentials (KEY/SECRET) are missing in Vercel settings.' };
   }
 
-  const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      consumer_key: consumerKey,
-      consumer_secret: consumerSecret,
-    }),
-  });
+  try {
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        consumer_key: consumerKey,
+        consumer_secret: consumerSecret,
+      }),
+    });
 
-  const data = await safeJson(response);
-  if (!response.ok || !data.token) {
-    throw new Error(`PesaPal Auth Failed: ${data.message || 'Unauthorized. Check your Live keys.'}`);
+    const data = await safeJson(response);
+    if (data.error || !response.ok || !data.token) {
+      return { error: `PesaPal Auth Failed: ${data.message || 'Unauthorized. Check your Live keys.'}` };
+    }
+
+    return { token: data.token };
+  } catch (err: any) {
+    return { error: `Connection failed: ${err.message}` };
   }
-
-  return data.token;
 }
 
 export async function registerIPN(token: string) {
@@ -62,32 +67,31 @@ export async function registerIPN(token: string) {
   });
 
   const data = await safeJson(response);
-  if (!response.ok) {
-    throw new Error(`IPN Registration Failed: ${data.message || 'Unknown error'}`);
+  if (!response.ok || data.error) {
+    return { error: data.message || 'IPN Registration Restricted. Use manual method.' };
   }
 
-  return data.ipn_id;
+  return { ipn_id: data.ipn_id };
 }
 
 export async function getTransactionStatus(orderTrackingId: string) {
   try {
-    const token = await getAccessToken();
+    const authResult = await getAccessToken();
+    if ('error' in authResult) return null;
+
     const response = await fetch(`${PESAPAL_BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId=${orderTrackingId}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${authResult.token}`,
       },
     });
 
     const data = await safeJson(response);
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch transaction status.');
-    }
+    if (!response.ok) return null;
     return data;
   } catch (error) {
-    console.error('PesaPal Status Error:', error);
     return null;
   }
 }
@@ -97,10 +101,17 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
     const ipnId = process.env.PESAPAL_IPN_ID;
 
     if (!ipnId || ipnId === 'YOUR_IPN_ID') {
-      throw new Error('MISSING_IPN_ID: You must get the IPN ID from your PesaPal Dashboard and add it to Vercel.');
+      return { 
+        success: false, 
+        error: 'MISSING_IPN_ID: You must go to your PesaPal Dashboard -> IPN Settings, save your listener URL, copy the ID generated, and add it to Vercel as PESAPAL_IPN_ID.' 
+      };
     }
 
-    const token = await getAccessToken();
+    const authResult = await getAccessToken();
+    if ('error' in authResult) {
+      return { success: false, error: authResult.error };
+    }
+
     const merchantReference = `RECHARGE_${userId}_${amount}_${Date.now()}`;
     const appUrl = 'https://matchflow-iota.vercel.app';
 
@@ -118,11 +129,9 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
         first_name: 'MatchFlow',
         last_name: 'User',
         line_1: 'Nairobi',
-        line_2: '',
         city: 'Nairobi',
-        state: '',
-        postal_code: '',
-        zip_code: ''
+        state: 'Nairobi',
+        postal_code: '00100'
       },
     };
 
@@ -131,20 +140,18 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${authResult.token}`,
       },
       body: JSON.stringify(payload),
     });
 
     const data = await safeJson(response);
-    if (!response.ok || !data.redirect_url) {
-      throw new Error(data.message || 'Payment initiation failed. Check if IPN ID is valid.');
+    if (!response.ok || !data.redirect_url || data.error) {
+      return { success: false, error: data.message || 'Payment initiation failed. Ensure IPN ID is valid.' };
     }
 
-    return { redirectUrl: data.redirect_url, merchantReference };
+    return { success: true, redirectUrl: data.redirect_url, merchantReference };
   } catch (error: any) {
-    console.error('PesaPal Payment Error:', error);
-    // Return the specific error message to the UI
-    throw new Error(error.message || 'Payment service unavailable.');
+    return { success: false, error: error.message || 'Payment service unavailable.' };
   }
 }
