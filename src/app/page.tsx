@@ -10,7 +10,7 @@ import Image from "next/image"
 /**
  * Entry Point for MatchFlow.
  * Displays a spacious, premium welcome screen with branding and access options.
- * Uses a hydration check to ensure stable rendering.
+ * This screen is the static entry point and does not perform automatic redirects.
  */
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
@@ -19,6 +19,7 @@ export default function WelcomePage() {
     setMounted(true)
   }, [])
 
+  // Robust hydration check to ensure the initial render matches exactly
   if (!mounted) {
     return (
       <div className="flex-1 bg-black min-h-screen" />
@@ -40,13 +41,13 @@ export default function WelcomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between">
-        {/* Top Branding Section */}
-        <div className="flex flex-col items-center justify-center space-y-10 mt-12">
+      <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between items-center text-center">
+        {/* Top Branding Section - More spacious distribution */}
+        <div className="flex flex-col items-center justify-center space-y-8 mt-4">
           <div className="relative">
             <Heart className="w-14 h-14 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
           </div>
-          <div className="text-center space-y-4">
+          <div className="space-y-3">
             <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
@@ -56,8 +57,8 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        {/* Bottom Actions Section */}
-        <div className="w-full max-w-sm mx-auto space-y-5 mb-8">
+        {/* Bottom Actions Section - Plenty of room to avoid "squeezed" look */}
+        <div className="w-full max-w-sm space-y-5 mb-4">
           <Button 
             asChild
             className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
@@ -79,8 +80,8 @@ export default function WelcomePage() {
             </Link>
           </Button>
 
-          <div className="pt-4">
-            <p className="text-[10px] text-center text-white/40 font-bold px-6 leading-relaxed">
+          <div className="pt-6">
+            <p className="text-[10px] text-white/40 font-bold px-6 leading-relaxed">
               By entering, you confirm you are 18+ and agree to our <span className="underline text-white/60">Terms</span> and <span className="underline text-white/60">Privacy Policy</span>.
             </p>
           </div>
