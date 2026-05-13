@@ -8,7 +8,6 @@ import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { 
   AlertDialog,
@@ -136,6 +135,9 @@ function ChatsContent() {
   const [chatListLimit, setChatListLimit] = useState(20)
   const [messagesLimit, setMessagesLimit] = useState(20)
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const prevMessagesCount = useRef(0)
+
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
@@ -249,6 +251,18 @@ function ChatsContent() {
     return sorted.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
+  // Auto-scroll logic
+  useEffect(() => {
+    if (messages.length > prevMessagesCount.current) {
+      // Only auto-scroll to bottom if we aren't loading history
+      const loadedHistory = messages.length - prevMessagesCount.current >= 15
+      if (!loadedHistory) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+      }
+    }
+    prevMessagesCount.current = messages.length
+  }, [messages])
+
   const handleSendMessage = (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
     
@@ -286,7 +300,7 @@ function ChatsContent() {
       await updateDoc(chatRef, {
         [`clearedAt.${currentUser.uid}`]: serverTimestamp()
       })
-      toast({ title: "Chat deleted", description: "The conversation has been cleared from your view." })
+      toast({ title: "Chat deleted", description: "The conversation has been cleared." })
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
     } finally {
@@ -388,7 +402,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-[100dvh] bg-white relative overflow-hidden">
-      <header className="bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50 shrink-0">
+      <header className="shrink-0 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -413,72 +427,68 @@ function ChatsContent() {
         </div>
       </header>
 
-      <div className="flex-1 relative overflow-hidden">
-        <ScrollArea className="h-full bg-white">
-          <div className="pb-8 pt-4">
-            {messagesRaw.length >= messagesLimit && (
-              <div className="flex justify-center my-4">
-                 <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2"
-                  onClick={() => setMessagesLimit(prev => prev + 20)}
-                 >
-                   <ChevronDown className="w-3 h-3 rotate-180" />
-                   Load previous messages
-                 </Button>
+      <main className="flex-1 overflow-y-auto bg-white px-4 py-4 no-scrollbar">
+        <div className="flex flex-col min-h-full">
+          {messagesRaw.length >= messagesLimit && (
+            <div className="flex justify-center mb-6">
+               <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
+                onClick={() => setMessagesLimit(prev => prev + 20)}
+               >
+                 <ChevronDown className="w-3 h-3 rotate-180" />
+                 Load previous messages
+               </Button>
+            </div>
+          )}
+
+          <div className="text-center mb-6">
+            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
+              Conversation Started
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
+              </div>
+            ) : messages.map((msg) => (
+              <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
+                {msg.senderId !== currentUser.uid && (
+                  <Avatar className="w-8 h-8 shrink-0">
+                    <AvatarImage src={chatPartner?.photoURL} />
+                    <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
+                  </Avatar>
+                )}
+                <div className={cn(
+                  "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
+                  msg.senderId === currentUser.uid 
+                    ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
+                    : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
+                )}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+
+            {isBlocked && (
+              <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
+                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Lock className="w-6 h-6 text-gray-400" />
+                 </div>
+                 <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
               </div>
             )}
-
-            <div className="text-center my-6">
-              <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
-                {format(new Date(), "HH:mm")}
-              </span>
-            </div>
-
-            <div className="px-4 space-y-6">
-              {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
-                <div className="flex justify-center p-8">
-                  <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
-                </div>
-              ) : messages.map((msg) => (
-                <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
-                  {msg.senderId !== currentUser.uid && (
-                    <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarImage src={chatPartner?.photoURL} />
-                      <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className={cn(
-                    "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
-                    msg.senderId === currentUser.uid 
-                      ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
-                      : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
-                  )}>
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-
-              {isBlocked && (
-                <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
-                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                      <Lock className="w-6 h-6 text-gray-400" />
-                   </div>
-                   <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
-                </div>
-              )}
-            </div>
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      </main>
 
       {!isBlocked && (
-        <footer className="bg-white border-t z-50 pb-safe shrink-0">
+        <footer className="shrink-0 bg-white border-t z-50 pb-safe">
           <div className="px-4 py-3 flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
-              <Mic className="w-6 h-6" />
-            </Button>
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
               <input 
                 placeholder="Start chatting..." 
@@ -488,9 +498,6 @@ function ChatsContent() {
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
               />
             </div>
-            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#FBC02D]">
-              <Smile className="w-6 h-6" />
-            </Button>
             <Button 
               variant="ghost" 
               size="icon" 
