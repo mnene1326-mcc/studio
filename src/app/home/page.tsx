@@ -118,7 +118,7 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
       <div className="absolute top-0 left-0 right-0 h-32 bg-[#00A2FF] z-0 overflow-hidden">
-        <div className="absolute -right-2 -top-2 opacity-15 select-none pointer-events-none">
+        <div className="absolute -right-2 top-4 opacity-15 select-none pointer-events-none">
           <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function HomePage() {
         <div className="bg-white rounded-t-[2.5rem] shadow-[0_-10px_30px_rgba(0,0,0,0.03)] border-b border-gray-100">
           <div className="px-4 pt-6 pb-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
+              <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
                 <div className="bg-white/30 p-2 rounded-2xl w-fit"><FileText className="w-5 h-5 text-black" /></div>
                 <div className="space-y-0.5">
                   <h3 className="text-white font-black text-sm">Mystery Note</h3>
@@ -135,7 +135,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div onClick={() => router.push('/tasks')} className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
+              <div onClick={() => router.push('/tasks')} className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
                 <div className="bg-white/30 p-2 rounded-2xl w-fit"><Target className="w-5 h-5 text-black" /></div>
                 <div className="space-y-0.5">
                   <h3 className="text-white font-black text-sm">Task Center</h3>
