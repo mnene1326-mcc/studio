@@ -65,7 +65,7 @@ export default function RechargePage() {
       if (result.success && result.redirect_url) {
         window.location.href = result.redirect_url
       } else {
-        throw new Error(result.error || "No redirect URL received")
+        throw new Error(result.error || "No redirect URL received from PesaPal.")
       }
     } catch (error: any) {
       toast({

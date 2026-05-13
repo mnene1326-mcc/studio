@@ -33,8 +33,13 @@ export async function getAccessToken() {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'PesaPal Auth Failed: Check your Consumer Key/Secret.');
+    const errorText = await response.text();
+    let errorMessage = 'PesaPal Auth Failed: Check your Consumer Key/Secret.';
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorMessage;
+    } catch (e) {}
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();
@@ -103,7 +108,7 @@ export async function initiatePayment(input: {
       id: trackingId,
       currency: 'KES',
       amount: input.amount,
-      description: `Recharge for MatchFlow Coins - User: ${input.userId}`,
+      description: `MatchFlow Coins - User: ${input.userId}`,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app'}/home`,
       notification_id: ipnId, 
       billing_address: {
@@ -125,15 +130,31 @@ export async function initiatePayment(input: {
       body: JSON.stringify(orderData),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return { success: false, error: error.message || 'PesaPal Order Submission Failed.' };
+    const responseText = await response.text();
+    let data: any = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      return { success: false, error: 'PesaPal returned an invalid response. Check your credentials.' };
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || 'PesaPal Order Submission Failed.' };
+    }
+
+    // PesaPal v3 returns the redirect_url in the root of the JSON or a 'message' property
+    const redirectUrl = data.redirect_url || data.redirectUrl || (data.message && typeof data.message === 'string' ? data.message : null);
+
+    if (!redirectUrl) {
+      return { 
+        success: false, 
+        error: `Order accepted but no redirect URL was returned by PesaPal. Status: ${data.status || 'Unknown'}` 
+      };
+    }
+
     return {
       success: true,
-      redirect_url: data.redirect_url,
+      redirect_url: redirectUrl,
       order_tracking_id: data.order_tracking_id,
     };
   } catch (error: any) {
