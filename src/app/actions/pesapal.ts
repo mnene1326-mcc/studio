@@ -21,30 +21,37 @@ export async function getAccessToken() {
     throw new Error('Vercel Config Error: PESAPAL_CONSUMER_KEY or SECRET is missing.');
   }
 
-  const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-      consumer_key: consumerKey,
-      consumer_secret: consumerSecret,
-    }),
-  });
+  try {
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        consumer_key: consumerKey,
+        consumer_secret: consumerSecret,
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = 'PesaPal Auth Failed: Verify your Live Keys in Vercel.';
-    try {
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.message || errorMessage;
-    } catch (e) {}
-    throw new Error(errorMessage);
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      let errorMessage = `PesaPal Auth Failed (Status ${response.status}): `;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorMessage += errorJson.message || 'Unknown error';
+      } catch (e) {
+        errorMessage += responseText.substring(0, 100); // Show start of HTML if it's not JSON
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = JSON.parse(responseText);
+    return data.token;
+  } catch (error: any) {
+    throw new Error(`PesaPal Connection Error: ${error.message}`);
   }
-
-  const data = await response.json();
-  return data.token;
 }
 
 /**
@@ -56,30 +63,37 @@ export async function registerIPN(url: string) {
   const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
   const ipnUrl = `${cleanUrl}/api/pesapal/ipn`;
 
-  const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-      url: ipnUrl,
-      ipn_notification_type: 'GET',
-    }),
-  });
+  try {
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        url: ipnUrl,
+        ipn_notification_type: 'GET',
+      }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to register IPN with PesaPal API.');
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      let errorMessage = `IPN Registration Failed (Status ${response.status}): `;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorMessage += errorJson.message || 'Unknown error';
+      } catch (e) {
+        errorMessage += responseText.substring(0, 100);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return JSON.parse(responseText);
+  } catch (error: any) {
+    throw new Error(`IPN Registration Error: ${error.message}`);
   }
-
-  const data = await response.json();
-  return {
-    ipn_id: data.ipn_id,
-    url: data.url,
-    status: data.status
-  };
 }
 
 /**
@@ -130,13 +144,18 @@ export async function initiatePayment(input: {
       body: JSON.stringify(orderData),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      return { success: false, error: `Invalid PesaPal response (Status ${response.status}): ${responseText.substring(0, 100)}` };
+    }
 
     if (!response.ok) {
       return { success: false, error: data.message || 'PesaPal Live Order Submission Failed.' };
     }
 
-    // PesaPal returns redirect_url or redirectUrl
     const redirectUrl = data.redirect_url || data.redirectUrl || data.message;
 
     if (!redirectUrl || typeof redirectUrl !== 'string' || !redirectUrl.startsWith('http')) {
