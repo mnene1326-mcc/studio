@@ -21,7 +21,7 @@ export async function getAccessToken() {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error('PesaPal credentials missing. Please set PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET in environment variables.');
+    throw new Error('PesaPal credentials missing. Please set PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET in Vercel project settings.');
   }
 
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
@@ -98,7 +98,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
     const ipnId = process.env.PESAPAL_IPN_ID;
 
     if (!ipnId) {
-      throw new Error('PESAPAL_IPN_ID is missing. Deploy your app and visit /api/pesapal/setup to get one.');
+      throw new Error('PESAPAL_IPN_ID is missing. Please add it to your Vercel project settings.');
     }
 
     const merchantReference = `RECHARGE_${userId}_${amount}_${Date.now()}`;

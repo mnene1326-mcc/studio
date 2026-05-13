@@ -14,19 +14,19 @@ async function processIPN(req: Request) {
   const orderMerchantReference = url.searchParams.get('OrderMerchantReference');
 
   // If parameters are missing, it's likely a validation ping from PesaPal or a manual visit.
-  // We return 200 OK to satisfy dashboard validation.
+  // We return 200 OK with a friendly message to satisfy dashboard validation.
   if (!orderTrackingId || !orderMerchantReference) {
     return NextResponse.json({ 
       status: 'OK', 
       message: 'MatchFlow IPN endpoint is active and waiting for data.' 
-    });
+    }, { status: 200 });
   }
 
   try {
     // 1. Verify transaction status with PesaPal Live
     const statusData = await getTransactionStatus(orderTrackingId);
     
-    // Status 1 = Completed
+    // Status 1 = Completed in PesaPal v3
     if (statusData && (statusData.payment_status_description === 'Completed' || statusData.status_code === 1)) {
       // Reference format: RECHARGE_userId_amount_timestamp
       if (orderMerchantReference.startsWith('RECHARGE_')) {
@@ -46,7 +46,7 @@ async function processIPN(req: Request) {
       }
     }
     
-    // PesaPal expects a 200 OK with this JSON structure
+    // PesaPal expects a 200 OK with this JSON structure to stop retrying the notification
     return NextResponse.json({ 
       status: 'OK', 
       orderTrackingId, 
@@ -54,8 +54,8 @@ async function processIPN(req: Request) {
     });
   } catch (e: any) {
     console.error('IPN Processing Error:', e.message);
-    // Still return 200 so PesaPal doesn't keep retrying failed logic pings
-    return NextResponse.json({ status: 'Processing Error', message: e.message });
+    // Still return 200 so PesaPal doesn't keep retrying if it's a logical error
+    return NextResponse.json({ status: 'Processing Error', message: e.message }, { status: 200 });
   }
 }
 
