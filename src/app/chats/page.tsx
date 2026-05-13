@@ -58,17 +58,24 @@ interface UserProfile {
   blockedBy?: string[]
 }
 
+/**
+ * Robust helper to convert Firestore/Cached timestamps to milliseconds.
+ */
 const toMillisSafe = (ts: any): number => {
   if (!ts) return 0;
-  if (ts.toMillis) return ts.toMillis();
+  if (typeof ts.toMillis === 'function') return ts.toMillis();
   if (ts.seconds !== undefined) return ts.seconds * 1000;
   if (typeof ts === 'number') return ts;
+  if (typeof ts === 'string') return new Date(ts).getTime();
   return 0;
 };
 
+/**
+ * Robust helper to convert Firestore/Cached timestamps to Date objects.
+ */
 const toDateSafe = (ts: any): Date => {
   if (!ts) return new Date(0);
-  if (ts.toDate) return ts.toDate();
+  if (typeof ts.toDate === 'function') return ts.toDate();
   if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
   return new Date(ts);
 };
@@ -88,7 +95,7 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
     timerRef.current = setTimeout(() => {
       isLongPress.current = true
       onDelete(chat)
-    }, 500)
+    }, 600)
   }
 
   const handleTouchEnd = () => {
@@ -168,21 +175,20 @@ function ChatsContent() {
     const blocking = currentUserProfile.blocking || []
     const blockedBy = currentUserProfile.blockedBy || []
     
-    return [...userChatsRaw]
-      .filter(chat => {
-        // Strictly show only chats that have at least one message
-        if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
+    return [...userChatsRaw].filter(chat => {
+      // Strictly show only chats that have at least one message
+      if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
-        const clearedAt = chat.clearedAt?.[currentUser.uid]
-        const partnerId = chat.participants.find(p => p !== currentUser.uid)
-        
-        if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
+      const clearedAt = chat.clearedAt?.[currentUser.uid]
+      const partnerId = chat.participants.find(p => p !== currentUser.uid)
+      
+      if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
 
-        if (!clearedAt) return true
-        const lastAt = chat.lastMessageAt
-        if (!lastAt) return true
-        return toMillisSafe(lastAt) > toMillisSafe(clearedAt)
-      })
+      if (!clearedAt) return true
+      const lastAtMillis = toMillisSafe(chat.lastMessageAt)
+      const clearedAtMillis = toMillisSafe(clearedAt)
+      return lastAtMillis > clearedAtMillis
+    })
   }, [userChatsRaw, currentUser?.uid, currentUserProfile])
 
   const currentChatData = useMemo(() => {
@@ -258,7 +264,8 @@ function ChatsContent() {
     if (!currentUser?.uid || !currentChatData) return messagesRaw
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
     if (!clearedAt) return messagesRaw
-    return messagesRaw.filter(m => toMillisSafe(m.timestamp) > toMillisSafe(clearedAt))
+    const clearedAtMillis = toMillisSafe(clearedAt)
+    return messagesRaw.filter(m => toMillisSafe(m.timestamp) > clearedAtMillis)
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
   const handleSendMessage = (text: string) => {
@@ -308,6 +315,9 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
+  /**
+   * CHAT LIST VIEW
+   */
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
@@ -398,10 +408,13 @@ function ChatsContent() {
     )
   }
 
+  /**
+   * INDIVIDUAL CONVERSATION VIEW
+   */
   return (
     <div className="flex-1 flex flex-col h-[100dvh] bg-white relative overflow-hidden">
       {/* Fixed Header with Blur */}
-      <header className="absolute top-0 left-0 right-0 h-24 bg-white/80 backdrop-blur-xl px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
+      <header className="shrink-0 h-24 bg-white/80 backdrop-blur-xl px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -426,9 +439,9 @@ function ChatsContent() {
         </div>
       </header>
 
-      {/* Main content with full-height scrolling */}
-      <main className="flex-1 overflow-y-auto bg-white no-scrollbar">
-        <div className="flex flex-col-reverse min-h-full px-4 pt-28 pb-6 space-y-6 space-y-reverse">
+      {/* Main content using reverse column to anchor to bottom naturally */}
+      <main className="flex-1 overflow-y-auto no-scrollbar bg-white">
+        <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
               {msg.senderId !== currentUser.uid && (
@@ -448,6 +461,7 @@ function ChatsContent() {
             </div>
           ))}
 
+          {/* Load More Button - appears at visual top of conversation */}
           {messagesRaw.length >= messagesLimit && (
             <div className="flex justify-center py-4">
                <Button 
@@ -485,6 +499,7 @@ function ChatsContent() {
         </div>
       </main>
 
+      {/* Fixed Footer */}
       {!isBlocked && (
         <footer className="shrink-0 bg-white border-t z-50 pb-safe">
           <div className="px-4 py-3 flex items-center gap-3">
