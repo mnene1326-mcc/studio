@@ -1,39 +1,53 @@
 
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { Loader2 } from "lucide-react"
 
 export default function WelcomePage() {
+  const [mounted, setMounted] = useState(false)
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
 
   useEffect(() => {
-    if (!authLoading) {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && !authLoading) {
       if (user) {
         const checkOnboarding = async () => {
           try {
             const userRef = doc(db, "users", user.uid)
             const userSnap = await getDoc(userRef)
             if (userSnap.exists() && userSnap.data().onboardingComplete) {
-              router.push("/home")
+              router.replace("/home")
             } else {
-              router.push("/onboarding")
+              router.replace("/onboarding")
             }
           } catch (error) {
-            router.push("/login")
+            router.replace("/login")
           }
         }
         checkOnboarding()
       } else {
-        router.push("/login")
+        router.replace("/login")
       }
     }
-  }, [authLoading, user, db, router])
+  }, [mounted, authLoading, user, db, router])
+
+  // Identical render for server and initial client pass
+  if (!mounted) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
+        <h1 className="text-5xl font-logo text-primary">MatchFlow</h1>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">

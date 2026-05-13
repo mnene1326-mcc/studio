@@ -64,8 +64,8 @@ export default function MePage() {
 
   if (authLoading || profileLoading) {
     return (
-      <div className="flex-1 pb-20 bg-background flex flex-col items-center justify-center">
-        <div className="text-center animate-pulse font-headline text-primary text-lg">Loading...</div>
+      <div className="flex-1 pb-20 bg-white flex flex-col items-center justify-center">
+        <div className="text-center animate-pulse font-logo text-primary text-lg">MatchFlow</div>
       </div>
     )
   }
@@ -74,19 +74,19 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      <div className="absolute top-0 left-0 w-full h-[280px] bg-[#FF3B30]" />
+      {/* Red header section - layers halfway behind recharge buttons */}
+      <div className="absolute top-0 left-0 w-full h-[240px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
-        <header className="relative pt-12 pb-8 px-6 flex flex-col items-center text-center">
+        <header className="relative pt-12 pb-6 px-6 flex flex-col items-center text-center">
           <div className="absolute top-4 right-6">
-            <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/20 shadow-sm flex items-center gap-2 active:scale-95 transition-transform cursor-pointer">
-              <span className="text-sm font-black text-white">12.5k</span>
-              <span className="text-[9px] uppercase font-black text-white/70 tracking-widest">Visitors</span>
+            <div className="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/20 shadow-sm flex items-center gap-2 active:scale-95 transition-transform cursor-pointer">
+              <span className="text-[10px] font-black text-white">12.5k Visitors</span>
             </div>
           </div>
 
-          <div className="relative mb-4 group cursor-pointer">
-            <div className="relative w-28 h-28 rounded-full shadow-2xl overflow-hidden bg-muted ring-4 ring-white/10">
+          <div className="relative mb-3 group">
+            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
                 alt={profile.name} 
@@ -95,93 +95,93 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            <button className="absolute bottom-0 right-0 bg-white p-2.5 rounded-full shadow-lg active:scale-90 transition-transform">
-              <Pencil className="w-4 h-4 text-[#FF3B30]" />
+            <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg active:scale-90 transition-transform border border-black/5">
+              <Pencil className="w-3.5 h-3.5 text-[#FF3B30]" />
             </button>
           </div>
 
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <h2 className="text-2xl font-black text-white tracking-tight">{profile.name}</h2>
-            <BadgeCheck className="w-5 h-5 text-white fill-white/10" />
+            <h2 className="text-xl font-black text-white tracking-tight">{profile.name}</h2>
+            <BadgeCheck className="w-4 h-4 text-white fill-white/10" />
           </div>
 
           <div 
-            className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all hover:bg-white/10 rounded-full px-3 py-1"
+            className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all"
             onClick={handleCopyId}
           >
-            <p className="text-white/80 font-bold text-xs tracking-tight">ID:{profile.matchFlowId || "---"}</p>
+            <p className="text-white/80 font-bold text-[10px] tracking-tight">ID:{profile.matchFlowId || "---"}</p>
             {copied ? (
-              <Check className="w-3 h-3 text-green-300" />
+              <Check className="w-2.5 h-2.5 text-green-300" />
             ) : (
-              <Copy className="w-3 h-3 text-white/80" />
+              <Copy className="w-2.5 h-2.5 text-white/80" />
             )}
           </div>
         </header>
 
-        <main className="px-6 space-y-6 -mt-4">
+        <main className="px-6 space-y-6">
           <div className="grid grid-cols-2 gap-4 relative z-20">
             <Button 
-              className="h-20 bg-white hover:bg-gray-50 border border-white/20 rounded-3xl shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
+              className="h-16 bg-white hover:bg-gray-50 border-none rounded-2xl shadow-xl flex flex-col items-center justify-center gap-0.5 text-[#FF3B30] active:scale-95 transition-all"
             >
-              <CircleDollarSign className="w-5 h-5" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Recharge</span>
+              <CircleDollarSign className="w-4 h-4" />
+              <span className="text-[9px] font-black uppercase tracking-widest">Recharge</span>
             </Button>
             
             <Button 
-              className="h-20 bg-white hover:bg-gray-50 border border-black/5 rounded-3xl shadow-lg flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all"
+              className="h-16 bg-white hover:bg-gray-50 border-none rounded-2xl shadow-xl flex flex-col items-center justify-center gap-0.5 text-black active:scale-95 transition-all"
             >
-              <Wallet className="w-5 h-5 text-[#4285F4]" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Income</span>
+              <Wallet className="w-4 h-4 text-[#4285F4]" />
+              <span className="text-[9px] font-black uppercase tracking-widest">Income</span>
             </Button>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-black/5 overflow-hidden">
+          <div className="bg-white rounded-[2rem] p-1.5 shadow-sm border border-black/5 overflow-hidden">
             <div className="flex flex-col">
               <Button 
                 variant="ghost" 
-                className="h-16 justify-between rounded-[2rem] px-6 hover:bg-gray-50 active:bg-gray-100"
+                className="h-14 justify-between rounded-[1.5rem] px-4 hover:bg-gray-50 active:bg-gray-100"
                 asChild
               >
                 <Link href="#">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-green-50 p-2.5 rounded-2xl">
-                      <ShieldCheck className="w-6 h-6 text-green-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-50 p-2 rounded-xl">
+                      <ShieldCheck className="w-5 h-5 text-green-600" />
                     </div>
-                    <span className="font-black text-sm text-black">Verify Now</span>
+                    <span className="font-black text-xs text-black">Verify Now</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300" />
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
                 </Link>
               </Button>
 
               <Button 
                 variant="ghost" 
-                className="h-16 justify-between rounded-[2rem] px-6 hover:bg-gray-50 active:bg-gray-100"
+                className="h-14 justify-between rounded-[1.5rem] px-4 hover:bg-gray-50 active:bg-gray-100"
                 asChild
               >
                 <Link href="#">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-50 p-2.5 rounded-2xl">
-                      <Headphones className="w-6 h-6 text-blue-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-50 p-2 rounded-xl">
+                      <Headphones className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="font-black text-sm text-black">Support</span>
+                    <span className="font-black text-xs text-black">Support</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300" />
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
                 </Link>
               </Button>
 
               <Button 
                 variant="ghost" 
-                className="h-16 justify-between rounded-[2rem] px-6 hover:bg-gray-50 active:bg-gray-100"
+                className="h-14 justify-between rounded-[1.5rem] px-4 hover:bg-gray-50 active:bg-gray-100"
                 asChild
               >
                 <Link href="/settings">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gray-50 p-2.5 rounded-2xl">
-                      <Settings className="w-6 h-6 text-gray-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gray-50 p-2 rounded-xl">
+                      <Settings className="w-5 h-5 text-gray-600" />
                     </div>
-                    <span className="font-black text-sm text-black">Settings</span>
+                    <span className="font-black text-xs text-black">Settings</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300" />
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
                 </Link>
               </Button>
             </div>

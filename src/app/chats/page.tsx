@@ -63,7 +63,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
       onClick={() => router.push(`/chats?startWith=${partnerId}`)}
     >
       <div className="relative">
-        <Avatar className="w-12 h-12 border border-white shadow-sm">
+        <Avatar className="w-12 h-12 border-none shadow-sm">
           <AvatarImage src={partner.photoURL || `https://picsum.photos/seed/${partner.uid}/200/200`} />
           <AvatarFallback className="bg-[#FF3B30] text-white font-black text-xs">{partner.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
@@ -77,7 +77,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
             <span className="text-[8px] text-gray-400 font-bold shrink-0">{randomStatus}</span>
           </div>
           <span className="text-[9px] text-gray-400 font-bold">
-            {chat.lastMessageAt && chat.lastMessageAt.toDate ? format(chat.lastMessageAt.toDate(), "MM-dd HH:mm") : "Just now"}
+            {chat.lastMessageAt && chat.lastMessageAt.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "Just now"}
           </span>
         </div>
         <div className="flex justify-between items-center">
@@ -300,7 +300,7 @@ function ChatsContent() {
             <div className="h-4 w-24 bg-muted animate-pulse rounded" />
           ) : (
             <>
-              <h3 className="font-black text-base leading-tight">{chatPartner?.name || 'Loading...'}</h3>
+              <h3 className="font-black text-sm leading-tight">{chatPartner?.name || 'Loading...'}</h3>
               <p className="text-[8px] text-green-500 font-bold">● Online</p>
             </>
           )}
