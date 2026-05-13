@@ -117,10 +117,9 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
-      {/* Background Layers - Perfectly Straight */}
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        {/* Blue Header - Adjusted slightly down past halfway the h-28 buttons */}
-        <div className="h-[72px] bg-[#00A2FF] relative overflow-hidden">
+        {/* Blue Header - Adjusted to exactly 70px */}
+        <div className="h-[70px] bg-[#00A2FF] relative overflow-hidden">
           <div className="absolute -right-4 -top-8 rotate-[-4deg] opacity-20 select-none pointer-events-none">
             <span className="text-7xl font-logo text-white whitespace-nowrap">MatchFlow</span>
           </div>
@@ -130,7 +129,8 @@ export default function HomePage() {
       
       <div className="relative z-10 pt-0">
         <div>
-          <div className="px-4 pt-2 pb-2">
+          {/* Top space set to land buttons halfway relative to 70px header (14px padding + 56px half-height) */}
+          <div className="px-4 pt-[14px] pb-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
                 <div className="bg-white/30 p-2 rounded-2xl w-fit"><FileText className="w-5 h-5 text-black" /></div>
