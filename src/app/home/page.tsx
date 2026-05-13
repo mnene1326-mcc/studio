@@ -72,41 +72,41 @@ export default function HomePage() {
       <div className="bg-[#FF3B30] pt-2 pb-8">
         <div className="px-4 pb-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-6 flex flex-col justify-between h-40 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2.5 rounded-2xl backdrop-blur-md">
-                  <FileText className="w-7 h-7 text-black" />
+                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
+                  <FileText className="w-6 h-6 text-black" />
                 </div>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-white font-black text-lg leading-none">Mystery Note</h3>
-                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Send a note</p>
+              <div className="space-y-0.5">
+                <h3 className="text-white font-black text-base leading-none">Mystery Note</h3>
+                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Send a note</p>
               </div>
             </div>
 
             <div 
               onClick={() => router.push('/tasks')}
-              className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-6 flex flex-col justify-between h-40 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer"
+              className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer"
             >
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2.5 rounded-2xl backdrop-blur-md">
-                  <Target className="w-7 h-7 text-black" />
+                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
+                  <Target className="w-6 h-6 text-black" />
                 </div>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-white font-black text-lg leading-none">Task Center</h3>
-                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">Earn rewards</p>
+              <div className="space-y-0.5">
+                <h3 className="text-white font-black text-base leading-none">Task Center</h3>
+                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Earn rewards</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="sticky top-0 z-40 px-4 pt-2 flex items-center justify-between">
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-8">
             <button 
               onClick={() => setActiveTab('Recommend')}
               className={cn(
-                "relative text-xl font-black transition-all tracking-tight",
+                "relative text-lg font-black transition-all tracking-tight",
                 activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50"
               )}
             >
@@ -115,7 +115,7 @@ export default function HomePage() {
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
-                "relative text-xl font-black transition-all tracking-tight",
+                "relative text-lg font-black transition-all tracking-tight",
                 activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50"
               )}
             >
@@ -123,8 +123,8 @@ export default function HomePage() {
             </button>
           </div>
           <div className="flex items-center gap-5">
-             <ShoppingBag className="w-7 h-7 text-white" />
-             <Search className="w-7 h-7 text-white" />
+             <ShoppingBag className="w-6 h-6 text-white" />
+             <Search className="w-6 h-6 text-white" />
           </div>
         </div>
       </div>
