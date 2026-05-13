@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { getAccessToken, registerIPN } from '@/app/actions/pesapal';
 
@@ -12,12 +11,12 @@ export async function GET() {
   try {
     // Step 1: Auth
     const token = await getAccessToken().catch(err => {
-      throw new Error(`Step 1 (Auth) Failed: ${err.message}`);
+      throw new Error(`Auth Failed: ${err.message}`);
     });
 
     // Step 2: Register IPN
     const ipnId = await registerIPN(token).catch(err => {
-      throw new Error(`Step 2 (IPN Registration) Failed: ${err.message}`);
+      throw new Error(`IPN Registration Failed: ${err.message}`);
     });
 
     return NextResponse.json({
@@ -33,7 +32,7 @@ export async function GET() {
       error: error.message,
       debug: {
         ipn_endpoint: ipnUrl,
-        tip: 'Check your Consumer Key and Secret are the LIVE ones from PesaPal.'
+        tip: '1. Ensure your keys in Vercel are LIVE keys. 2. If you registered manually in the dashboard, just copy the ID from there.'
       }
     }, { status: 500 });
   }
