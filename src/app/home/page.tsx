@@ -119,15 +119,16 @@ export default function HomePage() {
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
       {/* Background Layers - Perfectly Straight */}
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        <div className="h-[104px] bg-[#00A2FF] relative overflow-hidden">
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 select-none pointer-events-none">
-            <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
+        {/* Blue Header - Height lands exactly halfway the h-28 buttons at pt-4 + pt-4 = 88px */}
+        <div className="h-[88px] bg-[#00A2FF] relative overflow-hidden">
+          <div className="absolute -right-4 -top-6 rotate-[-4deg] opacity-20 select-none pointer-events-none">
+            <span className="text-7xl font-logo text-white whitespace-nowrap">MatchFlow</span>
           </div>
         </div>
         <div className="h-[120px] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.03)]" />
       </div>
       
-      <div className="relative z-10 pt-8">
+      <div className="relative z-10 pt-4">
         <div>
           <div className="px-4 pt-4 pb-2">
             <div className="grid grid-cols-2 gap-4">
@@ -213,12 +214,12 @@ export default function HomePage() {
 
                       {user.isVerified && (
                         <div className="absolute top-2.5 left-6 z-20">
-                           <BadgeCheck className="w-3.5 h-3.5 text-blue-400 fill-white" />
+                           <BadgeCheck className="w-4 h-4 text-blue-400 fill-white" />
                         </div>
                       )}
 
                       <div 
-                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-3 py-1.5 rounded-full z-30 text-white font-black text-[10px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
+                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-3.5 py-1.5 rounded-full z-30 text-white font-black text-[11px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/chats?startWith=${user.uid}`);
@@ -228,12 +229,12 @@ export default function HomePage() {
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                       <div className="absolute inset-x-0 bottom-0 p-3">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <h4 className="text-white font-black text-xs truncate tracking-tight">{user.name}</h4>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <h4 className="text-white font-black text-sm truncate tracking-tight">{user.name}</h4>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-[#006400] text-white font-black text-[10px] px-1.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
-                          <span className="bg-white/10 backdrop-blur-md px-1.5 py-0.5 rounded-full text-white font-bold text-[10px] border border-white/20 truncate max-w-[60px]">{user.country || "Kenya"}</span>
+                          <span className="bg-[#006400] text-white font-black text-[11px] px-2 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
+                          <span className="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full text-white font-bold text-[11px] border border-white/20 truncate max-w-[70px]">{user.country || "Kenya"}</span>
                         </div>
                       </div>
                     </Card>
