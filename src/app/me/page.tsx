@@ -65,20 +65,20 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Premium Red Header Background - Layered */}
-      <div className="absolute top-0 left-0 w-full h-[240px] bg-[#FF3B30] rounded-b-[3rem]" />
+      {/* Premium Red Header Background - Straight Architectural Edge */}
+      <div className="absolute top-0 left-0 w-full h-[240px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
         <header className="relative pt-12 pb-8 px-6 flex flex-col items-center text-center">
           {/* Top Right Visitor Count Badge */}
           <div className="absolute top-6 right-6">
-            <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
+            <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
               <span className="text-[9px] font-black text-white">12.5k Visitors</span>
             </div>
           </div>
 
           <div className="relative mb-4">
-            <div className="relative w-28 h-28 rounded-full shadow-2xl overflow-hidden bg-muted border-none">
+            <div className="relative w-28 h-28 shadow-2xl overflow-hidden bg-muted border-none">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
                 alt={profile.name} 
@@ -87,7 +87,7 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            <button className="absolute bottom-1 right-1 bg-white p-3 rounded-full shadow-xl active:scale-90 transition-transform border border-black/5">
+            <button className="absolute bottom-1 right-1 bg-white p-3 shadow-xl active:scale-90 transition-transform border border-black/5">
               <Pencil className="w-4 h-4 text-[#FF3B30]" />
             </button>
           </div>
@@ -114,26 +114,26 @@ export default function MePage() {
           {/* Action cards layered over the transition */}
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-2">
             <Button 
-              className="h-20 bg-white hover:bg-gray-50 border-none rounded-[2rem] shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
+              className="h-20 bg-white hover:bg-gray-50 border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
             >
               <CircleDollarSign className="w-5 h-5" />
               <span className="text-[10px] font-black uppercase tracking-widest">Recharge</span>
             </Button>
             
             <Button 
-              className="h-20 bg-white hover:bg-gray-50 border-none rounded-[2rem] shadow-xl flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all"
+              className="h-20 bg-white hover:bg-gray-50 border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all"
             >
               <Wallet className="w-5 h-5 text-[#4285F4]" />
               <span className="text-[10px] font-black uppercase tracking-widest">Income</span>
             </Button>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-black/5 overflow-hidden">
+          <div className="bg-white p-2 shadow-sm border border-black/5 overflow-hidden">
             <div className="flex flex-col">
-              <Button variant="ghost" className="h-16 justify-between rounded-[2rem] px-5" asChild>
+              <Button variant="ghost" className="h-16 justify-between px-5" asChild>
                 <Link href="#">
                   <div className="flex items-center gap-4">
-                    <div className="bg-green-50 p-2.5 rounded-2xl">
+                    <div className="bg-green-50 p-2.5">
                       <ShieldCheck className="w-5 h-5 text-green-600" />
                     </div>
                     <span className="font-black text-xs text-black">Identity Verification</span>
@@ -142,10 +142,10 @@ export default function MePage() {
                 </Link>
               </Button>
 
-              <Button variant="ghost" className="h-16 justify-between rounded-[2rem] px-5" asChild>
+              <Button variant="ghost" className="h-16 justify-between px-5" asChild>
                 <Link href="#">
                   <div className="flex items-center gap-4">
-                    <div className="bg-blue-50 p-2.5 rounded-2xl">
+                    <div className="bg-blue-50 p-2.5">
                       <Headphones className="w-5 h-5 text-blue-600" />
                     </div>
                     <span className="font-black text-xs text-black">Customer Support</span>
@@ -154,10 +154,10 @@ export default function MePage() {
                 </Link>
               </Button>
 
-              <Button variant="ghost" className="h-16 justify-between rounded-[2rem] px-5" asChild>
+              <Button variant="ghost" className="h-16 justify-between px-5" asChild>
                 <Link href="/settings">
                   <div className="flex items-center gap-4">
-                    <div className="bg-gray-50 p-2.5 rounded-2xl">
+                    <div className="bg-gray-50 p-2.5">
                       <Settings className="w-5 h-5 text-gray-600" />
                     </div>
                     <span className="font-black text-xs text-black">App Settings</span>

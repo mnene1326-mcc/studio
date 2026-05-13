@@ -67,12 +67,12 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      <div className="bg-[#FF3B30] pt-2 pb-6 rounded-b-[3rem]">
+      <div className="bg-[#FF3B30] pt-2 pb-6">
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-[2rem] p-5 flex flex-col justify-between h-36 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-5 flex flex-col justify-between h-36 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
+                <div className="bg-white/30 p-2 backdrop-blur-md">
                   <FileText className="w-5 h-5 text-black" />
                 </div>
               </div>
@@ -82,9 +82,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-[2rem] p-5 flex flex-col justify-between h-36 shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all">
+            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-5 flex flex-col justify-between h-36 shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all">
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
+                <div className="bg-white/30 p-2 backdrop-blur-md">
                   <Target className="w-5 h-5 text-black" />
                 </div>
               </div>
@@ -106,7 +106,7 @@ export default function HomePage() {
               )}
             >
               Recommend
-              {activeTab === 'Recommend' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white rounded-full mx-auto w-1/2" />}
+              {activeTab === 'Recommend' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white mx-auto w-1/2" />}
             </button>
             <button 
               onClick={() => setActiveTab('Nearby')}
@@ -116,7 +116,7 @@ export default function HomePage() {
               )}
             >
               Nearby
-              {activeTab === 'Nearby' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white rounded-full mx-auto w-1/2" />}
+              {activeTab === 'Nearby' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white mx-auto w-1/2" />}
             </button>
           </div>
           <div className="flex items-center gap-4">
@@ -130,7 +130,7 @@ export default function HomePage() {
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={`skeleton-${i}`} className="aspect-[3/4.2] rounded-[2.5rem] bg-muted animate-pulse" />
+              <div key={`skeleton-${i}`} className="aspect-[3/4.2] bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -142,7 +142,7 @@ export default function HomePage() {
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-[2.5rem] aspect-[3/4.2] group cursor-pointer shadow-xl premium-shadow"
+                className="relative overflow-hidden border-none aspect-[3/4.2] group cursor-pointer shadow-xl premium-shadow"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
@@ -154,7 +154,7 @@ export default function HomePage() {
                 />
                 
                 <div 
-                  className="absolute top-4 right-4 bg-[#FF3B30] rounded-2xl px-5 py-2.5 shadow-xl flex items-center justify-center z-20 active:scale-95 transition-transform"
+                  className="absolute top-4 right-4 bg-[#FF3B30] px-5 py-2.5 shadow-xl flex items-center justify-center z-20 active:scale-95 transition-transform"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
                   <span className="text-white font-black text-[10px] tracking-widest uppercase">CHAT</span>
@@ -166,10 +166,10 @@ export default function HomePage() {
                   <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none mb-2">{user.name}</h4>
                   
                   <div className="flex items-center gap-2">
-                    <span className="bg-[#006400] px-3 py-1 rounded-lg text-white font-black text-[10px] leading-none shadow-sm">
+                    <span className="bg-[#006400] px-3 py-1 text-white font-black text-[10px] leading-none shadow-sm">
                       {calculateAge(user.dob)}
                     </span>
-                    <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-white font-bold text-[10px] border border-white/20 leading-none shadow-sm">
+                    <span className="bg-white/10 backdrop-blur-md px-3 py-1 text-white font-bold text-[10px] border border-white/20 leading-none shadow-sm">
                       {user.country || "Kenya"}
                     </span>
                   </div>
