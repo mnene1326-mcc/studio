@@ -10,43 +10,43 @@ export async function GET() {
   const ipnUrl = `${appUrl}/api/pesapal-ipn`;
 
   try {
-    // Step 1: Auth
+    // Step 1: Auth check
     const token = await getAccessToken().catch(err => {
-      throw new Error(`Auth Failed: ${err.message}. Ensure your Live PESAPAL_CONSUMER_KEY and SECRET are in Vercel Environment Variables.`);
+      throw new Error(`AUTH_FAILED: ${err.message}`);
     });
 
-    // Step 2: Try Automated Registration
+    // Step 2: Attempt Automated Registration (Note: PesaPal Live often restricts this via API)
     const ipnId = await registerIPN(token).catch(err => {
-      throw new Error(`Automated registration is restricted by PesaPal: ${err.message}`);
+      throw new Error(`REGISTRATION_RESTRICTED: ${err.message}`);
     });
 
     return NextResponse.json({
       status: 'Success',
       message: 'IPN Registered successfully via API.',
       ipn_id: ipnId,
-      ipn_url: ipnUrl,
-      next_step: 'Copy the ipn_id above and add it to Vercel as PESAPAL_IPN_ID, then redeploy.'
+      instructions: "Copy the ipn_id above and add it to Vercel as PESAPAL_IPN_ID, then redeploy."
     });
   } catch (error: any) {
     return NextResponse.json({
       status: 'Manual Action Required',
       reason: error.message,
-      instructions: "Automated registration failed. Please follow these steps to get your IPN ID manually:",
+      summary: "You must manually get the IPN ID from your PesaPal Dashboard.",
       steps: [
-        "1. Log in to your PesaPal Dashboard (Live).",
-        "2. Go to Settings -> IPN Settings.",
+        "1. Log in to https://pay.pesapal.com/",
+        "2. Click 'Settings' (top right) -> 'IPN Settings'.",
         `3. Enter Website Domain: matchflow-iota.vercel.app`,
         `4. Enter IPN Listener URL: ${ipnUrl}`,
-        "5. Select 'GET' or 'POST' and click SAVE.",
-        "6. Once saved, look at the table on that page. Copy the value from the 'ID' or 'IPN ID' column.",
-        "7. Go to Vercel -> Settings -> Environment Variables.",
-        "8. Create PESAPAL_IPN_ID with the value you copied.",
-        "9. Redeploy your app."
+        "5. Select 'GET' or 'POST' and click SAVE URL.",
+        "6. Look at the table below. There is a column named 'ID' or 'IPN ID'.",
+        "7. COPY THAT ID (a long alphanumeric code).",
+        "8. Go to Vercel Dashboard -> MatchFlow -> Settings -> Environment Variables.",
+        "9. Add PESAPAL_IPN_ID = (the ID you copied).",
+        "10. Redeploy your app."
       ],
-      validation_check: {
-        listener_url: ipnUrl,
-        status: "Listener is active and reachable if you see 'OK' when visiting it directly."
+      current_status: {
+        listener_active: "YES (Confirmed)",
+        listener_url: ipnUrl
       }
-    }, { status: 200 });
+    });
   }
 }

@@ -94,17 +94,16 @@ export async function getTransactionStatus(orderTrackingId: string) {
 
 export async function initiatePayment(amount: number, userEmail: string, userId: string) {
   try {
-    const token = await getAccessToken();
     const ipnId = process.env.PESAPAL_IPN_ID;
 
-    if (!ipnId) {
-      throw new Error('PESAPAL_IPN_ID is missing. You must get this from the PesaPal Dashboard IPN settings first.');
+    if (!ipnId || ipnId === 'YOUR_IPN_ID') {
+      throw new Error('MISSING_IPN_ID: You must get the IPN ID from your PesaPal Dashboard and add it to Vercel.');
     }
 
+    const token = await getAccessToken();
     const merchantReference = `RECHARGE_${userId}_${amount}_${Date.now()}`;
     const appUrl = 'https://matchflow-iota.vercel.app';
 
-    // PesaPal v3 requires a more complete billing address structure
     const payload = {
       id: merchantReference,
       currency: 'KES',
@@ -145,7 +144,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
     return { redirectUrl: data.redirect_url, merchantReference };
   } catch (error: any) {
     console.error('PesaPal Payment Error:', error);
-    // Return a structured error so the client can show it without crashing
+    // Return the specific error message to the UI
     throw new Error(error.message || 'Payment service unavailable.');
   }
 }
