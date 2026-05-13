@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/utils"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 interface UserProfile {
@@ -117,7 +117,7 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen relative">
-      <div className="absolute top-0 left-0 right-0 h-32 bg-[#00A2FF] z-0" />
+      <div className="absolute top-0 left-0 right-0 h-24 bg-[#00A2FF] z-0" />
       
       <div className="relative z-10">
         <div className="px-4 pt-4 pb-2">
