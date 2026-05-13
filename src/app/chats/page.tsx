@@ -301,7 +301,7 @@ function ChatsContent() {
 
   if (!startWithId) {
     return (
-      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
+      <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
         <header className="sticky top-0 z-40 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-logo text-[#00A2FF] tracking-tight">Chat</h1>
           <div className="flex items-center gap-2">
@@ -390,8 +390,8 @@ function ChatsContent() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      <header className="sticky top-0 z-50 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm">
+    <div className="flex-1 flex flex-col h-[100dvh] bg-white relative overflow-hidden">
+      <header className="bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50 shrink-0">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -416,66 +416,68 @@ function ChatsContent() {
         </div>
       </header>
 
-      <ScrollArea className="flex-1 bg-white">
-        <div className="pb-32 pt-4">
-          {messagesRaw.length >= messagesLimit && (
-            <div className="flex justify-center my-4">
-               <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2"
-                onClick={() => setMessagesLimit(prev => prev + 20)}
-               >
-                 <ChevronDown className="w-3 h-3 rotate-180" />
-                 Load previous messages
-               </Button>
-            </div>
-          )}
-
-          <div className="text-center my-6">
-            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
-              {format(new Date(), "HH:mm")}
-            </span>
-          </div>
-
-          <div className="px-4 space-y-6">
-            {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
-              </div>
-            ) : messages.map((msg) => (
-              <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
-                {msg.senderId !== currentUser.uid && (
-                  <Avatar className="w-8 h-8 shrink-0">
-                    <AvatarImage src={chatPartner?.photoURL} />
-                    <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
-                  </Avatar>
-                )}
-                <div className={cn(
-                  "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
-                  msg.senderId === currentUser.uid 
-                    ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
-                    : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
-                )}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-
-            {isBlocked && (
-              <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
-                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Lock className="w-6 h-6 text-gray-400" />
-                 </div>
-                 <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
+      <div className="flex-1 relative overflow-hidden">
+        <ScrollArea className="h-full bg-white">
+          <div className="pb-8 pt-4">
+            {messagesRaw.length >= messagesLimit && (
+              <div className="flex justify-center my-4">
+                 <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2"
+                  onClick={() => setMessagesLimit(prev => prev + 20)}
+                 >
+                   <ChevronDown className="w-3 h-3 rotate-180" />
+                   Load previous messages
+                 </Button>
               </div>
             )}
+
+            <div className="text-center my-6">
+              <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
+                {format(new Date(), "HH:mm")}
+              </span>
+            </div>
+
+            <div className="px-4 space-y-6">
+              {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
+                </div>
+              ) : messages.map((msg) => (
+                <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
+                  {msg.senderId !== currentUser.uid && (
+                    <Avatar className="w-8 h-8 shrink-0">
+                      <AvatarImage src={chatPartner?.photoURL} />
+                      <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div className={cn(
+                    "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
+                    msg.senderId === currentUser.uid 
+                      ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
+                      : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
+                  )}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+
+              {isBlocked && (
+                <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
+                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Lock className="w-6 h-6 text-gray-400" />
+                   </div>
+                   <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {!isBlocked && (
-        <footer className="sticky bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
+        <footer className="bg-white border-t z-50 pb-safe shrink-0">
           <div className="px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
               <Mic className="w-6 h-6" />
