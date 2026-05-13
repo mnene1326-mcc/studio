@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, use, useState } from "react"
@@ -37,7 +36,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   const { data: profile, loading } = useDoc<UserProfile>(userRef)
 
   const calculateAge = (dob: string) => {
-    if (!dob) return "20"
+    if (!dob) return "21"
     const birthDate = new Date(dob)
     const today = new Date()
     let age = today.getFullYear() - birthDate.getFullYear()
@@ -61,7 +60,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
-      <div className="relative h-[55vh] w-full">
+      <div className="relative h-[60vh] w-full">
         <Image
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
           alt={profile.name}
@@ -71,65 +70,63 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           priority
         />
         
-        <div className="absolute top-10 inset-x-0 px-4 flex justify-between items-center z-20">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
-            <ChevronLeft className="w-5 h-5" />
+        <div className="absolute top-12 inset-x-0 px-6 flex justify-between items-center z-20">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
+            <ChevronLeft className="w-6 h-6" />
           </Button>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
-              <MoreHorizontal className="w-5 h-5" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
+            <MoreHorizontal className="w-6 h-6" />
+          </Button>
         </div>
       </div>
 
-      <div className="relative -mt-24 bg-white px-6 pt-6 space-y-3 min-h-[50vh] z-20 rounded-t-[2.5rem] shadow-2xl">
+      <div className="relative -mt-20 bg-white px-8 pt-8 space-y-6 min-h-[45vh] z-20 rounded-t-[3.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
         <div className="flex justify-between items-start">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-sm font-black text-black tracking-tight">{profile.name}</h1>
-              <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
-                <User className="w-1.5 h-1.5 text-black" />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-black tracking-tight leading-none">{profile.name}</h1>
+              <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                <User className="w-2 h-2 text-black" />
               </div>
             </div>
             
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[8px] font-black">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-[#006400] text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
                 {profile.gender === 'female' ? '♀' : '♂'} {age}
               </span>
-              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-[8px] font-black border border-black/5">
+              <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-lg text-[10px] font-black border border-black/5 uppercase tracking-widest">
                 {profile.country || "Kenya"}
               </span>
             </div>
 
-            <div className="flex items-center gap-1 text-gray-400 text-[8px] font-bold cursor-pointer" onClick={handleCopyId}>
-              <span>ID:{profile.matchFlowId || "---"}</span>
-              <Copy className={cn("w-2.5 h-2.5", copied ? "text-green-500" : "text-gray-300")} />
+            <div className="flex items-center gap-2 text-gray-400 text-[10px] font-black cursor-pointer uppercase tracking-widest" onClick={handleCopyId}>
+              <span>ID: {profile.matchFlowId || "---"}</span>
+              <Copy className={cn("w-3 h-3", copied ? "text-green-500" : "text-gray-300")} />
             </div>
           </div>
         </div>
 
-        <section className="space-y-1 pt-1">
-          <h2 className="text-[9px] font-black text-black uppercase tracking-widest opacity-40">About Me</h2>
-          <p className="text-[10px] font-bold text-gray-600 leading-relaxed italic">
-            "{profile.interests || `I'm interested in meeting new people and finding meaningful connections...`}"
+        <section className="space-y-2 pt-2">
+          <h2 className="text-[10px] font-black text-black uppercase tracking-[0.2em] opacity-30">About Me</h2>
+          <p className="text-sm font-medium text-gray-600 leading-relaxed italic">
+            "{profile.interests || `I'm passionate about meeting authentic people, exploring new cultures, and finding deep connections that go beyond the surface.`}"
           </p>
         </section>
 
-        <div className="pt-3 border-t border-black/5">
-          <p className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">
-            DM for fun and serious talks 🥰
+        <div className="pt-6 border-t border-black/5">
+          <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] text-center leading-relaxed">
+            Respectful vibes only ✨ Serious connections welcome 🥰
           </p>
         </div>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t z-50">
+      <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-50">
         <Button 
-          className="w-full h-11 rounded-full bg-[#FF3B30] text-white text-[10px] font-black flex items-center justify-center gap-2 shadow-xl uppercase tracking-widest"
+          className="w-full h-16 rounded-full bg-[#FF3B30] text-white text-sm font-black flex items-center justify-center gap-3 shadow-2xl premium-shadow uppercase tracking-widest active:scale-95 transition-all"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
-          <MessageSquare className="w-3.5 h-3.5 fill-current" />
-          CHAT NOW
+          <MessageSquare className="w-5 h-5 fill-current" />
+          Send Message
         </Button>
       </div>
     </div>

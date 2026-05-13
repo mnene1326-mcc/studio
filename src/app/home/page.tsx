@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -25,7 +24,7 @@ interface UserProfile {
 }
 
 function calculateAge(dob: string) {
-  if (!dob) return 20
+  if (!dob) return 22
   const birthDate = new Date(dob)
   const today = new Date()
   let age = today.getFullYear() - birthDate.getFullYear()
@@ -68,110 +67,110 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      <div className="bg-[#FF3B30] pt-2">
-        <div className="px-4 pb-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
+      <div className="bg-[#FF3B30] pt-2 pb-6 rounded-b-[3rem]">
+        <div className="px-4 pb-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-[2rem] p-5 flex flex-col justify-between h-36 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
-                   <div className="relative">
-                      <FileText className="w-5 h-5 text-black" />
-                   </div>
+                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
+                  <FileText className="w-5 h-5 text-black" />
                 </div>
               </div>
               <div className="space-y-0.5">
                 <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
-                <p className="text-white/80 text-[8px] font-bold">Send a note</p>
+                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Send a note</p>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all">
+            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] rounded-[2rem] p-5 flex flex-col justify-between h-36 shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all">
               <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
+                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
                   <Target className="w-5 h-5 text-black" />
                 </div>
               </div>
               <div className="space-y-0.5">
                 <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
-                <p className="text-white/80 text-[8px] font-bold">Earn rewards</p>
+                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Earn rewards</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-6">
+        <div className="sticky top-0 z-40 px-4 pt-2 flex items-center justify-between">
+          <div className="flex items-center gap-8">
             <button 
               onClick={() => setActiveTab('Recommend')}
               className={cn(
-                "relative text-base font-black transition-all tracking-tight",
-                activeTab === 'Recommend' ? "text-white scale-105" : "text-white/60"
+                "relative text-lg font-black transition-all tracking-tight",
+                activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50"
               )}
             >
               Recommend
+              {activeTab === 'Recommend' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white rounded-full mx-auto w-1/2" />}
             </button>
             <button 
               onClick={() => setActiveTab('Nearby')}
               className={cn(
-                "relative text-base font-black transition-all tracking-tight",
-                activeTab === 'Nearby' ? "text-white scale-105" : "text-white/60"
+                "relative text-lg font-black transition-all tracking-tight",
+                activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50"
               )}
             >
               Nearby
+              {activeTab === 'Nearby' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white rounded-full mx-auto w-1/2" />}
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
              <ShoppingBag className="w-6 h-6 text-white" />
              <Search className="w-6 h-6 text-white" />
           </div>
         </div>
       </div>
 
-      <main className="px-4 pt-4">
+      <main className="px-4 pt-6">
         {loading && filteredUsers.length === 0 ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={`skeleton-${i}`} className="aspect-[3/3.8] rounded-[2rem] bg-muted animate-pulse" />
+              <div key={`skeleton-${i}`} className="aspect-[3/4.2] rounded-[2.5rem] bg-muted animate-pulse" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-            <p className="font-bold">No one matches yet...</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center opacity-30">
+            <p className="font-bold">Finding matches for you...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
+                className="relative overflow-hidden border-none rounded-[2.5rem] aspect-[3/4.2] group cursor-pointer shadow-xl premium-shadow"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
                   src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/550`} 
                   alt={user.name}
                   fill
-                  className="object-cover"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                   data-ai-hint="person portrait"
                 />
                 
                 <div 
-                  className="absolute top-3 right-3 bg-[#FF3B30] rounded-2xl px-5 py-2 shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
+                  className="absolute top-4 right-4 bg-[#FF3B30] rounded-2xl px-5 py-2.5 shadow-xl flex items-center justify-center z-20 active:scale-95 transition-transform"
                   onClick={(e) => handleChatClick(e, user.uid)}
                 >
-                  <span className="text-white font-bold text-[11px] tracking-widest uppercase">CHAT</span>
+                  <span className="text-white font-black text-[10px] tracking-widest uppercase">CHAT</span>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
 
-                <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col items-start">
+                <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col items-start">
                   <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none mb-2">{user.name}</h4>
                   
-                  <div className="flex items-center gap-1.5">
-                    <span className="bg-[#006400] px-2.5 py-1 rounded-md text-white font-black text-[11px] leading-none shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#006400] px-3 py-1 rounded-lg text-white font-black text-[10px] leading-none shadow-sm">
                       {calculateAge(user.dob)}
                     </span>
-                    <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-md text-white font-bold text-[11px] border border-white/20 leading-none shadow-sm">
-                      {user.country ? user.country.charAt(0).toUpperCase() + user.country.slice(1) : "Kenya"}
+                    <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-lg text-white font-bold text-[10px] border border-white/20 leading-none shadow-sm">
+                      {user.country || "Kenya"}
                     </span>
                   </div>
                 </div>

@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -42,7 +41,6 @@
   }
 }
 
-/* Removed page-in animation as it causes perceived blinking during transitions */
 .native-page-transition {
   @apply flex-1 flex flex-col;
 }

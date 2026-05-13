@@ -1,11 +1,10 @@
-
 {
   "name": "MatchFlow",
   "short_name": "MatchFlow",
-  "description": "Connect with Heart - The premier dating app for East Africa.",
+  "description": "Connect with Heart - Premier dating app for East Africa.",
   "start_url": "/welcome",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#FF3B30",
   "theme_color": "#FF3B30",
   "icons": [
     {
