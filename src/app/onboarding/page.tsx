@@ -98,6 +98,10 @@ function OnboardingContent() {
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
 
+    // Monetization: Male 500 coins, Female 500 diamonds
+    const initialCoins = gender === 'male' ? 500 : (existingData?.coins || 0)
+    const initialDiamonds = gender === 'female' ? 500 : (existingData?.diamonds || 0)
+
     const updateData: any = {
       uid: user.uid,
       email: user.email || "guest@matchflow.app",
@@ -108,7 +112,8 @@ function OnboardingContent() {
       lookingFor: finalLookingFor,
       onboardingComplete: true,
       photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
-      coins: existingData?.coins || 100, // Initialize with 100 coins
+      coins: initialCoins,
+      diamonds: initialDiamonds,
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
     }
@@ -168,7 +173,6 @@ function OnboardingContent() {
                 <SelectContent className="rounded-2xl">
                   <SelectItem value="male">Male</SelectItem>
                   <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>

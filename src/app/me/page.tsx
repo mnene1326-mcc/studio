@@ -17,7 +17,8 @@ import {
   Pencil,
   CircleDollarSign,
   Wallet,
-  ShieldCheck
+  ShieldCheck,
+  Gem
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -28,6 +29,8 @@ interface UserProfile {
   email: string
   photoURL: string
   matchFlowId?: string
+  coins?: number
+  diamonds?: number
 }
 
 export default function MePage() {
@@ -66,7 +69,7 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Premium Red Header Background - Perfectly Straight End, Adjusted height for halfway buttons */}
+      {/* Premium Red Header Background - Perfectly Straight End */}
       <div className="absolute top-0 left-0 w-full h-[280px] bg-[#FF3B30] z-0" />
 
       <div className="relative z-10">
@@ -98,7 +101,6 @@ export default function MePage() {
             <BadgeCheck className="w-4 h-4 text-white" />
           </div>
 
-          {/* User ID Section - Strictly in Header */}
           <div 
             className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all"
             onClick={handleCopyId}
@@ -118,15 +120,21 @@ export default function MePage() {
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
             >
-              <CircleDollarSign className="w-5 h-5" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Recharge</span>
+              <div className="flex items-center gap-1.5">
+                <CircleDollarSign className="w-5 h-5" />
+                <span className="text-sm font-black">{profile.coins || 0}</span>
+              </div>
+              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Recharge Coins</span>
             </Button>
             
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all"
             >
-              <Wallet className="w-5 h-5 text-[#4285F4]" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Income</span>
+              <div className="flex items-center gap-1.5">
+                <Gem className="w-5 h-5 text-[#4285F4]" />
+                <span className="text-sm font-black">{profile.diamonds || 0}</span>
+              </div>
+              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Diamond Income</span>
             </Button>
           </div>
 

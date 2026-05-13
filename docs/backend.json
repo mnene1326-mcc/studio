@@ -9,7 +9,7 @@
         "uid": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
-        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "gender": { "type": "string", "enum": ["male", "female"] },
         "dob": { "type": "string", "format": "date" },
         "country": { "type": "string" },
         "lookingFor": { "type": "string" },
@@ -17,7 +17,9 @@
         "photoURL": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" },
         "interests": { "type": "string" },
-        "matchFlowId": { "type": "string", "description": "Unique 7-9 digit numeric ID." }
+        "matchFlowId": { "type": "string", "description": "Unique 7-9 digit numeric ID." },
+        "coins": { "type": "number", "description": "Currency for males to send messages." },
+        "diamonds": { "type": "number", "description": "Currency for females earned from interactions." }
       },
       "required": ["uid", "email", "onboardingComplete"]
     },
