@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react"
@@ -5,9 +6,8 @@ import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, Loader2 } from "lucide-react"
+import { ChevronLeft, Menu, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { initiatePayment } from "@/app/actions/pesapal"
 import { useToast } from "@/hooks/use-toast"
 
 interface UserProfile {
@@ -42,40 +42,26 @@ export default function RechargePage() {
   const db = useFirestore()
   const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
-  const [loading, setLoading] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  const selectedPkgData = useMemo(() => 
-    PACKAGES.find(p => p.amount === selectedPackage) || PACKAGES[1]
-  , [selectedPackage])
-
-  const handlePayment = async () => {
-    if (!user || !profile) return
-    setLoading(true)
-    try {
-      const { redirectUrl } = await initiatePayment(selectedPkgData.price, profile.email, user.uid)
-      window.location.href = redirectUrl
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Payment Error",
-        description: error.message || "Could not initiate payment. Check your configuration.",
-      })
-      setLoading(false)
-    }
+  const handlePayment = () => {
+    toast({
+      title: "Notice",
+      description: "Recharge services are currently undergoing maintenance. Please check back later.",
+    })
   }
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
       <header className="px-4 h-16 flex items-center justify-between border-b bg-white sticky top-0 z-50">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-6 h-6 text-black" />
         </Button>
         <h1 className="text-base font-black text-black">Wallet</h1>
         <Button variant="ghost" size="icon" className="rounded-full border border-black/20 w-8 h-8 p-1.5">
-           <Menu className="w-full h-full" />
+           <Menu className="w-full h-full text-black" />
         </Button>
       </header>
 
@@ -131,9 +117,8 @@ export default function RechargePage() {
         <Button 
           className="w-full h-16 rounded-full bg-[#FF3B30] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-red-100 uppercase tracking-widest flex items-center justify-center gap-3"
           onClick={handlePayment}
-          disabled={loading}
         >
-          {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Recharge Now"}
+          Recharge Now
         </Button>
       </footer>
     </div>
