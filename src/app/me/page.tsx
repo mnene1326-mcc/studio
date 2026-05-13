@@ -119,6 +119,7 @@ export default function MePage() {
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-10">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
+              onClick={() => router.push("/recharge")}
             >
               <div className="flex items-center gap-1.5">
                 <CircleDollarSign className="w-5 h-5" />
