@@ -6,10 +6,14 @@ import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check } from "lucide-react"
+import { ChevronLeft, Menu, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { initiatePayment } from "@/app/actions/pesapal"
 
 interface UserProfile {
+  name: string
+  email: string
   coins?: number
 }
 
@@ -22,24 +26,57 @@ function CoinIcon({ className }: { className?: string }) {
 }
 
 const PACKAGES = [
-  { amount: 500, price: "KES 50.0" },
-  { amount: 1000, price: "KES 100.0" },
-  { amount: 2000, price: "KES 200.0" },
-  { amount: 5000, price: "KES 500.0" },
-  { amount: 10000, price: "KES 1000.0" },
-  { amount: 20000, price: "KES 2000.0" },
-  { amount: 50000, price: "KES 5000.0" },
-  { amount: 100000, price: "KES 10000.0" },
+  { amount: 500, price: 50.0 },
+  { amount: 1000, price: 100.0 },
+  { amount: 2000, price: 200.0 },
+  { amount: 5000, price: 500.0 },
+  { amount: 10000, price: 1000.0 },
+  { amount: 20000, price: 2000.0 },
+  { amount: 50000, price: 5000.0 },
+  { amount: 100000, price: 10000.0 },
 ]
 
 export default function RechargePage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
+
+  const selectedPkgData = useMemo(() => 
+    PACKAGES.find(p => p.amount === selectedPackage) || PACKAGES[1]
+  , [selectedPackage])
+
+  const handlePayNow = async () => {
+    if (!user || !profile) return
+    
+    setIsProcessing(true)
+    try {
+      const result = await initiatePayment({
+        amount: selectedPkgData.price,
+        email: profile.email || "guest@matchflow.app",
+        name: profile.name || "MatchFlow User",
+        userId: user.uid,
+      })
+
+      if (result.redirect_url) {
+        window.location.href = result.redirect_url
+      } else {
+        throw new Error("No redirect URL received")
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: error.message || "Could not initiate payment. Please try again later.",
+      })
+      setIsProcessing(false)
+    }
+  }
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
@@ -65,7 +102,7 @@ export default function RechargePage() {
           </div>
 
           <div className="flex items-center justify-between">
-             <h3 className="text-sm font-black text-black">My Balance</h3>
+             <h3 className="text-sm font-black text-black">Top Up Packages</h3>
              <div className="bg-black text-white px-2.5 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-transform cursor-pointer">
                 <div className="w-4 h-3 bg-gradient-to-r from-black via-green-800 to-black rounded-sm overflow-hidden flex items-center justify-center">
                     <div className="w-full h-[2px] bg-red-600 rotate-45 scale-150" />
@@ -82,7 +119,7 @@ export default function RechargePage() {
                 className={cn(
                   "aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-2 relative transition-all active:scale-95 cursor-pointer",
                   selectedPackage === pkg.amount 
-                    ? "border-[#00AEFF] bg-white" 
+                    ? "border-[#00AEFF] bg-white shadow-md" 
                     : "border-gray-50 bg-white"
                 )}
               >
@@ -90,6 +127,7 @@ export default function RechargePage() {
                 <span className={cn("text-xs font-black", selectedPackage === pkg.amount ? "text-[#00AEFF]" : "text-black")}>
                   {pkg.amount}
                 </span>
+                <span className="text-[8px] font-bold text-gray-400 mt-1">KES {pkg.price}</span>
                 {selectedPackage === pkg.amount && (
                   <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#00AEFF] rounded-full flex items-center justify-center">
                      <Check className="w-2.5 h-2.5 text-white stroke-[4]" />
@@ -104,13 +142,18 @@ export default function RechargePage() {
       {/* Bottom Payment Button */}
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-[#FF3B30] text-white font-black text-base shadow-xl premium-shadow active:scale-95 transition-all uppercase tracking-widest"
-          onClick={() => {
-            // Placeholder for payment logic
-            window.open("https://wa.me/254713934404", "_blank")
-          }}
+          disabled={isProcessing}
+          className="w-full h-16 rounded-full bg-[#FF3B30] text-white font-black text-base shadow-xl premium-shadow active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-3"
+          onClick={handlePayNow}
         >
-          Pay Now
+          {isProcessing ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            `Pay KES ${selectedPkgData.price.toFixed(1)} Now`
+          )}
         </Button>
       </footer>
     </div>
