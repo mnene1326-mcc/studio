@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -68,19 +69,27 @@ function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentU
   const router = useRouter()
   const db = useFirestore()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const partnerId = chat.participants.find(id => id !== currentUserUid)
+  const isLongPress = useRef(false)
   
+  const partnerId = chat.participants.find(id => id !== currentUserUid)
   const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   const { data: partner } = useDoc<UserProfile>(partnerRef)
 
   const handleTouchStart = () => {
+    isLongPress.current = false
     timerRef.current = setTimeout(() => {
+      isLongPress.current = true
       onDelete(chat)
-    }, 800)
+    }, 500) // Reduced to 500ms for snappier feel
   }
 
   const handleTouchEnd = () => {
     if (timerRef.current) clearTimeout(timerRef.current)
+  }
+
+  const handleClick = () => {
+    if (isLongPress.current) return
+    router.push(`/chats?startWith=${partnerId}`)
   }
 
   if (!partner) return null
@@ -88,7 +97,7 @@ function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentU
   return (
     <div 
       className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50 select-none"
-      onClick={() => router.push(`/chats?startWith=${partnerId}`)}
+      onClick={handleClick}
       onMouseDown={handleTouchStart}
       onMouseUp={handleTouchEnd}
       onMouseLeave={handleTouchEnd}
