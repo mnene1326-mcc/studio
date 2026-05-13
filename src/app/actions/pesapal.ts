@@ -3,6 +3,7 @@
 /**
  * @fileOverview Server actions for PesaPal v3 integration.
  * Handles authentication, transaction initiation, and IPN registration.
+ * Explicitly uses Live endpoints unless PESAPAL_SANDBOX is 'true'.
  */
 
 const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
@@ -10,14 +11,14 @@ const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true'
   : 'https://pay.pesapal.com/v3';
 
 /**
- * Gets an access token from PesaPal using Consumer Key and Secret.
+ * Gets an access token from PesaPal using Consumer Key and Secret from Vercel Envs.
  */
 export async function getAccessToken() {
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error('PesaPal credentials (KEY/SECRET) are missing from environment variables.');
+    throw new Error('Vercel Config Error: PESAPAL_CONSUMER_KEY or SECRET is missing.');
   }
 
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
@@ -34,7 +35,7 @@ export async function getAccessToken() {
 
   if (!response.ok) {
     const errorText = await response.text();
-    let errorMessage = 'PesaPal Auth Failed: Check your Consumer Key/Secret.';
+    let errorMessage = 'PesaPal Auth Failed: Verify your Live Keys in Vercel.';
     try {
       const errorJson = JSON.parse(errorText);
       errorMessage = errorJson.message || errorMessage;
@@ -48,6 +49,7 @@ export async function getAccessToken() {
 
 /**
  * Registers an IPN URL with PesaPal and returns the IPN ID.
+ * Used by the /api/pesapal/setup endpoint.
  */
 export async function registerIPN(url: string) {
   const token = await getAccessToken();
@@ -69,7 +71,7 @@ export async function registerIPN(url: string) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Failed to register IPN');
+    throw new Error(error.message || 'Failed to register IPN with PesaPal API.');
   }
 
   const data = await response.json();
@@ -98,7 +100,7 @@ export async function initiatePayment(input: {
     if (!ipnId) {
       return { 
         success: false, 
-        error: "Missing PESAPAL_IPN_ID. Visit matchflow-iota.vercel.app/api/pesapal/setup to generate one." 
+        error: "Missing PESAPAL_IPN_ID in Vercel. Run the setup link to get one." 
       };
     }
 
@@ -131,16 +133,16 @@ export async function initiatePayment(input: {
     const data = await response.json();
 
     if (!response.ok) {
-      return { success: false, error: data.message || 'PesaPal Order Submission Failed.' };
+      return { success: false, error: data.message || 'PesaPal Live Order Submission Failed.' };
     }
 
-    // PesaPal v3 can return redirect_url or redirectUrl
+    // PesaPal returns redirect_url or redirectUrl
     const redirectUrl = data.redirect_url || data.redirectUrl || data.message;
 
     if (!redirectUrl || typeof redirectUrl !== 'string' || !redirectUrl.startsWith('http')) {
       return { 
         success: false, 
-        error: `Order accepted but no valid redirect URL returned. Status: ${data.status || 'Unknown'}` 
+        error: `Order accepted but no valid redirect URL returned. Message: ${data.message || 'Unknown'}` 
       };
     }
 
@@ -150,7 +152,7 @@ export async function initiatePayment(input: {
       order_tracking_id: data.order_tracking_id,
     };
   } catch (error: any) {
-    console.error('PesaPal Payment Error:', error);
-    return { success: false, error: error.message || 'Payment initiation failed.' };
+    console.error('PesaPal Live Error:', error);
+    return { success: false, error: error.message || 'Live payment initiation failed.' };
   }
 }
