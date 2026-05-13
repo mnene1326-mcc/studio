@@ -32,12 +32,15 @@
     @apply border-border;
   }
   html, body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground select-none;
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
     height: 100%;
     overflow-x: hidden;
     touch-action: pan-x pan-y;
+  }
+  input, textarea, [contenteditable="true"] {
+    @apply select-text;
   }
 }
 
