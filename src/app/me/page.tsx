@@ -103,7 +103,10 @@ export default function MePage() {
               <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Recharge Coins</span>
             </Button>
             
-            <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all">
+            <Button 
+              className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black active:scale-95 transition-all"
+              onClick={() => router.push("/income")}
+            >
               <div className="flex items-center gap-1.5">
                 <Gem className="w-5 h-5 text-[#4285F4]" />
                 <span className="text-sm font-black">{profile.diamonds || 0}</span>
