@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, use, useState } from "react"
@@ -84,17 +83,19 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             variant="ghost" 
             size="icon" 
             onClick={() => router.back()} 
-            className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 w-9 h-9"
+            className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 w-8 h-8"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 w-9 h-9"
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 w-8 h-8"
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -102,20 +103,20 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-black text-black tracking-tight">{profile.name}</h1>
-              <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
-                <User className="w-2 h-2 text-black fill-current" />
+              <h1 className="text-sm font-black text-black tracking-tight">{profile.name}</h1>
+              <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
+                <User className="w-1.5 h-1.5 text-black fill-current" />
               </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[9px] font-black uppercase">
+              <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[8px] font-black uppercase">
                 {profile.gender === 'female' ? '♀' : '♂'} {age}
               </span>
-              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-[9px] font-black border border-black/5">
+              <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-[8px] font-black border border-black/5">
                 {profile.country || "Kenya"}
               </span>
-              <span className="bg-black text-[#D4FF00] px-2 py-0.5 rounded-md text-[9px] font-black shadow-sm">13.6km</span>
+              <span className="bg-black text-[#D4FF00] px-2 py-0.5 rounded-md text-[8px] font-black shadow-sm">13.6km</span>
             </div>
 
             <div 
@@ -127,21 +128,21 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-full px-2.5 py-1 flex items-center gap-1.5 border border-black/5 shadow-sm">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[8px] font-black text-gray-500 uppercase tracking-tighter">Online</span>
+          <div className="bg-gray-50 rounded-full px-2 py-0.5 flex items-center gap-1 border border-black/5 shadow-sm">
+            <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-[7px] font-black text-gray-500 uppercase tracking-tighter">Online</span>
           </div>
         </div>
 
-        <section className="space-y-1.5 pt-2">
-          <h2 className="text-[10px] font-black text-black uppercase tracking-widest opacity-40">About Me</h2>
-          <p className="text-[11px] font-bold text-gray-600 leading-relaxed italic">
+        <section className="space-y-1 pt-1">
+          <h2 className="text-[9px] font-black text-black uppercase tracking-widest opacity-40">About Me</h2>
+          <p className="text-[10px] font-bold text-gray-600 leading-relaxed italic">
             "{profile.interests || `I'm interested in meeting new people and finding meaningful connections...`}"
           </p>
         </section>
 
-        <div className="pt-4 border-t border-black/5">
-          <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">
+        <div className="pt-3 border-t border-black/5">
+          <p className="text-[7px] font-black text-gray-400 uppercase tracking-[0.2em] text-center">
             DM for fun and serious talks 🥰
           </p>
         </div>
@@ -149,10 +150,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t z-50">
         <Button 
-          className="w-full h-12 rounded-full bg-[#FF3B30] text-white hover:bg-red-600 text-[11px] font-black flex items-center justify-center gap-2 shadow-xl active:scale-95 uppercase tracking-widest"
+          className="w-full h-11 rounded-full bg-[#FF3B30] text-white hover:bg-red-600 text-[10px] font-black flex items-center justify-center gap-2 shadow-xl active:scale-95 uppercase tracking-widest"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
-          <MessageSquare className="w-4 h-4 fill-current" />
+          <MessageSquare className="w-3.5 h-3.5 fill-current" />
           CHAT NOW
         </Button>
       </div>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -75,17 +74,17 @@ export default function MePage() {
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
       {/* Red header section - layers halfway behind recharge buttons */}
-      <div className="absolute top-0 left-0 w-full h-[240px] bg-[#FF3B30]" />
+      <div className="absolute top-0 left-0 w-full h-[220px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
-        <header className="relative pt-12 pb-6 px-6 flex flex-col items-center text-center">
+        <header className="relative pt-10 pb-6 px-6 flex flex-col items-center text-center">
           <div className="absolute top-4 right-6">
-            <div className="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/20 shadow-sm flex items-center gap-2 active:scale-95 transition-transform cursor-pointer">
-              <span className="text-[10px] font-black text-white">12.5k Visitors</span>
+            <div className="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
+              <span className="text-[9px] font-black text-white">12.5k Visitors</span>
             </div>
           </div>
 
-          <div className="relative mb-3 group">
+          <div className="relative mb-3">
             <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
@@ -95,25 +94,25 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
-            <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg active:scale-90 transition-transform border border-black/5">
+            <button className="absolute bottom-0 right-0 bg-white p-2.5 rounded-full shadow-lg active:scale-90 transition-transform border border-black/5">
               <Pencil className="w-3.5 h-3.5 text-[#FF3B30]" />
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 mb-1">
-            <h2 className="text-xl font-black text-white tracking-tight">{profile.name}</h2>
-            <BadgeCheck className="w-4 h-4 text-white fill-white/10" />
+          <div className="flex items-center justify-center gap-1.5 mb-0.5">
+            <h2 className="text-lg font-black text-white tracking-tight">{profile.name}</h2>
+            <BadgeCheck className="w-3.5 h-3.5 text-white fill-white/10" />
           </div>
 
           <div 
             className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all"
             onClick={handleCopyId}
           >
-            <p className="text-white/80 font-bold text-[10px] tracking-tight">ID:{profile.matchFlowId || "---"}</p>
+            <p className="text-white/70 font-bold text-[9px] tracking-tight">ID:{profile.matchFlowId || "---"}</p>
             {copied ? (
               <Check className="w-2.5 h-2.5 text-green-300" />
             ) : (
-              <Copy className="w-2.5 h-2.5 text-white/80" />
+              <Copy className="w-2.5 h-2.5 text-white/50" />
             )}
           </div>
         </header>
