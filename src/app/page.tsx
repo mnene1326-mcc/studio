@@ -1,14 +1,14 @@
 
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@/firebase"
+import { Heart } from "lucide-react"
 
 /**
- * Root Redirector.
- * Checks for an existing user session. 
- * If authenticated, proceeds to /home. Otherwise, lands on /welcome.
+ * Root Redirector with Splash Screen.
+ * Prevents the "white screen" effect by rendering a branded loading state.
  */
 export default function RootPage() {
   const router = useRouter()
@@ -16,13 +16,29 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!loading) {
-      if (user) {
-        router.replace("/home")
-      } else {
-        router.replace("/welcome")
-      }
+      // Small delay to ensure smooth transition after auth initialization
+      const timer = setTimeout(() => {
+        if (user) {
+          router.replace("/home")
+        } else {
+          router.replace("/welcome")
+        }
+      }, 1000)
+      return () => clearTimeout(timer)
     }
   }, [user, loading, router])
 
-  return null
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-black min-h-screen">
+      <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-700">
+        <div className="relative">
+          <Heart className="w-16 h-16 text-[#FF3B30] fill-current shadow-[0_0_40px_rgba(255,59,48,0.4)] animate-pulse" />
+        </div>
+        <div className="space-y-2 text-center">
+          <h1 className="text-4xl font-logo text-white tracking-tight">MatchFlow</h1>
+          <p className="text-[9px] text-white/30 font-black uppercase tracking-[0.5em] ml-2">Connect with Heart</p>
+        </div>
+      </div>
+    </div>
+  )
 }
