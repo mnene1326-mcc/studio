@@ -148,7 +148,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.uid} 
+                key={user.id} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
