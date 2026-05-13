@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
@@ -10,14 +11,9 @@ export default function WelcomeContent() {
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (mounted && !authLoading) {
+    if (!authLoading) {
       if (user) {
         const checkOnboarding = async () => {
           try {
@@ -37,9 +33,7 @@ export default function WelcomeContent() {
         router.replace("/login")
       }
     }
-  }, [mounted, authLoading, user, db, router])
-
-  if (!mounted) return null
+  }, [authLoading, user, db, router])
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">

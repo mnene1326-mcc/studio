@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -73,7 +74,7 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Red header section - layers halfway behind recharge buttons */}
+      {/* Red header background that layers halfway behind the buttons */}
       <div className="absolute top-0 left-0 w-full h-[220px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
