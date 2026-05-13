@@ -3,29 +3,45 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from "@/firebase"
+import { doc, getDoc } from "firebase/firestore"
+import { useUser, useFirestore } from "@/firebase"
 import { Heart } from "lucide-react"
 
 /**
  * Root Redirector with Splash Screen.
- * Uses router.replace to ensure the splash screen doesn't stay in history.
+ * Now checks for onboarding completion before deciding destination.
  */
 export default function RootPage() {
   const router = useRouter()
   const { user, loading } = useUser()
+  const db = useFirestore()
 
   useEffect(() => {
     if (!loading) {
-      const timer = setTimeout(() => {
+      const checkDestination = async () => {
         if (user) {
-          router.replace("/home")
+          try {
+            const userRef = doc(db, "users", user.uid)
+            const snap = await getDoc(userRef)
+            if (snap.exists() && snap.data().onboardingComplete) {
+              router.replace("/home")
+            } else {
+              router.replace("/onboarding")
+            }
+          } catch (e) {
+            router.replace("/onboarding")
+          }
         } else {
           router.replace("/welcome")
         }
-      }, 1000)
+      }
+
+      const timer = setTimeout(() => {
+        checkDestination()
+      }, 1200)
       return () => clearTimeout(timer)
     }
-  }, [user, loading, router])
+  }, [user, loading, router, db])
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-black min-h-screen">

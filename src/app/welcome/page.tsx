@@ -6,22 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Heart, Mail, Zap, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { signInAnonymously } from "firebase/auth"
-import { useAuth, useUser } from "@/firebase"
+import { doc, getDoc } from "firebase/firestore"
+import { useAuth, useUser, useFirestore } from "@/firebase"
 import Image from "next/image"
 
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const auth = useAuth()
+  const db = useFirestore()
   const { user, loading: authLoading } = useUser()
   const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
     
-    // Trap the history stack. If user presses back from Welcome, 
-    // it will effectively close the app/tab if there's no history,
-    // or keep them on this page if they just logged out.
+    // Prevent back navigation to root
     window.history.pushState(null, '', window.location.href);
     const handlePopState = () => {
       window.history.pushState(null, '', window.location.href);
@@ -33,17 +33,28 @@ export default function WelcomePage() {
     };
   }, [])
 
-  // If already logged in, skip welcome
+  // Check if logged in and onboarding is complete before skipping
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace("/home")
+      const checkRedirect = async () => {
+        const userRef = doc(db, "users", user.uid)
+        const snap = await getDoc(userRef)
+        if (snap.exists() && snap.data().onboardingComplete) {
+          router.replace("/home")
+        } else {
+          // If they have a user but incomplete onboarding, force them there
+          router.replace("/onboarding")
+        }
+      }
+      checkRedirect()
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, db])
 
   const handleFastLogin = async () => {
     setLoading(true)
     try {
       await signInAnonymously(auth)
+      // Redirect handled by useEffect above or explicitly here
       router.push("/onboarding?fast=true")
     } catch (error) {
       setLoading(false)

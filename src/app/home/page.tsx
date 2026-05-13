@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { collection, query, where, limit, doc } from "firebase/firestore"
+import { collection, query, where, limit, doc, getDoc } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
@@ -50,10 +50,22 @@ export default function HomePage() {
   useEffect(() => { setIsMounted(true) }, [])
 
   useEffect(() => {
-    if (!authLoading && !currentUser) {
-      router.replace("/welcome")
+    if (!authLoading) {
+      if (!currentUser) {
+        router.replace("/welcome")
+      } else {
+        // Double check onboarding status
+        const checkStatus = async () => {
+          const userRef = doc(db, "users", currentUser.uid)
+          const snap = await getDoc(userRef)
+          if (!snap.exists() || !snap.data().onboardingComplete) {
+            router.replace("/onboarding")
+          }
+        }
+        checkStatus()
+      }
     }
-  }, [currentUser, authLoading, router])
+  }, [currentUser, authLoading, router, db])
 
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
@@ -118,9 +130,9 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        {/* Blue Header - Adjusted to exactly 70px */}
+        {/* Blue Header - Exactly 70px */}
         <div className="h-[70px] bg-[#00A2FF] relative overflow-hidden">
-          <div className="absolute -right-4 -top-8 rotate-[-4deg] opacity-20 select-none pointer-events-none">
+          <div className="absolute -right-4 -top-8 rotate-[-12deg] opacity-20 select-none pointer-events-none">
             <span className="text-7xl font-logo text-white whitespace-nowrap">MatchFlow</span>
           </div>
         </div>
@@ -129,7 +141,7 @@ export default function HomePage() {
       
       <div className="relative z-10 pt-0">
         <div>
-          {/* Top space set to land buttons halfway relative to 70px header (14px padding + 56px half-height) */}
+          {/* pt-14 + 112/2 (h-28/2) = 70. Perfect halfway split. */}
           <div className="px-4 pt-[14px] pb-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
@@ -219,7 +231,7 @@ export default function HomePage() {
                       )}
 
                       <div 
-                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-2 rounded-full z-30 text-white font-black text-xs tracking-tight uppercase shadow-md active:scale-95 transition-transform"
+                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-2 rounded-full z-30 text-white font-black text-[14px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/chats?startWith=${user.uid}`);
@@ -230,11 +242,11 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                       <div className="absolute inset-x-0 bottom-0 p-3">
                         <div className="flex items-center gap-1.5 mb-1.5">
-                          <h4 className="text-white font-black text-base truncate tracking-tight">{user.name}</h4>
+                          <h4 className="text-white font-black text-[18px] truncate tracking-tight">{user.name}</h4>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-[#006400] text-white font-black text-xs px-2.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
-                          <span className="bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white font-bold text-xs border border-white/20 truncate max-w-[80px]">{user.country || "Kenya"}</span>
+                          <span className="bg-[#006400] text-white font-black text-[12px] px-2.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
+                          <span className="bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white font-bold text-[12px] border border-white/20 truncate max-w-[80px]">{user.country || "Kenya"}</span>
                         </div>
                       </div>
                     </Card>

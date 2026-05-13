@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
-import { doc } from "firebase/firestore"
+import { doc, getDoc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -17,7 +17,8 @@ import {
   Pencil,
   CircleDollarSign,
   ShieldCheck,
-  Gem
+  Gem,
+  Loader2
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -30,6 +31,7 @@ interface UserProfile {
   coins?: number
   diamonds?: number
   isVerified?: boolean
+  onboardingComplete?: boolean
 }
 
 export default function MePage() {
@@ -39,12 +41,23 @@ export default function MePage() {
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
 
-  // Strict Redirect
+  // Strict Redirect & Onboarding Check
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace("/welcome")
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/welcome")
+      } else {
+        const checkOnboarding = async () => {
+          const userRef = doc(db, "users", user.uid)
+          const snap = await getDoc(userRef)
+          if (!snap.exists() || !snap.data().onboardingComplete) {
+            router.replace("/onboarding")
+          }
+        }
+        checkOnboarding()
+      }
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, db])
 
   const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
@@ -58,7 +71,14 @@ export default function MePage() {
     }
   }
 
-  if (authLoading || profileLoading || !user || !profile) return null
+  if (authLoading || profileLoading || !user || !profile) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#F8F9FA]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#00A2FF]" />
+        <p className="text-[10px] font-black uppercase text-gray-400 mt-4 tracking-widest">Loading Profile...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
@@ -74,7 +94,7 @@ export default function MePage() {
 
           <div className="relative mb-4">
             <div className="relative w-28 h-28 rounded-full shadow-2xl overflow-hidden bg-muted border-none">
-              <Image src={profile.photoURL} alt={profile.name} fill className="object-cover" priority />
+              <Image src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/400/400`} alt={profile.name} fill className="object-cover" priority />
             </div>
             <button 
               className="absolute bottom-1 right-1 bg-white p-3 rounded-full shadow-xl active:scale-90 transition-transform border border-black/5"
