@@ -5,8 +5,6 @@ import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -30,13 +28,6 @@ import {
   Loader2, 
   Mic, 
   Smile, 
-  ImageIcon, 
-  Phone, 
-  Gift, 
-  Video, 
-  Hash,
-  Gamepad2,
-  Trash2,
   ChevronDown,
   Lock
 } from "lucide-react"
@@ -165,6 +156,9 @@ function ChatsContent() {
     
     return [...userChatsRaw]
       .filter(chat => {
+        // ONLY show chats if a message has been sent
+        if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
+
         const clearedAt = chat.clearedAt?.[currentUser.uid]
         const partnerId = chat.participants.find(p => p !== currentUser.uid)
         
@@ -397,7 +391,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      <header className="bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
+      <header className="sticky top-0 z-50 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -406,7 +400,7 @@ function ChatsContent() {
             className="rounded-full text-[#00A2FF] font-black px-2 hover:bg-blue-50"
           >
             <ChevronLeft className="w-6 h-6 mr-0.5" />
-            <span className="text-xs">99+</span>
+            <span className="text-xs">Chats</span>
           </Button>
         </div>
         
@@ -423,7 +417,7 @@ function ChatsContent() {
       </header>
 
       <ScrollArea className="flex-1 bg-white">
-        <div className="pb-48 pt-4">
+        <div className="pb-32 pt-4">
           {messagesRaw.length >= messagesLimit && (
             <div className="flex justify-center my-4">
                <Button 
@@ -481,52 +475,33 @@ function ChatsContent() {
       </ScrollArea>
 
       {!isBlocked && (
-        <>
-          <div className="fixed bottom-44 right-4 z-50">
-            <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
-              <Gamepad2 className="w-7 h-7 text-blue-500" />
-              <span className="text-[8px] font-black uppercase text-gray-500">GAME</span>
+        <footer className="sticky bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
+          <div className="px-4 py-3 flex items-center gap-3">
+            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
+              <Mic className="w-6 h-6" />
+            </Button>
+            <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
+              <input 
+                placeholder="Start chatting..." 
+                className="bg-transparent border-none flex-1 outline-none text-sm font-bold placeholder:text-gray-400 text-black" 
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
+              />
             </div>
+            <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#FBC02D]">
+              <Smile className="w-6 h-6" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
+              onClick={() => handleSendMessage(newMessage)}
+            >
+              <Send className="w-6 h-6" />
+            </Button>
           </div>
-
-          <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
-            <div className="px-4 py-3 flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
-                <Mic className="w-6 h-6" />
-              </Button>
-              <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
-                <input 
-                  placeholder="Start chatting..." 
-                  className="bg-transparent border-none flex-1 outline-none text-sm font-bold placeholder:text-gray-400 text-black" 
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
-                />
-              </div>
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#FBC02D]">
-                <Smile className="w-6 h-6" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
-                onClick={() => handleSendMessage(newMessage)}
-              >
-                <Send className="w-6 h-6" />
-              </Button>
-            </div>
-
-            <div className="px-8 py-3 flex items-center justify-between text-gray-400">
-              <ImageIcon className="w-7 h-7" />
-              <Phone className="w-7 h-7" />
-              <div className="relative -mt-4 bg-[#FFD600] p-4 rounded-full shadow-lg border-4 border-white active:scale-90 transition-transform cursor-pointer">
-                <Gift className="w-7 h-7 text-white fill-current" />
-              </div>
-              <Video className="w-7 h-7" />
-              <Hash className="w-7 h-7" />
-            </div>
-          </footer>
-        </>
+        </footer>
       )}
     </div>
   )
