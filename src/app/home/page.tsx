@@ -76,7 +76,6 @@ export default function HomePage() {
                 <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
                    <div className="relative">
                       <FileText className="w-5 h-5 text-black" />
-                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#4285F4] rounded-full border-2 border-white" />
                    </div>
                 </div>
               </div>
@@ -91,7 +90,6 @@ export default function HomePage() {
                 <div className="bg-white/30 p-1.5 rounded-2xl backdrop-blur-sm">
                   <Target className="w-5 h-5 text-black" />
                 </div>
-                <div className="w-1.5 h-1.5 bg-[#FFD600] rounded-full" />
               </div>
               <div className="space-y-0.5">
                 <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
@@ -144,7 +142,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2">
             {filteredUsers.map((user) => (
               <Card 
-                key={user.id} 
+                key={user.id || user.uid} 
                 className="relative overflow-hidden border-none rounded-[2rem] aspect-[3/3.8] group cursor-pointer shadow-md"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >

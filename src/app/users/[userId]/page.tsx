@@ -75,9 +75,11 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
-            <MoreHorizontal className="w-5 h-5" />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" className="rounded-full bg-black/20 backdrop-blur-md text-white w-8 h-8">
+              <MoreHorizontal className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 

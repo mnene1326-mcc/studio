@@ -34,25 +34,25 @@ export default function WelcomePage() {
           data-ai-hint="couple romance"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20">
-        <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+      <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between">
+        <div className="flex flex-col items-center justify-center space-y-8 mt-12">
           <div className="relative">
-            <Heart className="w-20 h-20 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
+            <Heart className="w-16 h-16 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
           </div>
           <div className="text-center space-y-4">
-            <h1 className="text-6xl font-logo text-white drop-shadow-2xl tracking-tight">
+            <h1 className="text-5xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
-            <p className="text-white/80 font-black text-[10px] uppercase tracking-[0.6em] ml-2">
+            <p className="text-white/80 font-black text-[9px] uppercase tracking-[0.6em] ml-2">
               Connect with Heart
             </p>
           </div>
         </div>
 
-        <div className="w-full max-w-sm mx-auto space-y-5">
+        <div className="w-full max-w-sm mx-auto space-y-5 mb-8">
           <Button 
             asChild
             className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"

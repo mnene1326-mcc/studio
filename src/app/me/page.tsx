@@ -66,7 +66,7 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-20 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Premium Red Header - Layered halfway behind the cards */}
+      {/* Premium Red Header Background */}
       <div className="absolute top-0 left-0 w-full h-[220px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
