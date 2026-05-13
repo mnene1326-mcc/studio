@@ -169,7 +169,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main className="px-4 pt-6">
+      <main className="px-4 pt-3">
         {(loading || isRefreshing) && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />)}
