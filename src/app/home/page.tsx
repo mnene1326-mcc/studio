@@ -117,19 +117,19 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
-      {/* Background Layers */}
+      {/* Background Layers - Perfectly Straight */}
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        <div className="h-[144px] bg-[#00A2FF] relative overflow-hidden">
+        <div className="h-[104px] bg-[#00A2FF] relative overflow-hidden">
           <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 select-none pointer-events-none">
             <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
           </div>
         </div>
-        <div className="h-[136px] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-b border-gray-100" />
+        <div className="h-[120px] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.03)]" />
       </div>
       
-      <div className="relative z-10 pt-16">
+      <div className="relative z-10 pt-8">
         <div>
-          <div className="px-4 pt-6 pb-2">
+          <div className="px-4 pt-4 pb-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
                 <div className="bg-white/30 p-2 rounded-2xl w-fit"><FileText className="w-5 h-5 text-black" /></div>
@@ -149,7 +149,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+          <div className="px-5 pt-3 pb-3 flex items-center justify-between">
             <div className="flex items-center gap-6">
               <button 
                 onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} 
@@ -180,7 +180,7 @@ export default function HomePage() {
               {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />)}
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-30">
+            <div className="flex-1 flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-30">
               <RotateCw className="w-12 h-12" />
               <p className="font-black text-sm uppercase tracking-widest">No users found</p>
             </div>
@@ -213,12 +213,12 @@ export default function HomePage() {
 
                       {user.isVerified && (
                         <div className="absolute top-2.5 left-6 z-20">
-                           <BadgeCheck className="w-3 h-3 text-blue-400 fill-white" />
+                           <BadgeCheck className="w-3.5 h-3.5 text-blue-400 fill-white" />
                         </div>
                       )}
 
                       <div 
-                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-2.5 py-1 rounded-full z-30 text-white font-black text-[7px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
+                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-3 py-1.5 rounded-full z-30 text-white font-black text-[10px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/chats?startWith=${user.uid}`);
@@ -229,11 +229,11 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                       <div className="absolute inset-x-0 bottom-0 p-3">
                         <div className="flex items-center gap-1.5 mb-1">
-                          <h4 className="text-white font-black text-[10px] truncate tracking-tight">{user.name}</h4>
+                          <h4 className="text-white font-black text-xs truncate tracking-tight">{user.name}</h4>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="bg-[#006400] text-white font-black text-[8px] px-1.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
-                          <span className="bg-white/10 backdrop-blur-md px-1.5 py-0.5 rounded-full text-white font-bold text-[8px] border border-white/20 truncate max-w-[50px]">{user.country || "Kenya"}</span>
+                          <span className="bg-[#006400] text-white font-black text-[10px] px-1.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
+                          <span className="bg-white/10 backdrop-blur-md px-1.5 py-0.5 rounded-full text-white font-bold text-[10px] border border-white/20 truncate max-w-[60px]">{user.country || "Kenya"}</span>
                         </div>
                       </div>
                     </Card>
