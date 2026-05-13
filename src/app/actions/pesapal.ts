@@ -17,7 +17,7 @@ export async function getAccessToken() {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error('PesaPal credentials are not configured in environment variables.');
+    throw new Error('PesaPal credentials (KEY/SECRET) are missing from environment variables.');
   }
 
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
@@ -34,7 +34,7 @@ export async function getAccessToken() {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'Failed to authenticate with PesaPal');
+    throw new Error(error.message || 'PesaPal Auth Failed: Check your Consumer Key/Secret.');
   }
 
   const data = await response.json();
@@ -46,43 +46,39 @@ export async function getAccessToken() {
  * @param url - The site URL (e.g., https://matchflow-iota.vercel.app)
  */
 export async function registerIPN(url: string) {
-  try {
-    const token = await getAccessToken();
-    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-    const ipnUrl = `${cleanUrl}/api/pesapal/ipn`;
+  const token = await getAccessToken();
+  const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+  const ipnUrl = `${cleanUrl}/api/pesapal/ipn`;
 
-    const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        url: ipnUrl,
-        ipn_notification_type: 'GET',
-      }),
-    });
+  const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      url: ipnUrl,
+      ipn_notification_type: 'GET',
+    }),
+  });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to register IPN');
-    }
-
-    const data = await response.json();
-    return {
-      ipn_id: data.ipn_id,
-      url: data.url,
-      status: data.status
-    };
-  } catch (error: any) {
-    console.error('PesaPal IPN Error:', error);
-    throw new Error(error.message || 'IPN registration failed.');
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to register IPN');
   }
+
+  const data = await response.json();
+  return {
+    ipn_id: data.ipn_id,
+    url: data.url,
+    status: data.status
+  };
 }
 
 /**
  * Initiates a PesaPal order for coin recharge.
+ * Returns a result object instead of throwing to prevent Next.js obfuscation in production.
  */
 export async function initiatePayment(input: {
   amount: number;
@@ -94,6 +90,14 @@ export async function initiatePayment(input: {
   try {
     const token = await getAccessToken();
     const trackingId = crypto.randomUUID();
+    const ipnId = process.env.PESAPAL_IPN_ID;
+
+    if (!ipnId) {
+      return { 
+        success: false, 
+        error: "Missing PESAPAL_IPN_ID. Please run matchflow-iota.vercel.app/api/pesapal/setup and add the ID to Vercel settings." 
+      };
+    }
 
     const orderData = {
       id: trackingId,
@@ -101,7 +105,7 @@ export async function initiatePayment(input: {
       amount: input.amount,
       description: `Recharge for MatchFlow Coins - User: ${input.userId}`,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app'}/home`,
-      notification_id: process.env.PESAPAL_IPN_ID, 
+      notification_id: ipnId, 
       billing_address: {
         email_address: input.email,
         phone_number: input.phoneNumber || '',
@@ -123,16 +127,17 @@ export async function initiatePayment(input: {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to submit PesaPal order');
+      return { success: false, error: error.message || 'PesaPal Order Submission Failed.' };
     }
 
     const data = await response.json();
     return {
+      success: true,
       redirect_url: data.redirect_url,
       order_tracking_id: data.order_tracking_id,
     };
   } catch (error: any) {
     console.error('PesaPal Payment Error:', error);
-    throw new Error(error.message || 'Payment initiation failed.');
+    return { success: false, error: error.message || 'Payment initiation failed due to a server error.' };
   }
 }

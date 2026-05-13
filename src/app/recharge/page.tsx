@@ -62,10 +62,10 @@ export default function RechargePage() {
         userId: user.uid,
       })
 
-      if (result.redirect_url) {
+      if (result.success && result.redirect_url) {
         window.location.href = result.redirect_url
       } else {
-        throw new Error("No redirect URL received")
+        throw new Error(result.error || "No redirect URL received")
       }
     } catch (error: any) {
       toast({
