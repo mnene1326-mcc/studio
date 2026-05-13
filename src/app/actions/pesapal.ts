@@ -1,8 +1,8 @@
+
 'use server';
 
 /**
  * @fileOverview PesaPal v3 Live Production actions.
- * Corrected endpoints for v3 specification to avoid 404 errors.
  */
 
 const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
@@ -14,7 +14,7 @@ export async function getAccessToken() {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error('PesaPal credentials missing in environment variables.');
+    throw new Error('PesaPal credentials missing. Please set PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET in environment variables.');
   }
 
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
@@ -31,7 +31,7 @@ export async function getAccessToken() {
 
   const data = await response.json();
   if (!response.ok || !data.token) {
-    throw new Error(`Auth Failed (Status ${response.status}): ${data.message || 'Invalid Credentials'}`);
+    throw new Error(`PesaPal Auth Failed: ${data.message || 'Check your keys.'}`);
   }
 
   return data.token;
@@ -41,7 +41,6 @@ export async function registerIPN(token: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app';
   const ipnUrl = `${appUrl.replace(/\/$/, '')}/api/pesapal-ipn`;
 
-  // PesaPal v3 uses /api/Queues/RegisterIPN for IPN registration
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Queues/RegisterIPN`, {
     method: 'POST',
     headers: {
@@ -57,7 +56,7 @@ export async function registerIPN(token: string) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(`IPN Registration Failed (Status ${response.status}): ${JSON.stringify(data)}`);
+    throw new Error(`IPN Registration Failed: ${JSON.stringify(data)}`);
   }
 
   return data.ipn_id;
@@ -69,7 +68,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
     const ipnId = process.env.PESAPAL_IPN_ID;
 
     if (!ipnId) {
-      throw new Error('PESAPAL_IPN_ID is missing. Please run the setup link (/api/pesapal/setup) first.');
+      throw new Error('PESAPAL_IPN_ID is missing. Deploy your app and visit /api/pesapal/setup to get one.');
     }
 
     const merchantReference = `RECHARGE_${userId}_${Date.now()}`;
@@ -79,7 +78,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
       id: merchantReference,
       currency: 'KES',
       amount: amount,
-      description: `Recharge ${amount} coins for MatchFlow user ${userId}`,
+      description: `Recharge coins for MatchFlow user ${userId}`,
       callback_url: `${appUrl}/home`,
       notification_id: ipnId,
       billing_address: {

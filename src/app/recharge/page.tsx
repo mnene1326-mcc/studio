@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react"
@@ -5,9 +6,10 @@ import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check } from "lucide-react"
+import { ChevronLeft, Menu, Check, Loader2, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { initiatePayment } from "@/app/actions/pesapal"
 
 interface UserProfile {
   uid: string
@@ -39,15 +41,31 @@ export default function RechargePage() {
   const db = useFirestore()
   const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
+  const [loading, setLoading] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  const handlePayment = () => {
-    toast({
-      title: "Notice",
-      description: "Recharge services are currently undergoing maintenance. Please check back later.",
-    })
+  const handlePayment = async () => {
+    if (!user || !profile) return
+    
+    setLoading(true)
+    try {
+      const pkg = PACKAGES.find(p => p.amount === selectedPackage)
+      if (!pkg) throw new Error("Invalid package selected")
+
+      const result = await initiatePayment(pkg.price, profile.email, user.uid)
+      
+      // Redirect to PesaPal Payment Page
+      window.location.href = result.redirectUrl
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: error.message || "Failed to initiate payment. Ensure PesaPal keys are configured.",
+      })
+      setLoading(false)
+    }
   }
 
   return (
@@ -86,7 +104,7 @@ export default function RechargePage() {
             {PACKAGES.map((pkg) => (
               <div 
                 key={pkg.amount}
-                onClick={() => setSelectedPackage(pkg.amount)}
+                onClick={() => !loading && setSelectedPackage(pkg.amount)}
                 className={cn(
                   "aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-2 relative transition-all active:scale-95 cursor-pointer",
                   selectedPackage === pkg.amount 
@@ -112,10 +130,21 @@ export default function RechargePage() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3"
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-70"
           onClick={handlePayment}
+          disabled={loading}
         >
-          Recharge Now
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Initializing...
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-5 h-5" />
+              Recharge Now
+            </>
+          )}
         </Button>
       </footer>
     </div>
