@@ -13,7 +13,7 @@ async function processIPN(req: Request) {
   const orderTrackingId = url.searchParams.get('OrderTrackingId');
   const orderMerchantReference = url.searchParams.get('OrderMerchantReference');
 
-  // Dashboard validation check
+  // Dashboard validation check: dashboard often pings with no params
   if (!orderTrackingId || !orderMerchantReference) {
     return NextResponse.json({ 
       status: 'OK', 
@@ -31,6 +31,7 @@ async function processIPN(req: Request) {
         const userId = parts[1];
         const amountPaid = parseFloat(parts[2]);
 
+        // Credit coins (e.g., 10 coins per KES 1)
         const coinsToCredit = amountPaid * 10;
         const userRef = doc(db, 'users', userId);
         
@@ -49,6 +50,7 @@ async function processIPN(req: Request) {
     }, { status: 200 });
   } catch (e: any) {
     console.error('IPN Processing Error:', e.message);
+    // Return 200 even on error to stop PesaPal retries if it's a code issue
     return NextResponse.json({ status: 'Processing Error', message: e.message }, { status: 200 });
   }
 }

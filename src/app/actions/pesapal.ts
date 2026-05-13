@@ -123,7 +123,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
     if (!ipnId) {
       return { 
         success: false, 
-        error: 'MISSING_IPN_ID: You must get your IPN ID from the PesaPal dashboard and add it to Vercel.' 
+        error: 'MISSING_IPN_ID: Please visit /api/pesapal/setup to find your IPN ID, then add it to Vercel.' 
       };
     }
 
