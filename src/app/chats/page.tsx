@@ -133,10 +133,6 @@ function ChatsContent() {
   const [chatListLimit, setChatListLimit] = useState(20)
   const [messagesLimit, setMessagesLimit] = useState(20)
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
-  const prevLastMessageId = useRef<string | null>(null)
-  const prevCount = useRef(0)
-
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
@@ -159,6 +155,7 @@ function ChatsContent() {
     
     return [...userChatsRaw]
       .filter(chat => {
+        // Only show chats in the list if they have a last message (sent)
         if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
         const clearedAt = chat.clearedAt?.[currentUser.uid]
@@ -233,6 +230,7 @@ function ChatsContent() {
 
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
+    // We order DESC to get the latest messages first, and to enable flex-col-reverse
     return query(
       collection(db, "chats", chatId, "messages"), 
       orderBy("timestamp", "desc"),
@@ -243,30 +241,12 @@ function ChatsContent() {
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const messages = useMemo(() => {
-    const sorted = [...messagesRaw].sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0))
-    if (!currentUser?.uid || !currentChatData) return sorted
+    // Keep them DESC [newest...oldest] for flex-col-reverse
+    if (!currentUser?.uid || !currentChatData) return messagesRaw
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
-    if (!clearedAt) return sorted
-    return sorted.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
+    if (!clearedAt) return messagesRaw
+    return messagesRaw.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
   }, [messagesRaw, currentUser?.uid, currentChatData])
-
-  // Intelligent scroll management
-  useEffect(() => {
-    const currentLastMessageId = messages[messages.length - 1]?.id || null
-    
-    // Determine if we just added a new message (not history)
-    const isNewMessageAdded = currentLastMessageId !== prevLastMessageId.current && messages.length > 0
-    // Determine if history was loaded (last message remains same, but count grew)
-    const isHistoryLoaded = currentLastMessageId === prevLastMessageId.current && messages.length > prevCount.current
-
-    if (isNewMessageAdded && !isHistoryLoaded) {
-      // Only scroll to bottom for actual new messages
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-
-    prevLastMessageId.current = currentLastMessageId
-    prevCount.current = messages.length
-  }, [messages])
 
   const handleSendMessage = (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
@@ -432,10 +412,36 @@ function ChatsContent() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto bg-white px-4 py-4 no-scrollbar">
-        <div className="flex flex-col min-h-full">
+      {/* 
+          Using column-reverse means the browser handles the "pinned to bottom" behavior naturally.
+          New messages (at the start of the DESC array) appear at the bottom.
+          Older messages (at the end of the DESC array) appear at the top.
+      */}
+      <main className="flex-1 overflow-y-auto bg-white no-scrollbar">
+        <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
+          {/* Messages Map: These are visually rendered from bottom to top */}
+          {messages.map((msg) => (
+            <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
+              {msg.senderId !== currentUser.uid && (
+                <Avatar className="w-8 h-8 shrink-0">
+                  <AvatarImage src={chatPartner?.photoURL} />
+                  <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
+                </Avatar>
+              )}
+              <div className={cn(
+                "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
+                msg.senderId === currentUser.uid 
+                  ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
+                  : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
+              )}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+
+          {/* Pagination: Visually at the top because it's at the end of the column-reverse flow */}
           {messagesRaw.length >= messagesLimit && (
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center py-4">
                <Button 
                 variant="ghost" 
                 size="sm" 
@@ -448,46 +454,27 @@ function ChatsContent() {
             </div>
           )}
 
-          <div className="text-center mb-6">
+          {/* Conversation Starter Info: Visually near the oldest messages */}
+          <div className="text-center py-4">
             <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
               Conversation Started
             </span>
           </div>
 
-          <div className="space-y-6">
-            {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
-              </div>
-            ) : messages.map((msg) => (
-              <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
-                {msg.senderId !== currentUser.uid && (
-                  <Avatar className="w-8 h-8 shrink-0">
-                    <AvatarImage src={chatPartner?.photoURL} />
-                    <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
-                  </Avatar>
-                )}
-                <div className={cn(
-                  "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
-                  msg.senderId === currentUser.uid 
-                    ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
-                    : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
-                )}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+          {(isInitializingChat || (messagesLoading && messages.length === 0)) && (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
+            </div>
+          )}
 
-            {isBlocked && (
-              <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
-                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Lock className="w-6 h-6 text-gray-400" />
-                 </div>
-                 <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
-              </div>
-            )}
-          </div>
+          {isBlocked && (
+            <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
+               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-gray-400" />
+               </div>
+               <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
+            </div>
+          )}
         </div>
       </main>
 
