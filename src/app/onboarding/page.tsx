@@ -78,6 +78,7 @@ function OnboardingContent() {
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
 
+    // Default coins/diamonds based on gender for a fresh start
     const initialCoins = gender === 'male' ? 500 : (existingData?.coins || 0)
     const initialDiamonds = gender === 'female' ? 500 : (existingData?.diamonds || 0)
 

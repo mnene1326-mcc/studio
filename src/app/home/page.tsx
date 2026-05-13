@@ -105,8 +105,8 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        {/* Blue Header - Exactly 70px */}
-        <div className="h-[70px] bg-[#00A2FF] relative overflow-hidden">
+        {/* Blue Header - Now 140px to reach halfway through 112px buttons positioned 84px from top */}
+        <div className="h-[140px] bg-[#00A2FF] relative overflow-hidden">
           <div className="absolute -right-4 -top-8 rotate-[-12deg] opacity-20 select-none pointer-events-none">
             <span className="text-7xl font-logo text-white whitespace-nowrap">MatchFlow</span>
           </div>
@@ -116,8 +116,8 @@ export default function HomePage() {
       
       <div className="relative z-10 pt-0">
         <div>
-          {/* pt-14 + 112/2 (h-28/2) = 70. Perfect halfway split. */}
-          <div className="px-4 pt-[14px] pb-2">
+          {/* pt-84 + 112/2 = 140. Perfect halfway split. */}
+          <div className="px-4 pt-[84px] pb-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-28 rounded-2xl shadow-lg cursor-pointer active:scale-95 transition-transform">
                 <div className="bg-white/30 p-2 rounded-2xl w-fit"><FileText className="w-5 h-5 text-black" /></div>
@@ -137,7 +137,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="px-5 pt-3 pb-3 flex items-center justify-between">
+          {/* Sticky navigation tabs */}
+          <div className="sticky top-0 z-40 bg-[#F9FAFB]/90 backdrop-blur-md px-5 pt-3 pb-3 flex items-center justify-between border-b border-black/5 shadow-sm">
             <div className="flex items-center gap-6">
               <button onClick={() => setActiveTab('Recommend')} className={cn("text-sm font-black transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
               <button onClick={() => setActiveTab('Nearby')} className={cn("text-sm font-black transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
@@ -159,11 +160,14 @@ export default function HomePage() {
                 {filteredUsers.map((user) => (
                   <Card key={user.uid} className="relative overflow-hidden border-none aspect-[1/1.2] rounded-2xl group cursor-pointer shadow-xl bg-white" onClick={() => router.push(`/users/${user.uid}`)}>
                     <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
+                    {/* Increased Font Size for Button */}
                     <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-black text-[12px] uppercase shadow-md" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
+                      {/* Increased Font Size for Name */}
                       <h4 className="text-white font-black text-[18px] truncate tracking-tight">{user.name}</h4>
                       <div className="flex items-center gap-1.5 mt-1">
+                        {/* Increased Font Size for age/country */}
                         <span className="bg-[#006400] text-white font-black text-[10px] px-2.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
                         <span className="bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white font-bold text-[10px] border border-white/20 truncate">{user.country || "Kenya"}</span>
                       </div>
