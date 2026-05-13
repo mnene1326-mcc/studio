@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react"
 /**
  * Stabilized Entry Point for MatchFlow.
  * Handles both the splash screen and redirect logic in a single Client Component
- * to ensure hydration consistency and prevent loading hangs.
+ * with a robust hydration strategy to prevent mismatch errors.
  */
 export default function WelcomePage() {
   const [isMounted, setIsMounted] = useState(false)
@@ -45,9 +45,10 @@ export default function WelcomePage() {
     }
   }, [isMounted, authLoading, user, db, router])
 
+  // Initial shell must be identical on server and client
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-      <div className="animate-in fade-in zoom-in duration-700 ease-out flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-6">
         <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
