@@ -99,7 +99,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   const age = calculateAge(profile.dob)
 
   return (
-    <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
+    <div className="flex-1 bg-white flex flex-col min-h-screen pb-40">
       <div className="relative h-[60vh] w-full">
         <Image 
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} 
@@ -156,10 +156,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </div>
           </div>
         </div>
-        <section className="space-y-2 pt-2">
-          <h2 className="text-[10px] font-black text-black uppercase tracking-[0.2em] opacity-30">About Me</h2>
-          <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{profile.interests || `I'm passionate about meeting authentic people and finding deep connections.`}"</p>
-        </section>
+        
+        {profile.interests && (
+          <section className="space-y-2 pt-2 pb-10">
+            <h2 className="text-[10px] font-black text-black uppercase tracking-[0.2em] opacity-30">About Me</h2>
+            <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{profile.interests}"</p>
+          </section>
+        )}
       </div>
 
       <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-50">
