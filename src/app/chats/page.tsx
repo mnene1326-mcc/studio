@@ -246,7 +246,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      {/* Straight Architectural Red Header */}
+      {/* Signature Architectural Red Header */}
       <header className="bg-[#FF3B30] px-4 pt-12 pb-4 flex items-center justify-between shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
@@ -307,7 +307,7 @@ function ChatsContent() {
         </div>
       </ScrollArea>
 
-      {/* Floating Game Widget */}
+      {/* Floating Game Widget - High Fidelity Shadow */}
       <div className="fixed bottom-40 right-4 z-50">
         <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
           <Gamepad2 className="w-7 h-7 text-blue-500" />
@@ -353,7 +353,7 @@ function ChatsContent() {
           </Button>
         </div>
 
-        {/* Bottom Toolbar Icons */}
+        {/* Premium Bottom Toolbar */}
         <div className="px-8 py-3 flex items-center justify-between text-gray-400">
           <ImageIcon className="w-7 h-7" />
           <Phone className="w-7 h-7" />

@@ -13,7 +13,7 @@ export async function GET() {
 
   if (!key || !secret) {
     return NextResponse.json({ 
-      status: 'Config Missing',
+      status: 'Configuration Missing',
       message: 'PESAPAL_CONSUMER_KEY or SECRET is not set in Vercel.',
       debug: {
         PESAPAL_SANDBOX: process.env.PESAPAL_SANDBOX || 'false (default)',
@@ -23,14 +23,15 @@ export async function GET() {
   }
   
   try {
-    // Step 1: Verify Token (Auth check)
+    // Step 1: Verify Auth
+    let token;
     try {
-      await getAccessToken();
+      token = await getAccessToken();
     } catch (authError: any) {
       return NextResponse.json({
-        status: 'Authentication Failed',
+        status: 'Step 1 Failed: Authentication',
         message: authError.message,
-        tip: 'Your Consumer Key or Secret is likely invalid or for the wrong environment (Sandbox vs Live).'
+        tip: 'Ensure your Live Keys are correct and PESAPAL_SANDBOX is false.'
       }, { status: 401 });
     }
 
@@ -39,16 +40,17 @@ export async function GET() {
     
     return NextResponse.json({ 
       status: 'Success',
-      message: 'PesaPal Live IPN Registered Successfully', 
+      message: 'Live PesaPal IPN Registered Successfully', 
       ipn_id: result.ipn_id,
       registered_url: result.url,
-      next_step: 'Copy this IPN_ID and add it to Vercel Environment Variables as PESAPAL_IPN_ID.'
+      token_verified: !!token,
+      next_step: 'Add this IPN_ID to your Vercel Environment Variables as PESAPAL_IPN_ID.'
     });
   } catch (error: any) {
     return NextResponse.json({ 
-      status: 'PesaPal API Error',
+      status: 'Step 2 Failed: IPN Registration',
       message: error.message,
-      tip: 'Check if you are using Live Keys with PESAPAL_SANDBOX=false. Also ensure your site is accessible via HTTPS.'
+      tip: 'This often means the PesaPal Live API returned an error (like a 404 or 401). Verify your account status on PesaPal.'
     }, { status: 500 });
   }
 }

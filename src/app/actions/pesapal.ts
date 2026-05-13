@@ -11,14 +11,14 @@ const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true'
   : 'https://pay.pesapal.com/v3';
 
 /**
- * Gets an access token from PesaPal using Consumer Key and Secret from Vercel Envs.
+ * Gets an access token from PesaPal using Consumer Key and Secret.
  */
 export async function getAccessToken() {
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!consumerKey || !consumerSecret) {
-    throw new Error('Vercel Config Error: PESAPAL_CONSUMER_KEY or SECRET is missing.');
+    throw new Error('Config Error: PESAPAL_CONSUMER_KEY or SECRET is missing in environment variables.');
   }
 
   try {
@@ -32,17 +32,18 @@ export async function getAccessToken() {
         consumer_key: consumerKey,
         consumer_secret: consumerSecret,
       }),
+      cache: 'no-store'
     });
 
     const responseText = await response.text();
 
     if (!response.ok) {
-      let errorMessage = `PesaPal Auth Failed (Status ${response.status}): `;
+      let errorMessage = `Auth Failed (Status ${response.status}): `;
       try {
         const errorJson = JSON.parse(responseText);
         errorMessage += errorJson.message || 'Unknown error';
       } catch (e) {
-        errorMessage += responseText.substring(0, 100);
+        errorMessage += responseText.substring(0, 150);
       }
       throw new Error(errorMessage);
     }
@@ -50,18 +51,16 @@ export async function getAccessToken() {
     const data = JSON.parse(responseText);
     return data.token;
   } catch (error: any) {
-    throw new Error(`PesaPal Token Connection Error: ${error.message}`);
+    throw new Error(`PesaPal Connection Error: ${error.message}`);
   }
 }
 
 /**
  * Registers an IPN URL with PesaPal and returns the IPN ID.
- * Used by the /api/pesapal/setup endpoint.
  */
 export async function registerIPN(baseUrl: string) {
   const token = await getAccessToken();
   
-  // Ensure the URL is clean and points to our IPN handler
   const cleanBaseUrl = baseUrl.replace(/\/$/, ""); 
   const ipnUrl = `${cleanBaseUrl}/api/pesapal/ipn`;
 
@@ -77,6 +76,7 @@ export async function registerIPN(baseUrl: string) {
         url: ipnUrl,
         ipn_notification_type: 'GET',
       }),
+      cache: 'no-store'
     });
 
     const responseText = await response.text();
@@ -87,19 +87,19 @@ export async function registerIPN(baseUrl: string) {
         const errorJson = JSON.parse(responseText);
         errorMessage += errorJson.message || 'Unknown error';
       } catch (e) {
-        errorMessage += responseText.substring(0, 100);
+        errorMessage += responseText.substring(0, 150);
       }
       throw new Error(errorMessage);
     }
 
     return JSON.parse(responseText);
   } catch (error: any) {
-    throw new Error(`IPN Registration Fetch Error: ${error.message}`);
+    throw new Error(`IPN Registration Error: ${error.message}`);
   }
 }
 
 /**
- * Initiates a PesaPal order for coin recharge.
+ * Initiates a PesaPal order.
  */
 export async function initiatePayment(input: {
   amount: number;
@@ -116,7 +116,7 @@ export async function initiatePayment(input: {
     if (!ipnId) {
       return { 
         success: false, 
-        error: "Missing PESAPAL_IPN_ID in Vercel. Run the setup link to get one." 
+        error: "Missing PESAPAL_IPN_ID. Please run the setup link to register your site IPN." 
       };
     }
 
@@ -144,6 +144,7 @@ export async function initiatePayment(input: {
         'Accept': 'application/json',
       },
       body: JSON.stringify(orderData),
+      cache: 'no-store'
     });
 
     const responseText = await response.text();
@@ -151,19 +152,19 @@ export async function initiatePayment(input: {
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      return { success: false, error: `Invalid PesaPal response (Status ${response.status}): ${responseText.substring(0, 100)}` };
+      return { success: false, error: `Invalid API response (Status ${response.status}): ${responseText.substring(0, 150)}` };
     }
 
     if (!response.ok) {
-      return { success: false, error: data.message || 'PesaPal Live Order Submission Failed.' };
+      return { success: false, error: data.message || 'Order submission failed.' };
     }
 
-    const redirectUrl = data.redirect_url || data.redirectUrl || data.message;
+    const redirectUrl = data.redirect_url || data.redirectUrl;
 
-    if (!redirectUrl || typeof redirectUrl !== 'string' || !redirectUrl.startsWith('http')) {
+    if (!redirectUrl) {
       return { 
         success: false, 
-        error: `Order accepted but no valid redirect URL returned. Message: ${data.message || 'Unknown'}` 
+        error: `Order accepted but no redirect URL was returned. Response: ${JSON.stringify(data)}` 
       };
     }
 
@@ -173,7 +174,6 @@ export async function initiatePayment(input: {
       order_tracking_id: data.order_tracking_id,
     };
   } catch (error: any) {
-    console.error('PesaPal Live Error:', error);
-    return { success: false, error: error.message || 'Live payment initiation failed.' };
+    return { success: false, error: error.message || 'Payment initiation failed.' };
   }
 }
