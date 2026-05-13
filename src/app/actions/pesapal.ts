@@ -2,8 +2,7 @@
 
 /**
  * @fileOverview Server actions for PesaPal v3 integration.
- * Handles authentication, transaction initiation, and IPN registration.
- * Explicitly uses Live endpoints: https://pay.pesapal.com/v3
+ * Hardened for Live Production: https://pay.pesapal.com/v3
  */
 
 const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3';
@@ -55,7 +54,7 @@ export async function getAccessToken() {
 
 /**
  * Registers an IPN URL with PesaPal and returns the IPN ID.
- * Uses the user-specified path: /api/pesapal-ipn
+ * Targets the user-specified path: /api/pesapal-ipn
  */
 export async function registerIPN(baseUrl: string) {
   const token = await getAccessToken();
