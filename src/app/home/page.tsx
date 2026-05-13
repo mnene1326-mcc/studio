@@ -54,7 +54,6 @@ export default function HomePage() {
       if (!currentUser) {
         router.replace("/welcome")
       } else {
-        // Double check onboarding status
         const checkStatus = async () => {
           const userRef = doc(db, "users", currentUser.uid)
           const snap = await getDoc(userRef)
@@ -88,41 +87,17 @@ export default function HomePage() {
 
   const filteredUsers = useMemo(() => {
     if (!users || !currentUserProfile) return []
-    
     const blockedList = [...(currentUserProfile.blocking || []), ...(currentUserProfile.blockedBy || [])]
-    
     const baseList = users.filter(u => {
       if (u.uid === currentUser?.uid) return false
       if (blockedList.includes(u.uid)) return false
-      
-      const genderMatch = currentUserProfile.gender === 'male' 
-        ? u.gender === 'female' 
-        : (currentUserProfile.gender === 'female' ? u.gender === 'male' : true);
-      
+      const genderMatch = currentUserProfile.gender === 'male' ? u.gender === 'female' : (currentUserProfile.gender === 'female' ? u.gender === 'male' : true);
       if (!genderMatch) return false;
-
-      if (activeTab === 'Nearby') {
-        return u.country === currentUserProfile.country;
-      }
-      
+      if (activeTab === 'Nearby') return u.country === currentUserProfile.country;
       return true;
     }).slice(0, displayLimit)
-
-    const now = Date.now()
-    const tenMinutes = 10 * 60 * 1000
-
-    return [...baseList].sort((a, b) => {
-      const aAt = a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : 0
-      const bAt = b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : 0
-      const aOnline = (now - aAt) < tenMinutes
-      const bOnline = (now - bAt) < tenMinutes
-      
-      if (aOnline && !bOnline) return -1
-      if (!aOnline && bOnline) return 1
-      
-      const seed = refreshSeed || 0;
-      return (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed))
-    });
+    const seed = refreshSeed || 0;
+    return [...baseList].sort((a, b) => (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed)));
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, displayLimit])
 
   if (!isMounted || authLoading || !currentUser) return null
@@ -164,103 +139,41 @@ export default function HomePage() {
 
           <div className="px-5 pt-3 pb-3 flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <button 
-                onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} 
-                className={cn("text-sm font-black transition-all", activeTab === 'Recommend' ? "text-[#00A2FF] scale-105" : "text-gray-400")}
-              >
-                Recommend
-              </button>
-              <button 
-                onClick={() => { setActiveTab('Nearby'); setDisplayLimit(10); }} 
-                className={cn("text-sm font-black transition-all", activeTab === 'Nearby' ? "text-[#00A2FF] scale-105" : "text-gray-400")}
-              >
-                Nearby
-              </button>
+              <button onClick={() => setActiveTab('Recommend')} className={cn("text-sm font-black transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
+              <button onClick={() => setActiveTab('Nearby')} className={cn("text-sm font-black transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
             </div>
-            <button 
-              onClick={handleRefresh} 
-              disabled={isRefreshing}
-              className={cn("p-1.5 transition-all active:scale-90 text-[#00A2FF]", isRefreshing && "animate-spin opacity-50")}
-            >
+            <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF]", isRefreshing && "animate-spin opacity-50")}>
               <RotateCw className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         <main className="px-4 pt-3">
-          {(loading || isRefreshing) && filteredUsers.length === 0 ? (
+          {loading && filteredUsers.length === 0 ? (
             <div className="grid grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />)}
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-30">
-              <RotateCw className="w-12 h-12" />
-              <p className="font-black text-sm uppercase tracking-widest">No users found</p>
             </div>
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-2 gap-3">
-                {filteredUsers.map((user, idx) => {
-                  const now = Date.now()
-                  const tenMinutes = 10 * 60 * 1000
-                  const userAt = user.updatedAt?.seconds ? user.updatedAt.seconds * 1000 : 0
-                  const isOnline = (now - userAt) < tenMinutes
-
-                  return (
-                    <Card 
-                      key={`${user.uid}-${refreshSeed}-${idx}`} 
-                      className="relative overflow-hidden border-none aspect-[1/1.2] rounded-2xl group cursor-pointer shadow-xl bg-white" 
-                      onClick={() => router.push(`/users/${user.uid}`)}
-                    >
-                      <Image 
-                        src={user.photoURL} 
-                        alt={user.name} 
-                        fill 
-                        className="object-cover transition-transform group-hover:scale-105" 
-                        data-ai-hint="person profile"
-                      />
-                      
-                      {isOnline && (
-                        <div className="absolute top-2.5 left-2.5 z-20 w-2 h-2 rounded-full bg-green-500 border border-white/50 shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
-                      )}
-
-                      {user.isVerified && (
-                        <div className="absolute top-2.5 left-6 z-20">
-                           <BadgeCheck className="w-4 h-4 text-blue-400 fill-white" />
-                        </div>
-                      )}
-
-                      <div 
-                        className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-2 rounded-full z-30 text-white font-black text-[14px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/chats?startWith=${user.uid}`);
-                        }}
-                      >
-                        CHAT
+                {filteredUsers.map((user) => (
+                  <Card key={user.uid} className="relative overflow-hidden border-none aspect-[1/1.2] rounded-2xl group cursor-pointer shadow-xl bg-white" onClick={() => router.push(`/users/${user.uid}`)}>
+                    <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
+                    <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-black text-[12px] uppercase shadow-md" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
+                    <div className="absolute inset-x-0 bottom-0 p-3">
+                      <h4 className="text-white font-black text-[18px] truncate tracking-tight">{user.name}</h4>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="bg-[#006400] text-white font-black text-[10px] px-2.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
+                        <span className="bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white font-bold text-[10px] border border-white/20 truncate">{user.country || "Kenya"}</span>
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
-                      <div className="absolute inset-x-0 bottom-0 p-3">
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <h4 className="text-white font-black text-[18px] truncate tracking-tight">{user.name}</h4>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="bg-[#006400] text-white font-black text-[12px] px-2.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
-                          <span className="bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white font-bold text-[12px] border border-white/20 truncate max-w-[80px]">{user.country || "Kenya"}</span>
-                        </div>
-                      </div>
-                    </Card>
-                  )
-                })}
+                    </div>
+                  </Card>
+                ))}
               </div>
-              
               {users.length >= displayLimit && (
                 <div className="flex justify-center pb-8">
-                  <Button 
-                    variant="ghost" 
-                    className="text-gray-400 font-black text-[9px] uppercase tracking-widest gap-2"
-                    onClick={() => setDisplayLimit(prev => prev + 10)}
-                  >
+                  <Button variant="ghost" className="text-gray-400 font-black text-[9px] uppercase tracking-widest gap-2" onClick={() => setDisplayLimit(prev => prev + 10)}>
                     <ChevronDown className="w-3.5 h-3.5" />
                     Show more
                   </Button>

@@ -24,7 +24,7 @@ const LOOKING_FOR_OPTIONS = [
 
 const RANDOM_NAMES = [
   "Amani", "Zahara", "Kwame", "Jabari", "Malik", "Zendaya", "Tunde", "Folami", "Nala", "Simba", 
-  "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu", "Guest 102", "Guest 441", "Guest 982", "Guest 773"
+  "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu", "User 102", "User 441", "User 982", "User 773"
 ];
 
 function OnboardingContent() {
@@ -61,53 +61,29 @@ function OnboardingContent() {
   }
 
   const generateMatchFlowId = () => {
-    const min = 1000000; // 7 digits
-    const max = 999999999; // 9 digits
+    const min = 1000000; 
+    const max = 999999999; 
     return Math.floor(Math.random() * (max - min + 1) + min).toString();
-  }
-
-  const validateAge = (dateString: string) => {
-    if (!dateString) return false;
-    const today = new Date()
-    const birthDate = new Date(dateString)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age >= 18
   }
 
   const handleComplete = async () => {
     if (!user) return
-    
     setLoading(true)
 
     const finalName = isFast ? RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)] : name;
     const finalDob = isFast ? generateRandomDOB() : dob;
     const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
 
-    if (!validateAge(finalDob)) {
-      toast({
-        variant: "destructive",
-        title: "Age Validation",
-        description: "You must be 18 years or older to use MatchFlow.",
-      })
-      setLoading(false)
-      return
-    }
-
     const userRef = doc(db, "users", user.uid)
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
 
-    // Monetization: Male 500 coins, Female 500 diamonds
     const initialCoins = gender === 'male' ? 500 : (existingData?.coins || 0)
     const initialDiamonds = gender === 'female' ? 500 : (existingData?.diamonds || 0)
 
     const updateData: any = {
       uid: user.uid,
-      email: user.email || "guest@matchflow.app",
+      email: user.email || `anonymous_${user.uid}@matchflow.app`,
       name: finalName,
       gender,
       dob: finalDob,
@@ -123,19 +99,18 @@ function OnboardingContent() {
       isDeleted: false
     }
 
-    setDoc(userRef, updateData, { merge: true })
-      .then(() => {
-        router.push("/home")
-      })
-      .catch(async (serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: userRef.path,
-          operation: 'write',
-          requestResourceData: updateData,
-        } satisfies SecurityRuleContext)
-        errorEmitter.emit('permission-error', permissionError)
-        setLoading(false)
-      })
+    try {
+      await setDoc(userRef, updateData, { merge: true })
+      router.push("/home")
+    } catch (serverError) {
+      const permissionError = new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'write',
+        requestResourceData: updateData,
+      } satisfies SecurityRuleContext)
+      errorEmitter.emit('permission-error', permissionError)
+      setLoading(false)
+    }
   }
 
   return (
@@ -143,7 +118,7 @@ function OnboardingContent() {
       <header className="text-center space-y-2 mt-8">
         <Heart className="w-12 h-12 text-[#00A2FF] mx-auto fill-current" />
         <h1 className="text-3xl font-black text-black tracking-tight">
-          {isFast ? "Fast Matching" : "Create Profile"}
+          {isFast ? "Fast Access" : "Create Profile"}
         </h1>
         <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
           {isFast ? `Step ${step} of 2` : `Step ${step} of 3`}
@@ -200,7 +175,6 @@ function OnboardingContent() {
                   onChange={(e) => setDob(e.target.value)} 
                   className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary"
                 />
-                <p className="text-[9px] text-muted-foreground font-bold ml-1">Minimum 18 years old.</p>
               </div>
             )}
             <div className="space-y-1.5">

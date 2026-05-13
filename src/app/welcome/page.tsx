@@ -20,30 +20,21 @@ export default function WelcomePage() {
 
   useEffect(() => {
     setMounted(true)
-    
-    // Prevent back navigation to root
-    window.history.pushState(null, '', window.location.href);
-    const handlePopState = () => {
-      window.history.pushState(null, '', window.location.href);
-    };
-    window.addEventListener('popstate', handlePopState);
-    
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
   }, [])
 
   // Check if logged in and onboarding is complete before skipping
   useEffect(() => {
     if (!authLoading && user) {
       const checkRedirect = async () => {
-        const userRef = doc(db, "users", user.uid)
-        const snap = await getDoc(userRef)
-        if (snap.exists() && snap.data().onboardingComplete) {
-          router.replace("/home")
-        } else {
-          // If they have a user but incomplete onboarding, force them there
-          router.replace("/onboarding")
+        try {
+          const userRef = doc(db, "users", user.uid)
+          const snap = await getDoc(userRef)
+          if (snap.exists() && snap.data().onboardingComplete) {
+            router.replace("/home")
+          }
+          // Note: We don't auto-redirect to onboarding here to avoid losing query params like ?fast=true
+        } catch (e) {
+          // Stay on welcome
         }
       }
       checkRedirect()
@@ -54,14 +45,13 @@ export default function WelcomePage() {
     setLoading(true)
     try {
       await signInAnonymously(auth)
-      // Redirect handled by useEffect above or explicitly here
       router.push("/onboarding?fast=true")
     } catch (error) {
       setLoading(false)
     }
   }
 
-  if (!mounted || authLoading || user) {
+  if (!mounted || authLoading) {
     return <div className="flex-1 bg-black min-h-screen" />
   }
 
