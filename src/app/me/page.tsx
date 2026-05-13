@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -75,7 +76,10 @@ export default function MePage() {
             <div className="relative w-28 h-28 rounded-full shadow-2xl overflow-hidden bg-muted border-none">
               <Image src={profile.photoURL} alt={profile.name} fill className="object-cover" priority />
             </div>
-            <button className="absolute bottom-1 right-1 bg-white p-3 rounded-full shadow-xl active:scale-90 transition-transform border border-black/5">
+            <button 
+              className="absolute bottom-1 right-1 bg-white p-3 rounded-full shadow-xl active:scale-90 transition-transform border border-black/5"
+              onClick={() => router.push('/edit-profile')}
+            >
               <Pencil className="w-4 h-4 text-[#00A2FF]" />
             </button>
           </div>

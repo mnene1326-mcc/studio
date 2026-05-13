@@ -1,37 +1,88 @@
+
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { doc } from "firebase/firestore"
+import { doc, updateDoc, increment } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, FileText, Gem, Star } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ChevronLeft, FileText, Gem, Star, RefreshCw, Coins } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 interface UserProfile {
   diamonds?: number
+  coins?: number
 }
 
-/**
- * Income Screen.
- * Features a vibrant blue gradient header, diamond balance display,
- * and an architectural white container.
- */
 export default function IncomePage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
+  
+  const [diamondsToConvert, setDiamondsToConvert] = useState<string>("")
+  const [isConverting, setIsConverting] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  const diamondBalance = profile?.diamonds?.toFixed(1) || "0.0"
+  const diamondBalance = profile?.diamonds || 0
+  
+  // Rate: 1000 diamonds = 90 coins
+  const conversionRate = 0.09
+  const expectedCoins = Math.floor(Number(diamondsToConvert) * conversionRate)
+
+  const handleConvert = async () => {
+    const amount = Number(diamondsToConvert)
+    if (isNaN(amount) || amount < 1000) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Amount",
+        description: "Minimum conversion is 1000 diamonds.",
+      })
+      return
+    }
+
+    if (amount > diamondBalance) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient Balance",
+        description: "You don't have enough diamonds to convert this amount.",
+      })
+      return
+    }
+
+    if (!userRef) return
+
+    setIsConverting(true)
+    try {
+      await updateDoc(userRef, {
+        diamonds: increment(-amount),
+        coins: increment(expectedCoins)
+      })
+      
+      toast({
+        title: "Success!",
+        description: `Successfully converted ${amount} diamonds to ${expectedCoins} coins.`,
+      })
+      setDiamondsToConvert("")
+    } catch (err) {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update'
+      }))
+    } finally {
+      setIsConverting(false)
+    }
+  }
 
   return (
     <div className="flex-1 bg-[#00A2FF] min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background Gradient & Pattern Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#00A2FF] via-[#00BFFF] to-[#00D4FF] z-0" />
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
       
       <header className="relative z-10 px-4 h-16 flex items-center justify-between">
         <Button 
@@ -59,36 +110,62 @@ export default function IncomePage() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Gem className="w-12 h-12 text-white fill-blue-400/30 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-6 h-6 bg-white/20 blur-sm rounded-full" />
-              </div>
             </div>
             <span className="text-6xl font-black text-white tracking-tighter">
-              {diamondBalance}
+              {diamondBalance.toFixed(1)}
             </span>
           </div>
         </div>
 
-        {/* Architectural White Container */}
-        <div className="flex-1 bg-white rounded-t-[3.5rem] shadow-2xl relative">
-          <div className="p-10">
-            {/* Content area for history or details would go here */}
+        <div className="flex-1 bg-white rounded-t-[3.5rem] shadow-2xl p-10 space-y-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw className="w-4 h-4 text-[#00A2FF]" />
+              <h3 className="text-xs font-black text-black uppercase tracking-widest">Convert to Coins</h3>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="relative">
+                <Input
+                  type="number"
+                  placeholder="Min 1000 diamonds"
+                  value={diamondsToConvert}
+                  onChange={(e) => setDiamondsToConvert(e.target.value)}
+                  className="rounded-2xl h-16 pl-12 border-gray-100 bg-gray-50 focus:bg-white transition-colors text-lg font-black"
+                />
+                <Gem className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+              </div>
+              <p className="text-[10px] font-bold text-gray-400 px-1">
+                Rate: 1000 Diamonds = 90 Coins
+              </p>
+            </div>
+
+            {expectedCoins > 0 && (
+              <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-yellow-500" />
+                  <span className="text-sm font-black text-black">Estimated Return</span>
+                </div>
+                <span className="text-xl font-black text-[#00A2FF]">+{expectedCoins}</span>
+              </div>
+            )}
+
+            <Button
+              className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50"
+              onClick={handleConvert}
+              disabled={isConverting || !diamondsToConvert || Number(diamondsToConvert) < 1000}
+            >
+              {isConverting ? "Processing..." : "Convert Diamonds"}
+            </Button>
           </div>
 
-          {/* Floating Reward/Star Badge */}
-          <div className="absolute bottom-10 right-8 flex flex-col items-center">
-             <div className="relative group active:scale-90 transition-transform cursor-pointer">
-                <div className="w-16 h-16 bg-gradient-to-tr from-[#7E57C2] to-[#B39DDB] rounded-full p-1 shadow-lg flex items-center justify-center">
-                   <div className="w-full h-full bg-[#9575CD] rounded-full flex items-center justify-center border-2 border-white/20">
-                      <div className="w-10 h-10 bg-[#FFB74D] rounded-full flex items-center justify-center shadow-inner">
-                         <Star className="w-6 h-6 text-white fill-current" />
-                      </div>
-                   </div>
-                </div>
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#9575CD] px-3 py-0.5 rounded-full border border-white/30 shadow-md">
-                   <span className="text-[10px] font-black text-white">385</span>
-                </div>
-             </div>
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 text-gray-400">
+              <Star className="w-5 h-5 fill-current opacity-20" />
+              <p className="text-[10px] font-bold leading-relaxed">
+                Diamonds are earned through interactions and gifts. You can convert them to coins to send more messages or buy premium virtual items.
+              </p>
+            </div>
           </div>
         </div>
       </main>
