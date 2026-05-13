@@ -20,7 +20,9 @@ export default function WelcomePage() {
   }, [])
 
   if (!mounted) {
-    return null
+    return (
+      <div className="flex-1 bg-black min-h-screen" />
+    )
   }
 
   return (
@@ -38,12 +40,12 @@ export default function WelcomePage() {
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between">
-        <div className="flex flex-col items-center justify-center space-y-8 mt-12">
+        <div className="flex flex-col items-center justify-center space-y-10 mt-12">
           <div className="relative">
-            <Heart className="w-16 h-16 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
+            <Heart className="w-14 h-14 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
           </div>
           <div className="text-center space-y-4">
-            <h1 className="text-5xl font-logo text-white drop-shadow-2xl tracking-tight">
+            <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
             <p className="text-white/80 font-black text-[9px] uppercase tracking-[0.6em] ml-2">
