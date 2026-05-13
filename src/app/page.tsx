@@ -1,25 +1,59 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
-import WelcomeContent from "./WelcomeContent"
+import { useRouter } from "next/navigation"
+import { useUser, useFirestore } from "@/firebase"
+import { doc, getDoc } from "firebase/firestore"
+import { Loader2 } from "lucide-react"
 
 /**
- * Entry point for the app. Handles initial mount to prevent hydration mismatches.
- * Returns null during the first pass to ensure a stable hydration phase.
+ * Stabilized Entry Point for MatchFlow.
+ * Handles both the splash screen and redirect logic in a single Client Component
+ * to ensure hydration consistency and prevent loading hangs.
  */
 export default function WelcomePage() {
-  const [mounted, setMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const { user, loading: authLoading } = useUser()
+  const db = useFirestore()
+  const router = useRouter()
 
   useEffect(() => {
-    setMounted(true)
+    setIsMounted(true)
   }, [])
 
-  // To prevent hydration mismatch, we return null on the server and initial client pass.
-  // This ensures the DOM matches perfectly before we render the dynamic content.
-  if (!mounted) {
-    return null
-  }
+  useEffect(() => {
+    if (isMounted && !authLoading) {
+      if (user) {
+        const checkOnboarding = async () => {
+          try {
+            const userRef = doc(db, "users", user.uid)
+            const userSnap = await getDoc(userRef)
+            if (userSnap.exists() && userSnap.data().onboardingComplete) {
+              router.replace("/home")
+            } else {
+              router.replace("/onboarding")
+            }
+          } catch (error) {
+            router.replace("/login")
+          }
+        }
+        checkOnboarding()
+      } else {
+        router.replace("/login")
+      }
+    }
+  }, [isMounted, authLoading, user, db, router])
 
-  // Once mounted, render the interactive content which handles auth redirects
-  return <WelcomeContent />
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
+      <div className="animate-in fade-in zoom-in duration-700 ease-out flex flex-col items-center gap-6">
+        <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Entering MatchFlow...</p>
+        </div>
+      </div>
+    </div>
+  )
 }
