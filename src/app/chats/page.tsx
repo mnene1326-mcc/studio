@@ -297,7 +297,7 @@ function ChatsContent() {
                   "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
                   msg.senderId === currentUser.uid 
                     ? 'bg-[#FF3B30] text-white rounded-[1.2rem] rounded-br-none' 
-                    : 'bg-gray-50 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
+                    : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
                 )}>
                   {msg.text}
                 </div>
@@ -307,7 +307,7 @@ function ChatsContent() {
         </div>
       </ScrollArea>
 
-      {/* Floating Game Widget - High Fidelity Shadow */}
+      {/* Floating Game Widget */}
       <div className="fixed bottom-40 right-4 z-50">
         <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
           <Gamepad2 className="w-7 h-7 text-blue-500" />

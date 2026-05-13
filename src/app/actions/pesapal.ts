@@ -3,12 +3,10 @@
 /**
  * @fileOverview Server actions for PesaPal v3 integration.
  * Handles authentication, transaction initiation, and IPN registration.
- * Explicitly uses Live endpoints unless PESAPAL_SANDBOX is 'true'.
+ * Explicitly uses Live endpoints: https://pay.pesapal.com/v3
  */
 
-const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
-  ? 'https://cybqa.pesapal.com/pesapalv3' 
-  : 'https://pay.pesapal.com/v3';
+const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3';
 
 /**
  * Gets an access token from PesaPal using Consumer Key and Secret.
@@ -57,12 +55,13 @@ export async function getAccessToken() {
 
 /**
  * Registers an IPN URL with PesaPal and returns the IPN ID.
+ * Uses the user-specified path: /api/pesapal-ipn
  */
 export async function registerIPN(baseUrl: string) {
   const token = await getAccessToken();
   
   const cleanBaseUrl = baseUrl.replace(/\/$/, ""); 
-  const ipnUrl = `${cleanBaseUrl}/api/pesapal/ipn`;
+  const ipnUrl = `${cleanBaseUrl}/api/pesapal-ipn`;
 
   try {
     const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
@@ -116,7 +115,7 @@ export async function initiatePayment(input: {
     if (!ipnId) {
       return { 
         success: false, 
-        error: "Missing PESAPAL_IPN_ID. Please run the setup link to register your site IPN." 
+        error: "Missing PESAPAL_IPN_ID. Please run /api/pesapal/setup to register your site IPN." 
       };
     }
 
@@ -164,7 +163,7 @@ export async function initiatePayment(input: {
     if (!redirectUrl) {
       return { 
         success: false, 
-        error: `Order accepted but no redirect URL was returned. Response: ${JSON.stringify(data)}` 
+        error: `Order accepted but no redirect URL was returned.` 
       };
     }
 
