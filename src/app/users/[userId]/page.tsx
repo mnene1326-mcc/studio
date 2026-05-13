@@ -91,10 +91,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-[#006400] text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
+              <span className="bg-[#006400] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
                 {profile.gender === 'female' ? '♀' : '♂'} {age}
               </span>
-              <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-lg text-[10px] font-black border border-black/5 uppercase tracking-widest">
+              <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black border border-black/5 uppercase tracking-widest">
                 {profile.country || "Kenya"}
               </span>
             </div>

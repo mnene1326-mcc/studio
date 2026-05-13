@@ -37,7 +37,7 @@ export default function WelcomePage() {
             <Heart className="w-14 h-14 text-[#FF3B30] fill-current drop-shadow-[0_0_30px_rgba(255,59,48,0.6)] animate-pulse" />
           </div>
           <div className="space-y-4">
-            <h1 className="text-3xl font-logo text-white drop-shadow-2xl tracking-tight">
+            <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
             <p className="text-white/70 font-black text-[9px] uppercase tracking-[0.6em] ml-2">
@@ -49,7 +49,7 @@ export default function WelcomePage() {
         <div className="w-full max-w-sm space-y-5 mb-6">
           <Button 
             asChild
-            className="w-full h-16 bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
+            className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
           >
             <Link href="/login" className="flex items-center justify-center gap-3">
               <Mail className="w-5 h-5" />
@@ -60,7 +60,7 @@ export default function WelcomePage() {
           <Button 
             asChild
             variant="outline"
-            className="w-full h-16 border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
+            className="w-full h-16 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
           >
             <Link href="/onboarding?fast=true" className="flex items-center justify-center gap-3">
               <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
