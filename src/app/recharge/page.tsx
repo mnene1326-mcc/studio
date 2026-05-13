@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react"
@@ -115,7 +114,7 @@ export default function RechargePage() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-[#FF3B30] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-red-100 uppercase tracking-widest flex items-center justify-center gap-3"
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3"
           onClick={handlePayment}
         >
           Recharge Now

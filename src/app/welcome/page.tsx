@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -50,7 +49,7 @@ export default function WelcomePage() {
       <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between items-center text-center">
         <div className="flex flex-col items-center justify-center space-y-10 mt-6">
           <div className="relative">
-            <Heart className="w-14 h-14 text-[#FF3B30] fill-current drop-shadow-[0_0_30px_rgba(255,59,48,0.6)] animate-pulse" />
+            <Heart className="w-14 h-14 text-[#00A2FF] fill-current drop-shadow-[0_0_30px_rgba(0,162,255,0.6)] animate-pulse" />
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
@@ -65,7 +64,7 @@ export default function WelcomePage() {
         <div className="w-full max-w-sm space-y-5 mb-6">
           <Button 
             onClick={() => router.push("/login")}
-            className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
+            className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
           >
             <div className="flex items-center justify-center gap-3">
               <Mail className="w-5 h-5" />

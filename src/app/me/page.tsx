@@ -57,8 +57,8 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Straight Architectural Red Header */}
-      <div className="absolute top-0 left-0 w-full h-[280px] bg-[#FF3B30] z-0" />
+      {/* Straight Architectural Blue Header */}
+      <div className="absolute top-0 left-0 w-full h-[280px] bg-[#00A2FF] z-0" />
 
       <div className="relative z-10">
         <header className="relative pt-12 pb-10 px-6 flex flex-col items-center text-center">
@@ -73,7 +73,7 @@ export default function MePage() {
               <Image src={profile.photoURL} alt={profile.name} fill className="object-cover" priority />
             </div>
             <button className="absolute bottom-1 right-1 bg-white p-3 rounded-full shadow-xl active:scale-90 transition-transform border border-black/5">
-              <Pencil className="w-4 h-4 text-[#FF3B30]" />
+              <Pencil className="w-4 h-4 text-[#00A2FF]" />
             </button>
           </div>
 
@@ -82,7 +82,6 @@ export default function MePage() {
             <BadgeCheck className="w-4 h-4 text-white" />
           </div>
 
-          {/* User ID correctly in Header under Name */}
           <div className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all" onClick={handleCopyId}>
             <p className="text-white/70 font-bold text-[9px] tracking-tight uppercase">ID: {profile.matchFlowId || "---"}</p>
             {copied ? <Check className="w-2.5 h-2.5 text-green-300" /> : <Copy className="w-2.5 h-2.5 text-white/50" />}
@@ -90,10 +89,9 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Layered action cards sitting halfway on the red background transition */}
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-10">
             <Button 
-              className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
+              className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#00A2FF] active:scale-95 transition-all"
               onClick={() => router.push("/recharge")}
             >
               <div className="flex items-center gap-1.5">

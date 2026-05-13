@@ -51,7 +51,6 @@ export default function HomePage() {
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    // Update seed to trigger reshuffle in useMemo
     setRefreshSeed(prev => prev + 1)
     setTimeout(() => {
       setIsRefreshing(false)
@@ -77,9 +76,6 @@ export default function HomePage() {
       return true;
     })
 
-    // Shuffle implementation using the refreshSeed
-    // We also simulate "online" by sorting - in a real app this would be a field
-    // For this prototype, we'll just shuffle and pretend the top ones are more 'active'
     return [...baseList].sort(() => Math.random() - 0.5);
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
@@ -87,7 +83,7 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      <div className="bg-[#FF3B30] pt-4 pb-4">
+      <div className="bg-[#00A2FF] pt-4 pb-4">
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg cursor-pointer">
@@ -161,13 +157,12 @@ export default function HomePage() {
                   data-ai-hint="person profile"
                 />
                 
-                {/* Simulated Online Indicator */}
                 <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
                   <span className="text-[8px] font-black text-white uppercase tracking-tighter">Online</span>
                 </div>
 
-                <div className="absolute top-4 right-4 bg-[#FF3B30] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
+                <div className="absolute top-4 right-4 bg-[#00A2FF] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
                 <div className="absolute inset-x-0 bottom-0 p-5">
                   <h4 className="text-white font-black text-sm truncate mb-2">{user.name}</h4>

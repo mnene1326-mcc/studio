@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -16,7 +15,6 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!loading) {
-      // Small delay to ensure smooth transition after auth initialization
       const timer = setTimeout(() => {
         if (user) {
           router.replace("/home")
@@ -32,7 +30,7 @@ export default function RootPage() {
     <div className="flex-1 flex flex-col items-center justify-center bg-black min-h-screen">
       <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-700">
         <div className="relative">
-          <Heart className="w-16 h-16 text-[#FF3B30] fill-current shadow-[0_0_40px_rgba(255,59,48,0.4)] animate-pulse" />
+          <Heart className="w-16 h-16 text-[#00A2FF] fill-current shadow-[0_0_40px_rgba(0,162,255,0.4)] animate-pulse" />
         </div>
         <div className="space-y-2 text-center">
           <h1 className="text-4xl font-logo text-white tracking-tight">MatchFlow</h1>

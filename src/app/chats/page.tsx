@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -98,7 +97,7 @@ function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentU
     >
       <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
         <AvatarImage src={partner.photoURL} className="object-cover" />
-        <AvatarFallback className="bg-[#FF3B30] text-white font-black text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
+        <AvatarFallback className="bg-[#00A2FF] text-white font-black text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
       </Avatar>
       
       <div className="flex-1 min-w-0">
@@ -147,7 +146,6 @@ function ChatsContent() {
         if (!clearedAt) return true
         const lastAt = chat.lastMessageAt
         if (!lastAt) return true
-        // If last message is before we cleared it, hide it
         return lastAt.toMillis() > clearedAt.toMillis()
       })
       .sort((a, b) => {
@@ -245,7 +243,6 @@ function ChatsContent() {
     updateDoc(doc(db, "chats", chatId), { 
       lastMessage: text.trim(), 
       lastMessageAt: serverTimestamp(),
-      // Ensure the chat is no longer "cleared" for either user when a new message is sent
       [`clearedAt.${currentUser.uid}`]: null
     })
     setNewMessage("")
@@ -271,8 +268,8 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
-        <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-12 pb-4 flex items-center justify-between">
-          <h1 className="text-xl font-black text-white tracking-tight uppercase">Chat</h1>
+        <header className="sticky top-0 z-40 bg-[#00A2FF] px-4 pt-12 pb-4 flex items-center justify-between">
+          <h1 className="text-3xl font-logo text-white tracking-tight">Chat</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20" onClick={() => router.push('/recharge')}>
                 <ShoppingBag className="w-6 h-6" />
@@ -299,7 +296,7 @@ function ChatsContent() {
           ) : userChats.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 space-y-4 opacity-40">
               <ShoppingBag className="w-16 h-16 mb-4" />
-              <p className="font-black text-xl">No chats yet...</p>
+              <p className="font-black text-xl text-black">No chats yet...</p>
             </div>
           ) : (
             <div className="bg-white">
@@ -318,8 +315,8 @@ function ChatsContent() {
         <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
           <AlertDialogContent className="rounded-[2.5rem] border-none p-8 max-w-[85vw]">
             <AlertDialogHeader className="items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
-                <Trash2 className="w-8 h-8 text-[#FF3B30]" />
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-[#00A2FF]" />
               </div>
               <AlertDialogTitle className="text-xl font-black text-black">Delete Chat?</AlertDialogTitle>
               <AlertDialogDescription className="text-sm font-bold text-gray-500 leading-relaxed">
@@ -332,7 +329,7 @@ function ChatsContent() {
               </AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleSoftDelete}
-                className="flex-1 rounded-full h-14 bg-[#FF3B30] hover:bg-[#E6352B] font-black text-white uppercase tracking-widest text-[10px]"
+                className="flex-1 rounded-full h-14 bg-[#00A2FF] hover:bg-[#0081CC] font-black text-white uppercase tracking-widest text-[10px]"
               >
                 Delete
               </AlertDialogAction>
@@ -347,7 +344,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      <header className="bg-[#FF3B30] px-4 pt-12 pb-4 flex items-center justify-between shadow-sm z-50">
+      <header className="bg-[#00A2FF] px-4 pt-12 pb-4 flex items-center justify-between shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -383,7 +380,7 @@ function ChatsContent() {
           <div className="px-4 space-y-6">
             {(isInitializingChat || (messagesLoading && messages.length === 0)) ? (
               <div className="flex justify-center p-8">
-                <Loader2 className="w-8 h-8 text-[#FF3B30] animate-spin opacity-20" />
+                <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
               </div>
             ) : messages.map((msg) => (
               <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'justify-end' : 'justify-start')}>
@@ -396,7 +393,7 @@ function ChatsContent() {
                 <div className={cn(
                   "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
                   msg.senderId === currentUser.uid 
-                    ? 'bg-[#FF3B30] text-white rounded-[1.2rem] rounded-br-none' 
+                    ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
                     : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
                 )}>
                   {msg.text}
@@ -443,7 +440,7 @@ function ChatsContent() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#FF3B30]" : "text-gray-300")}
+            className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
             onClick={() => handleSendMessage(newMessage)}
           >
             <Send className="w-6 h-6" />
