@@ -29,7 +29,8 @@ import {
   Mic, 
   Smile, 
   ChevronDown,
-  Lock
+  Lock,
+  Trash2
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -156,7 +157,6 @@ function ChatsContent() {
     
     return [...userChatsRaw]
       .filter(chat => {
-        // ONLY show chats if a message has been sent
         if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
         const clearedAt = chat.clearedAt?.[currentUser.uid]
