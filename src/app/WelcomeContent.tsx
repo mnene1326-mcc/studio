@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect } from "react"
@@ -7,6 +6,10 @@ import { useUser, useFirestore } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
 import { Loader2 } from "lucide-react"
 
+/**
+ * Handles the logic for redirecting users based on their auth and onboarding status.
+ * Displays a loading animation while processing.
+ */
 export default function WelcomeContent() {
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
