@@ -118,7 +118,7 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen relative">
       <div className="absolute top-0 left-0 right-0 h-28 bg-[#00A2FF] z-0 overflow-hidden">
-        <div className="absolute -right-2 -top-2 opacity-15 rotate-[15deg] select-none pointer-events-none">
+        <div className="absolute -right-2 -top-2 opacity-15 select-none pointer-events-none">
           <span className="text-6xl font-logo text-white whitespace-nowrap">MatchFlow</span>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function HomePage() {
                     )}
 
                     <div 
-                      className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-2.5 py-1 rounded-full z-30 text-white font-black text-[7px] uppercase tracking-widest shadow-md active:scale-95 transition-transform"
+                      className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-2.5 py-1 rounded-full z-30 text-white font-black text-[7px] tracking-tight uppercase shadow-md active:scale-95 transition-transform"
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(`/chats?startWith=${user.uid}`);
@@ -227,7 +227,7 @@ export default function HomePage() {
                         <h4 className="text-white font-black text-[10px] truncate tracking-tight">{user.name}</h4>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="bg-[#006400] px-1.5 py-0.5 rounded-full text-white font-black text-[8px]">{calculateAge(user.dob)}</span>
+                        <span className="bg-[#006400] text-white font-black text-[8px] px-1.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
                         <span className="bg-white/10 backdrop-blur-md px-1.5 py-0.5 rounded-full text-white font-bold text-[8px] border border-white/20 truncate max-w-[50px]">{user.country || "Kenya"}</span>
                       </div>
                     </div>
