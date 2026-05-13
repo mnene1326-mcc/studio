@@ -25,8 +25,6 @@ import {
   ShoppingBag, 
   User as UserIcon, 
   Loader2, 
-  Mic, 
-  Smile, 
   ChevronDown,
   Lock,
   Trash2
@@ -136,7 +134,8 @@ function ChatsContent() {
   const [messagesLimit, setMessagesLimit] = useState(20)
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
-  const prevMessagesCount = useRef(0)
+  const prevLastMessageId = useRef<string | null>(null)
+  const prevCount = useRef(0)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
@@ -251,16 +250,22 @@ function ChatsContent() {
     return sorted.filter(m => m.timestamp?.toMillis() > clearedAt.toMillis())
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
-  // Auto-scroll logic
+  // Intelligent scroll management
   useEffect(() => {
-    if (messages.length > prevMessagesCount.current) {
-      // Only auto-scroll to bottom if we aren't loading history
-      const loadedHistory = messages.length - prevMessagesCount.current >= 15
-      if (!loadedHistory) {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-      }
+    const currentLastMessageId = messages[messages.length - 1]?.id || null
+    
+    // Determine if we just added a new message (not history)
+    const isNewMessageAdded = currentLastMessageId !== prevLastMessageId.current && messages.length > 0
+    // Determine if history was loaded (last message remains same, but count grew)
+    const isHistoryLoaded = currentLastMessageId === prevLastMessageId.current && messages.length > prevCount.current
+
+    if (isNewMessageAdded && !isHistoryLoaded) {
+      // Only scroll to bottom for actual new messages
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
-    prevMessagesCount.current = messages.length
+
+    prevLastMessageId.current = currentLastMessageId
+    prevCount.current = messages.length
   }, [messages])
 
   const handleSendMessage = (text: string) => {
@@ -402,7 +407,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-[100dvh] bg-white relative overflow-hidden">
-      <header className="shrink-0 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
+      <header className="shrink-0 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -487,7 +492,7 @@ function ChatsContent() {
       </main>
 
       {!isBlocked && (
-        <footer className="shrink-0 bg-white border-t z-50 pb-safe">
+        <footer className="shrink-0 bg-white border-t z-50 pb-safe sticky bottom-0">
           <div className="px-4 py-3 flex items-center gap-3">
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
               <input 
