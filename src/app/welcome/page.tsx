@@ -18,6 +18,19 @@ export default function WelcomePage() {
 
   useEffect(() => {
     setMounted(true)
+    
+    // Trap the history stack. If user presses back from Welcome, 
+    // it will effectively close the app/tab if there's no history,
+    // or keep them on this page if they just logged out.
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [])
 
   // If already logged in, skip welcome
