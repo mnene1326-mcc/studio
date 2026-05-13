@@ -177,7 +177,6 @@ function ChatsContent() {
     const blockedBy = currentUserProfile.blockedBy || []
     
     return [...userChatsRaw].filter(chat => {
-      // Strictly show only chats that have at least one message sent
       if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
       const clearedAt = chat.clearedAt?.[currentUser.uid]
@@ -269,11 +268,8 @@ function ChatsContent() {
     return messagesRaw.filter(m => toMillisSafe(m.timestamp) > clearedAtMillis)
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
-  // Native reverse column anchoring: Ensure we are at the "bottom" (scrollTop 0 in reverse column) when messages update
   useEffect(() => {
     if (scrollContainerRef.current && messages.length > 0) {
-      // Browsers handle flex-col-reverse scrolling naturally by keeping the user at the visual bottom
-      // if they were already there. To force it for new messages, we can ensure scrollTop is 0.
       scrollContainerRef.current.scrollTop = 0
     }
   }, [messages.length])
@@ -309,7 +305,6 @@ function ChatsContent() {
         [`clearedAt.${currentUser.uid}`]: null
       })
       
-      // Force scroll to bottom (scrollTop 0 for flex-col-reverse) after sending
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = 0
       }
@@ -335,9 +330,6 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
-  /**
-   * CHAT LIST VIEW
-   */
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
@@ -428,13 +420,9 @@ function ChatsContent() {
     )
   }
 
-  /**
-   * INDIVIDUAL CONVERSATION VIEW
-   */
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
-      {/* Fixed Header */}
-      <header className="shrink-0 h-24 bg-white/80 backdrop-blur-xl px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
+      <header className="shrink-0 h-16 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -443,12 +431,11 @@ function ChatsContent() {
             className="rounded-full text-[#00A2FF] font-black px-2 hover:bg-blue-50"
           >
             <ChevronLeft className="w-6 h-6 mr-0.5" />
-            <span className="text-xs">Chats</span>
           </Button>
         </div>
         
         <h3 className="font-black text-sm tracking-tight text-center flex-1 text-black uppercase truncate px-2">
-          {chatPartner?.name || 'Loading...'}
+          {chatPartner?.name || '...'}
         </h3>
 
         <div className="flex items-center gap-3">
@@ -459,7 +446,6 @@ function ChatsContent() {
         </div>
       </header>
 
-      {/* Main content using reverse column to anchor to bottom naturally and scroll beneath header */}
       <main ref={scrollContainerRef} className="flex-1 overflow-y-auto no-scrollbar bg-white">
         <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
           {messages.map((msg) => (
@@ -481,8 +467,7 @@ function ChatsContent() {
             </div>
           ))}
 
-          {/* Pagination Button at visual top */}
-          {messagesRaw.length >= messagesLimit && (
+          {messagesRaw.length >= messagesLimit && messagesRaw.length > 0 && (
             <div className="flex justify-center py-4">
                <Button 
                 variant="ghost" 
@@ -495,12 +480,6 @@ function ChatsContent() {
                </Button>
             </div>
           )}
-
-          <div className="text-center py-4">
-            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
-              Conversation Started
-            </span>
-          </div>
 
           {(isInitializingChat || (messagesLoading && messages.length === 0)) && (
             <div className="flex justify-center p-8">
@@ -519,7 +498,6 @@ function ChatsContent() {
         </div>
       </main>
 
-      {/* Fixed Footer stays at bottom and does not move with scrolling */}
       {!isBlocked && (
         <footer className="shrink-0 bg-white border-t z-50 pb-safe sticky bottom-0">
           <div className="px-4 py-3 flex items-center gap-3">
