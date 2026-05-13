@@ -176,7 +176,7 @@ function ChatsContent() {
     const blockedBy = currentUserProfile.blockedBy || []
     
     return [...userChatsRaw].filter(chat => {
-      // Strictly show only chats that have at least one message
+      // Strictly show only chats that have at least one message sent
       if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
       const clearedAt = chat.clearedAt?.[currentUser.uid]
@@ -412,9 +412,9 @@ function ChatsContent() {
    * INDIVIDUAL CONVERSATION VIEW
    */
   return (
-    <div className="flex-1 flex flex-col h-[100dvh] bg-white relative overflow-hidden">
-      {/* Fixed Header with Blur */}
-      <header className="shrink-0 h-24 bg-white/80 backdrop-blur-xl px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
+    <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
+      {/* Fixed Header */}
+      <header className="shrink-0 h-24 bg-white/80 backdrop-blur-xl px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -439,7 +439,7 @@ function ChatsContent() {
         </div>
       </header>
 
-      {/* Main content using reverse column to anchor to bottom naturally */}
+      {/* Main content using reverse column to anchor to bottom naturally and scroll beneath header */}
       <main className="flex-1 overflow-y-auto no-scrollbar bg-white">
         <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
           {messages.map((msg) => (
@@ -461,7 +461,7 @@ function ChatsContent() {
             </div>
           ))}
 
-          {/* Load More Button - appears at visual top of conversation */}
+          {/* Pagination Button at visual top */}
           {messagesRaw.length >= messagesLimit && (
             <div className="flex justify-center py-4">
                <Button 
@@ -499,9 +499,9 @@ function ChatsContent() {
         </div>
       </main>
 
-      {/* Fixed Footer */}
+      {/* Fixed Footer stays at bottom and does not move with scrolling */}
       {!isBlocked && (
-        <footer className="shrink-0 bg-white border-t z-50 pb-safe">
+        <footer className="shrink-0 bg-white border-t z-50 pb-safe sticky bottom-0">
           <div className="px-4 py-3 flex items-center gap-3">
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
               <input 
