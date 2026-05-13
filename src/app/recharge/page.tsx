@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, Loader2 } from "lucide-react"
+import { ChevronLeft, Menu, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
-import { initiatePayment } from "@/app/actions/pesapal"
 
 interface UserProfile {
   name: string
@@ -39,9 +37,7 @@ export default function RechargePage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
-  const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
-  const [isProcessing, setIsProcessing] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
@@ -49,33 +45,6 @@ export default function RechargePage() {
   const selectedPkgData = useMemo(() => 
     PACKAGES.find(p => p.amount === selectedPackage) || PACKAGES[1]
   , [selectedPackage])
-
-  const handlePayNow = async () => {
-    if (!user || !profile) return
-    
-    setIsProcessing(true)
-    try {
-      const result = await initiatePayment({
-        amount: selectedPkgData.price,
-        email: profile.email || "guest@matchflow.app",
-        name: profile.name || "MatchFlow User",
-        userId: user.uid,
-      })
-
-      if (result.success && result.redirect_url) {
-        window.location.href = result.redirect_url
-      } else {
-        throw new Error(result.error || "PesaPal initiation failed.")
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Payment Error",
-        description: error.message || "Could not start payment. Please check your internet or setup.",
-      })
-      setIsProcessing(false)
-    }
-  }
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
@@ -139,18 +108,10 @@ export default function RechargePage() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          disabled={isProcessing}
-          className="w-full h-16 rounded-full bg-[#FF3B30] text-white font-black text-base shadow-xl premium-shadow active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-3"
-          onClick={handlePayNow}
+          className="w-full h-16 rounded-full bg-gray-100 text-gray-400 font-black text-base active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed"
+          disabled
         >
-          {isProcessing ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Redirecting to PesaPal...
-            </>
-          ) : (
-            `Pay KES ${selectedPkgData.price.toFixed(1)} Now`
-          )}
+          Payment Maintenance
         </Button>
       </footer>
     </div>
