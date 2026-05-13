@@ -49,7 +49,7 @@ export default function HomePage() {
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  // Cost Optimization: Load only 10 users initially (incrementally)
+  // Cost Optimization: Load only 10 users initially
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
@@ -61,7 +61,7 @@ export default function HomePage() {
   const handleRefresh = () => {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
-    setDisplayLimit(10) // Reset to base limit on refresh
+    // We don't change the limit, just reshuffle what we have locally
     setTimeout(() => {
       setIsRefreshing(false)
     }, 800)
@@ -96,7 +96,9 @@ export default function HomePage() {
       if (aOnline && !bOnline) return -1
       if (!aOnline && bOnline) return 1
       
-      return (Math.sin(a.uid.length + refreshSeed) - Math.sin(b.uid.length + refreshSeed))
+      // Use refreshSeed to ensure the reshuffle only happens when clicking the refresh button
+      const seed = refreshSeed || 0;
+      return (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed))
     });
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
@@ -203,16 +205,18 @@ export default function HomePage() {
             </div>
             
             {/* Pagination Trigger */}
-            <div className="flex justify-center pb-8">
-               <Button 
-                variant="ghost" 
-                className="text-gray-400 font-black text-[10px] uppercase tracking-widest gap-2"
-                onClick={() => setDisplayLimit(prev => prev + 10)}
-               >
-                 <ChevronDown className="w-4 h-4" />
-                 Show more
-               </Button>
-            </div>
+            {users.length >= displayLimit && (
+              <div className="flex justify-center pb-8">
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-400 font-black text-[10px] uppercase tracking-widest gap-2"
+                  onClick={() => setDisplayLimit(prev => prev + 10)}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  Show more
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </main>

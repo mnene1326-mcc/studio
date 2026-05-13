@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -89,7 +90,8 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4 relative z-20 -mt-10">
+          {/* Lowered position of buttons: Changed -mt-10 to -mt-6 for more ID breathing room */}
+          <div className="grid grid-cols-2 gap-4 relative z-20 -mt-6">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#00A2FF] active:scale-95 transition-all"
               onClick={() => router.push("/recharge")}
