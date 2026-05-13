@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useAuth, useFirestore } from "@/firebase"
+import { useAuth, useFirestore, useUser } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { deleteUser, signOut } from "firebase/auth"
@@ -49,11 +49,11 @@ export default function SettingsPage() {
   const { toast } = useToast()
   const auth = useAuth()
   const db = useFirestore()
+  const { user } = useUser()
 
   const handleSignOut = async () => {
     try {
       await signOut(auth)
-      // Use window.location.replace to fully clear history stack and hard-reload at Welcome
       window.location.replace("/welcome")
     } catch (error) {
       // Errors handled centrally
@@ -61,7 +61,6 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = async () => {
-    const user = auth.currentUser
     if (!user) return
 
     try {
@@ -102,7 +101,7 @@ export default function SettingsPage() {
     { label: "Charge settings", href: "/recharge" },
     { label: "Rights Center", href: "#" },
     { label: "Chat settings", href: "#" },
-    { label: "Blocked List", href: "#" },
+    { label: "Blocked List", href: "/blocked-list" },
     { label: "Language", href: "#" },
     { label: "Clear Cache", onClick: () => toast({ title: "Cache Cleared", description: "Temporary files have been removed." }) },
     { label: "About Bibo", href: "#" },

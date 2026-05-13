@@ -21,7 +21,10 @@
         "coins": { "type": "number", "description": "Currency for males to send messages." },
         "diamonds": { "type": "number", "description": "Currency for females earned from interactions." },
         "lastCheckInDate": { "type": "object", "description": "Firestore Timestamp of last check-in." },
-        "checkInStreak": { "type": "number", "description": "Number of consecutive or cumulative check-in days (0-7)." }
+        "checkInStreak": { "type": "number", "description": "Number of consecutive or cumulative check-in days (0-7)." },
+        "blocking": { "type": "array", "items": { "type": "string" }, "description": "List of UIDs this user has blocked." },
+        "blockedBy": { "type": "array", "items": { "type": "string" }, "description": "List of UIDs this user is blocked by." },
+        "isVerified": { "type": "boolean" }
       },
       "required": ["uid", "email", "onboardingComplete"]
     },

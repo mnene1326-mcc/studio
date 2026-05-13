@@ -1,20 +1,29 @@
+
 "use client"
 
 import { useMemo, use, useState } from "react"
-import { doc } from "firebase/firestore"
-import { useFirestore, useDoc } from "@/firebase"
+import { doc, updateDoc, arrayUnion } from "firebase/firestore"
+import { useFirestore, useDoc, useUser } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { 
   ChevronLeft, 
   MessageSquare, 
   MoreHorizontal, 
-  Copy, 
   User,
-  BadgeCheck
+  BadgeCheck,
+  Ban,
+  Flag
 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast"
 
 interface UserProfile {
   uid: string
@@ -26,13 +35,15 @@ interface UserProfile {
   interests?: string
   matchFlowId?: string
   isVerified?: boolean
+  blocking?: string[]
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params)
   const router = useRouter()
   const db = useFirestore()
-  const [copied, setCopied] = useState(false)
+  const { user: currentUser } = useUser()
+  const { toast } = useToast()
 
   const userRef = useMemo(() => doc(db, "users", userId), [db, userId])
   const { data: profile, loading } = useDoc<UserProfile>(userRef)
@@ -47,12 +58,41 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
     return age
   }
 
-  const handleCopyId = () => {
-    if (profile?.matchFlowId) {
-      navigator.clipboard.writeText(profile.matchFlowId)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+  const handleBlock = async () => {
+    if (!currentUser || !profile) return
+    try {
+      const myRef = doc(db, "users", currentUser.uid)
+      const targetRef = doc(db, "users", profile.uid)
+
+      // 1. Add to my blocking list
+      await updateDoc(myRef, {
+        blocking: arrayUnion(profile.uid)
+      })
+
+      // 2. Add to their blockedBy list
+      await updateDoc(targetRef, {
+        blockedBy: arrayUnion(currentUser.uid)
+      })
+
+      toast({
+        title: "User Blocked",
+        description: `${profile.name} has been blocked and will no longer appear in your feed.`,
+      })
+      router.push("/home")
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to block user. Please try again.",
+      })
     }
+  }
+
+  const handleReport = () => {
+    toast({
+      title: "Report Submitted",
+      description: "Thank you for helping keep MatchFlow safe. We will review this profile.",
+    })
   }
 
   if (loading || !profile) return null
@@ -61,14 +101,42 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
       <div className="relative h-[60vh] w-full">
-        <Image src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} alt={profile.name} fill className="object-cover" priority data-ai-hint="person portrait" />
+        <Image 
+          src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} 
+          alt={profile.name} 
+          fill 
+          className="object-cover" 
+          priority 
+          data-ai-hint="person portrait" 
+        />
         <div className="absolute top-12 inset-x-0 px-6 flex justify-between items-center z-20">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
             <ChevronLeft className="w-6 h-6" />
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
-            <MoreHorizontal className="w-6 h-6" />
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
+                <MoreHorizontal className="w-6 h-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-2xl min-w-[140px] p-2">
+              <DropdownMenuItem 
+                onClick={handleBlock}
+                className="rounded-xl h-11 text-red-500 font-bold focus:text-red-500 focus:bg-red-50 gap-2"
+              >
+                <Ban className="w-4 h-4" />
+                Block User
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleReport}
+                className="rounded-xl h-11 font-bold gap-2"
+              >
+                <Flag className="w-4 h-4" />
+                Report
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

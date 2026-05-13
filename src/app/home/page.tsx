@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -8,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils"
 import { Button } from "@/components/ui/button"
 
 interface UserProfile {
@@ -22,6 +23,8 @@ interface UserProfile {
   onboardingComplete: boolean
   updatedAt?: any
   isVerified?: boolean
+  blocking?: string[]
+  blockedBy?: string[]
 }
 
 function calculateAge(dob: string) {
@@ -46,7 +49,6 @@ export default function HomePage() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
-  // Strict Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !currentUser) {
       router.replace("/welcome")
@@ -59,7 +61,7 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(displayLimit)
+    limit(displayLimit + 20) // Fetch extra to account for client-side filtering
   ), [db, displayLimit])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
@@ -75,8 +77,11 @@ export default function HomePage() {
   const filteredUsers = useMemo(() => {
     if (!users || !currentUserProfile) return []
     
+    const blockedList = [...(currentUserProfile.blocking || []), ...(currentUserProfile.blockedBy || [])]
+    
     const baseList = users.filter(u => {
       if (u.uid === currentUser?.uid) return false
+      if (blockedList.includes(u.uid)) return false
       
       const genderMatch = currentUserProfile.gender === 'male' 
         ? u.gender === 'female' 
@@ -89,7 +94,7 @@ export default function HomePage() {
       }
       
       return true;
-    })
+    }).slice(0, displayLimit)
 
     const now = Date.now()
     const tenMinutes = 10 * 60 * 1000
@@ -104,7 +109,7 @@ export default function HomePage() {
       const seed = refreshSeed || 0;
       return (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed))
     });
-  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
+  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, displayLimit])
 
   if (!isMounted || authLoading || !currentUser) return null
 

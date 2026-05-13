@@ -37,10 +37,11 @@ import {
   Hash,
   Gamepad2,
   Trash2,
-  ChevronDown
+  ChevronDown,
+  Lock
 } from "lucide-react"
 import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils"
 
 interface Message {
   id: string
@@ -64,9 +65,11 @@ interface UserProfile {
   photoURL: string
   gender?: string
   coins?: number
+  blocking?: string[]
+  blockedBy?: string[]
 }
 
-function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentUserUid: string, onDelete: (chat: Chat) => void }) {
+function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: { chat: Chat, currentUserUid: string, blocking: string[], blockedBy: string[], onDelete: (chat: Chat) => void }) {
   const router = useRouter()
   const db = useFirestore()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -93,7 +96,8 @@ function ChatListItem({ chat, currentUserUid, onDelete }: { chat: Chat, currentU
     router.push(`/chats?startWith=${partnerId}`)
   }
 
-  if (!partner) return null
+  // Filter out chats with blocked users
+  if (!partner || blocking.includes(partner.uid) || blockedBy.includes(partner.uid)) return null
 
   return (
     <div 
@@ -138,14 +142,12 @@ function ChatsContent() {
   const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
   
-  // Pagination State
   const [chatListLimit, setChatListLimit] = useState(20)
   const [messagesLimit, setMessagesLimit] = useState(20)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
-  // Cost Optimization: Limit chat list to 20 recent conversations initially
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
     return query(
@@ -159,16 +161,24 @@ function ChatsContent() {
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
 
   const userChats = useMemo(() => {
-    if (!currentUser?.uid) return []
+    if (!currentUser?.uid || !currentUserProfile) return []
+    const blocking = currentUserProfile.blocking || []
+    const blockedBy = currentUserProfile.blockedBy || []
+    
     return userChatsRaw
       .filter(chat => {
         const clearedAt = chat.clearedAt?.[currentUser.uid]
+        const partnerId = chat.participants.find(p => p !== currentUser.uid)
+        
+        // Hide chats from blocked users
+        if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
+
         if (!clearedAt) return true
         const lastAt = chat.lastMessageAt
         if (!lastAt) return true
         return lastAt.toMillis() > clearedAt.toMillis()
       })
-  }, [userChatsRaw, currentUser?.uid])
+  }, [userChatsRaw, currentUser?.uid, currentUserProfile])
 
   const currentChatData = useMemo(() => {
     return userChatsRaw.find(c => c.id === chatId)
@@ -176,6 +186,13 @@ function ChatsContent() {
 
   const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
   const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
+
+  const isBlocked = useMemo(() => {
+    if (!chatPartner || !currentUserProfile) return false
+    const blocking = currentUserProfile.blocking || []
+    const blockedBy = currentUserProfile.blockedBy || []
+    return blocking.includes(chatPartner.uid) || blockedBy.includes(chatPartner.uid)
+  }, [chatPartner, currentUserProfile])
 
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) {
@@ -219,12 +236,11 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db])
 
-  // Cost Optimization: Limit message history to 20 latest messages initially
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
     return query(
       collection(db, "chats", chatId, "messages"), 
-      orderBy("timestamp", "desc"), // Order by desc to get LATEST first with limit
+      orderBy("timestamp", "desc"),
       limit(messagesLimit)
     )
   }, [db, chatId, messagesLimit])
@@ -232,7 +248,6 @@ function ChatsContent() {
   const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
 
   const messages = useMemo(() => {
-    // Reverse messages back to chronological for display
     const reversed = [...messagesRaw].sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0))
     if (!currentUser?.uid || !currentChatData) return reversed
     const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
@@ -241,7 +256,7 @@ function ChatsContent() {
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
   const handleSendMessage = (text: string) => {
-    if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile) return
+    if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
     
     if (currentUserProfile.gender === 'male') {
       const currentCoins = currentUserProfile.coins || 0
@@ -290,13 +305,13 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
-        <header className="sticky top-0 z-40 bg-[#00A2FF] px-4 pt-8 pb-3 flex items-center justify-between">
-          <h1 className="text-2xl font-logo text-white tracking-tight">Chat</h1>
+        <header className="sticky top-0 z-40 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b">
+          <h1 className="text-2xl font-logo text-[#00A2FF] tracking-tight">Chat</h1>
           <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20" onClick={() => router.push('/recharge')}>
+             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#00A2FF] hover:bg-blue-50" onClick={() => router.push('/recharge')}>
                 <ShoppingBag className="w-6 h-6" />
              </Button>
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20" onClick={() => router.push('/me')}>
+             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#00A2FF] hover:bg-blue-50" onClick={() => router.push('/me')}>
                 <UserIcon className="w-6 h-6" />
              </Button>
           </div>
@@ -327,6 +342,8 @@ function ChatsContent() {
                   key={chat.id} 
                   chat={chat} 
                   currentUserUid={currentUser.uid} 
+                  blocking={currentUserProfile?.blocking || []}
+                  blockedBy={currentUserProfile?.blockedBy || []}
                   onDelete={setChatToDelete}
                 />
               ))}
@@ -379,25 +396,25 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      <header className="bg-[#00A2FF] px-4 pt-8 pb-3 flex items-center justify-between shadow-sm z-50">
+      <header className="bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => router.push("/chats")} 
-            className="rounded-full text-white font-black px-2 hover:bg-white/20"
+            className="rounded-full text-[#00A2FF] font-black px-2 hover:bg-blue-50"
           >
             <ChevronLeft className="w-6 h-6 mr-0.5" />
             <span className="text-xs">99+</span>
           </Button>
         </div>
         
-        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-white uppercase">
+        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-black uppercase">
           {chatPartner?.name || 'Loading...'}
         </h3>
 
         <div className="flex items-center gap-3">
-          <Avatar className="w-8 h-8 rounded-full border border-white/20">
+          <Avatar className="w-8 h-8 rounded-full border border-gray-100">
             <AvatarImage src={chatPartner?.photoURL} />
             <AvatarFallback className="font-black text-[10px]">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
           </Avatar>
@@ -406,8 +423,6 @@ function ChatsContent() {
 
       <ScrollArea className="flex-1 bg-white">
         <div className="pb-48 pt-4">
-          
-          {/* Load More Messages */}
           {messagesRaw.length >= messagesLimit && (
             <div className="flex justify-center my-4">
                <Button 
@@ -451,54 +466,67 @@ function ChatsContent() {
                 </div>
               </div>
             ))}
+
+            {isBlocked && (
+              <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
+                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Lock className="w-6 h-6 text-gray-400" />
+                 </div>
+                 <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
+              </div>
+            )}
           </div>
         </div>
       </ScrollArea>
 
-      <div className="fixed bottom-44 right-4 z-50">
-        <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
-          <Gamepad2 className="w-7 h-7 text-blue-500" />
-          <span className="text-[8px] font-black uppercase text-gray-500">GAME</span>
-        </div>
-      </div>
-
-      <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
-        <div className="px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
-            <Mic className="w-6 h-6" />
-          </Button>
-          <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
-            <input 
-              placeholder="Start chatting..." 
-              className="bg-transparent border-none flex-1 outline-none text-sm font-bold placeholder:text-gray-400 text-black" 
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
-            />
+      {!isBlocked && (
+        <>
+          <div className="fixed bottom-44 right-4 z-50">
+            <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
+              <Gamepad2 className="w-7 h-7 text-blue-500" />
+              <span className="text-[8px] font-black uppercase text-gray-500">GAME</span>
+            </div>
           </div>
-          <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#FBC02D]">
-            <Smile className="w-6 h-6" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
-            onClick={() => handleSendMessage(newMessage)}
-          >
-            <Send className="w-6 h-6" />
-          </Button>
-        </div>
 
-        <div className="px-8 py-3 flex items-center justify-between text-gray-400">
-          <ImageIcon className="w-7 h-7" />
-          <Phone className="w-7 h-7" />
-          <div className="relative -mt-4 bg-[#FFD600] p-4 rounded-full shadow-lg border-4 border-white active:scale-90 transition-transform cursor-pointer">
-            <Gift className="w-7 h-7 text-white fill-current" />
-          </div>
-          <Video className="w-7 h-7" />
-          <Hash className="w-7 h-7" />
-        </div>
-      </footer>
+          <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
+            <div className="px-4 py-3 flex items-center gap-3">
+              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
+                <Mic className="w-6 h-6" />
+              </Button>
+              <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
+                <input 
+                  placeholder="Start chatting..." 
+                  className="bg-transparent border-none flex-1 outline-none text-sm font-bold placeholder:text-gray-400 text-black" 
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
+                />
+              </div>
+              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#FBC02D]">
+                <Smile className="w-6 h-6" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
+                onClick={() => handleSendMessage(newMessage)}
+              >
+                <Send className="w-6 h-6" />
+              </Button>
+            </div>
+
+            <div className="px-8 py-3 flex items-center justify-between text-gray-400">
+              <ImageIcon className="w-7 h-7" />
+              <Phone className="w-7 h-7" />
+              <div className="relative -mt-4 bg-[#FFD600] p-4 rounded-full shadow-lg border-4 border-white active:scale-90 transition-transform cursor-pointer">
+                <Gift className="w-7 h-7 text-white fill-current" />
+              </div>
+              <Video className="w-7 h-7" />
+              <Hash className="w-7 h-7" />
+            </div>
+          </footer>
+        </>
+      )}
     </div>
   )
 }
