@@ -66,8 +66,8 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Premium Red Header Background - Straight Architectural Edge */}
-      <div className="absolute top-0 left-0 w-full h-[240px] bg-[#FF3B30]" />
+      {/* Premium Red Header Background - Perfectly Straight End */}
+      <div className="absolute top-0 left-0 w-full h-[242px] bg-[#FF3B30]" />
 
       <div className="relative z-10">
         <header className="relative pt-12 pb-8 px-6 flex flex-col items-center text-center">
@@ -112,8 +112,8 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Action cards layered over the transition */}
-          <div className="grid grid-cols-2 gap-4 relative z-20 -mt-2">
+          {/* Layered action cards sitting halfway on the red background */}
+          <div className="grid grid-cols-2 gap-4 relative z-20 -mt-10">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
             >

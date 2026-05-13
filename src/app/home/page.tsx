@@ -68,7 +68,7 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Architectural Header - Perfectly Straight */}
+      {/* Architectural Header - Perfectly Straight End */}
       <div className="bg-[#FF3B30] pt-2 pb-8">
         <div className="px-4 pb-6">
           <div className="grid grid-cols-2 gap-4">
