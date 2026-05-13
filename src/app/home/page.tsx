@@ -119,8 +119,8 @@ export default function HomePage() {
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
       {/* Background Layers - Perfectly Straight */}
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        {/* Blue Header - Height lands exactly halfway the h-28 buttons at pt-0 + pt-2 = 8px margin. 64-8 = 56px (half of 112px) */}
-        <div className="h-[64px] bg-[#00A2FF] relative overflow-hidden">
+        {/* Blue Header - Adjusted slightly down past halfway the h-28 buttons */}
+        <div className="h-[72px] bg-[#00A2FF] relative overflow-hidden">
           <div className="absolute -right-4 -top-8 rotate-[-4deg] opacity-20 select-none pointer-events-none">
             <span className="text-7xl font-logo text-white whitespace-nowrap">MatchFlow</span>
           </div>
