@@ -16,7 +16,7 @@ import {
   Headphones, 
   Pencil,
   CircleDollarSign,
-  Wallet,
+  BadgeInfo,
   ShieldCheck,
   Gem
 } from "lucide-react"
@@ -153,7 +153,7 @@ export default function MePage() {
               </Button>
 
               <Button variant="ghost" className="h-16 justify-between px-5 rounded-none" asChild>
-                <Link href="#">
+                <Link href="/support">
                   <div className="flex items-center gap-4">
                     <div className="bg-blue-50 p-2.5 rounded-xl">
                       <Headphones className="w-5 h-5 text-blue-600" />
