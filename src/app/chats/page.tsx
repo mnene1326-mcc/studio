@@ -58,9 +58,6 @@ interface UserProfile {
   blockedBy?: string[]
 }
 
-/**
- * Robust helper to convert Firestore/Cached timestamps to milliseconds.
- */
 const toMillisSafe = (ts: any): number => {
   if (!ts) return 0;
   if (typeof ts.toMillis === 'function') return ts.toMillis();
@@ -70,9 +67,6 @@ const toMillisSafe = (ts: any): number => {
   return 0;
 };
 
-/**
- * Robust helper to convert Firestore/Cached timestamps to Date objects.
- */
 const toDateSafe = (ts: any): Date => {
   if (!ts) return new Date(0);
   if (typeof ts.toDate === 'function') return ts.toDate();
@@ -301,8 +295,7 @@ function ChatsContent() {
       await addDoc(collection(db, "chats", chatId, "messages"), msgData)
       await updateDoc(doc(db, "chats", chatId), { 
         lastMessage: text.trim(), 
-        lastMessageAt: serverTimestamp(),
-        [`clearedAt.${currentUser.uid}`]: null
+        lastMessageAt: serverTimestamp()
       })
       
       if (scrollContainerRef.current) {
@@ -422,7 +415,7 @@ function ChatsContent() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
-      <header className="shrink-0 h-16 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
+      <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
