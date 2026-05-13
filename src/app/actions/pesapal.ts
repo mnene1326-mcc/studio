@@ -59,6 +59,29 @@ export async function registerIPN(token: string) {
   return data.ipn_id;
 }
 
+export async function getTransactionStatus(orderTrackingId: string) {
+  try {
+    const token = await getAccessToken();
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId=${orderTrackingId}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch transaction status.');
+    }
+    return data;
+  } catch (error) {
+    console.error('PesaPal Status Error:', error);
+    return null;
+  }
+}
+
 export async function initiatePayment(amount: number, userEmail: string, userId: string) {
   try {
     const token = await getAccessToken();
@@ -68,7 +91,9 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
       throw new Error('PESAPAL_IPN_ID is missing. Deploy your app and visit /api/pesapal/setup to get one.');
     }
 
-    const merchantReference = `RECHARGE_${userId}_${Date.now()}`;
+    // We encode the amount in the reference to easily identify what to credit on IPN
+    // Format: RECHARGE_userId_amount_timestamp
+    const merchantReference = `RECHARGE_${userId}_${amount}_${Date.now()}`;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app';
 
     const payload = {
