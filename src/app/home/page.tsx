@@ -79,8 +79,8 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
-                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Send a note</p>
+                <h3 className="text-white font-black text-lg leading-none">Mystery Note</h3>
+                <p className="text-white/80 text-[11px] font-bold uppercase tracking-widest">Send a note</p>
               </div>
             </div>
 
@@ -91,8 +91,8 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
-                <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Earn rewards</p>
+                <h3 className="text-white font-black text-lg leading-none">Task Center</h3>
+                <p className="text-white/80 text-[11px] font-bold uppercase tracking-widest">Earn rewards</p>
               </div>
             </div>
           </div>
