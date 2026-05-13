@@ -2,7 +2,7 @@
 
 /**
  * @fileOverview Server actions for PesaPal v3 integration.
- * Handles authentication and transaction initiation for both Sandbox and Live environments.
+ * Handles authentication, transaction initiation, and IPN registration.
  */
 
 const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
@@ -12,7 +12,7 @@ const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true'
 /**
  * Gets an access token from PesaPal using Consumer Key and Secret.
  */
-async function getAccessToken() {
+export async function getAccessToken() {
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
 
@@ -42,6 +42,48 @@ async function getAccessToken() {
 }
 
 /**
+ * Registers an IPN URL with PesaPal and returns the IPN ID.
+ * @param url - The URL where PesaPal will send instant payment notifications.
+ */
+export async function registerIPN(url: string) {
+  try {
+    const token = await getAccessToken();
+    
+    // Ensure URL doesn't have a trailing slash for consistency
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+    const ipnUrl = `${cleanUrl}/api/pesapal/ipn`;
+
+    const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        url: ipnUrl,
+        ipn_notification_type: 'GET',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to register IPN');
+    }
+
+    const data = await response.json();
+    return {
+      ipn_id: data.ipn_id,
+      url: data.url,
+      status: data.status
+    };
+  } catch (error: any) {
+    console.error('PesaPal IPN Error:', error);
+    throw new Error(error.message || 'IPN registration failed.');
+  }
+}
+
+/**
  * Initiates a PesaPal order.
  * @param input - The payment details and user metadata.
  */
@@ -62,7 +104,7 @@ export async function initiatePayment(input: {
       amount: input.amount,
       description: `Recharge for MatchFlow Coins - User: ${input.userId}`,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/home`,
-      notification_id: process.env.PESAPAL_IPN_ID, // Must be pre-registered in PesaPal dashboard
+      notification_id: process.env.PESAPAL_IPN_ID, 
       billing_address: {
         email_address: input.email,
         phone_number: input.phoneNumber || '',
