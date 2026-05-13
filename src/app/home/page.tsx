@@ -68,9 +68,9 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Architectural Header - Perfectly Straight End */}
-      <div className="bg-[#FF3B30] pt-2 pb-8">
-        <div className="px-4 pb-6">
+      {/* Architectural Header - Perfectly Straight End, Reduced Height */}
+      <div className="bg-[#FF3B30] pt-2 pb-4">
+        <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
               <div className="flex items-start justify-between">
@@ -79,7 +79,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-white font-black text-base leading-none">Mystery Note</h3>
+                <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
                 <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Send a note</p>
               </div>
             </div>
@@ -94,14 +94,14 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-white font-black text-base leading-none">Task Center</h3>
+                <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
                 <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Earn rewards</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="sticky top-0 z-40 px-4 pt-2 flex items-center justify-between">
+        <div className="sticky top-0 z-40 px-4 pt-1 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <button 
               onClick={() => setActiveTab('Recommend')}
@@ -129,7 +129,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main className="px-4 pt-8">
+      <main className="px-4 pt-6">
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
