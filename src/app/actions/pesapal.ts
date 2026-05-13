@@ -35,8 +35,8 @@ export async function getAccessToken() {
 }
 
 export async function registerIPN(token: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app';
-  const ipnUrl = `${appUrl.replace(/\/$/, '')}/api/pesapal-ipn`;
+  const appUrl = 'https://matchflow-iota.vercel.app';
+  const ipnUrl = `${appUrl}/api/pesapal-ipn`;
 
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Queues/RegisterIPN`, {
     method: 'POST',
@@ -91,10 +91,9 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
       throw new Error('PESAPAL_IPN_ID is missing. Deploy your app and visit /api/pesapal/setup to get one.');
     }
 
-    // We encode the amount in the reference to easily identify what to credit on IPN
-    // Format: RECHARGE_userId_amount_timestamp
+    // Reference format: RECHARGE_userId_amount_timestamp
     const merchantReference = `RECHARGE_${userId}_${amount}_${Date.now()}`;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app';
+    const appUrl = 'https://matchflow-iota.vercel.app';
 
     const payload = {
       id: merchantReference,

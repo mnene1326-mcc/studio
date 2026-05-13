@@ -5,8 +5,8 @@ import { getAccessToken, registerIPN } from '@/app/actions/pesapal';
  * Diagnostic utility to register IPN and retrieve IPN_ID for Live environment.
  */
 export async function GET() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'YOUR_DEPLOYED_URL';
-  const ipnUrl = `${appUrl.replace(/\/$/, '')}/api/pesapal-ipn`;
+  const appUrl = 'https://matchflow-iota.vercel.app';
+  const ipnUrl = `${appUrl}/api/pesapal-ipn`;
 
   try {
     // Step 1: Auth
@@ -16,7 +16,7 @@ export async function GET() {
 
     // Step 2: Register IPN
     const ipnId = await registerIPN(token).catch(err => {
-      throw new Error(`IPN Registration Step Failed: ${err.message}. Check if your NEXT_PUBLIC_APP_URL is accessible via HTTPS.`);
+      throw new Error(`IPN Registration Step Failed: ${err.message}. Check if your IPN endpoint is accessible via HTTPS.`);
     });
 
     return NextResponse.json({
@@ -24,7 +24,7 @@ export async function GET() {
       message: 'IPN Registered successfully (Live Production).',
       ipn_id: ipnId,
       ipn_url: ipnUrl,
-      next_step: 'Add the "ipn_id" above to your Vercel/Hosting Environment Variables as PESAPAL_IPN_ID.'
+      next_step: 'Add the "ipn_id" above to your Vercel Environment Variables as PESAPAL_IPN_ID and redeploy.'
     });
   } catch (error: any) {
     return NextResponse.json({
@@ -32,7 +32,7 @@ export async function GET() {
       message: error.message,
       debug: {
         attempted_url: ipnUrl,
-        tip: '1. Deploy your app first. 2. Ensure NEXT_PUBLIC_APP_URL starts with https://. 3. Use Live Keys.'
+        tip: '1. Deploy your app first. 2. Ensure your keys are Live production keys from PesaPal.'
       }
     }, { status: 500 });
   }
