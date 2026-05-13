@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -107,7 +108,6 @@ export default function HomePage() {
               )}
             >
               Recommend
-              {activeTab === 'Recommend' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white mx-auto w-1/2" />}
             </button>
             <button 
               onClick={() => setActiveTab('Nearby')}
@@ -117,7 +117,6 @@ export default function HomePage() {
               )}
             >
               Nearby
-              {activeTab === 'Nearby' && <div className="absolute -bottom-1 left-0 right-0 h-1 bg-white mx-auto w-1/2" />}
             </button>
           </div>
           <div className="flex items-center gap-4">
@@ -131,7 +130,7 @@ export default function HomePage() {
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={`skeleton-${i}`} className="aspect-[3/4.2] bg-muted animate-pulse rounded-2xl" />
+              <div key={`skeleton-${i}`} className="aspect-[1/1.2] bg-muted animate-pulse rounded-2xl" />
             ))}
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -143,11 +142,11 @@ export default function HomePage() {
             {filteredUsers.map((user) => (
               <Card 
                 key={user.id} 
-                className="relative overflow-hidden border-none aspect-[3/4.2] rounded-3xl group cursor-pointer shadow-xl premium-shadow"
+                className="relative overflow-hidden border-none aspect-[1/1.2] rounded-3xl group cursor-pointer shadow-xl premium-shadow"
                 onClick={() => router.push(`/users/${user.uid}`)}
               >
                 <Image 
-                  src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/550`} 
+                  src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/480`} 
                   alt={user.name}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
