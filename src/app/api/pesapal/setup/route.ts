@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { getAccessToken, registerIPN } from '@/app/actions/pesapal';
 
@@ -11,12 +12,12 @@ export async function GET() {
   try {
     // Step 1: Auth
     const token = await getAccessToken().catch(err => {
-      throw new Error(`Auth Step Failed: ${err.message}. Ensure PESAPAL_CONSUMER_KEY and SECRET are Live production keys.`);
+      throw new Error(`Step 1 (Auth) Failed: ${err.message}`);
     });
 
     // Step 2: Register IPN
     const ipnId = await registerIPN(token).catch(err => {
-      throw new Error(`IPN Registration Step Failed: ${err.message}. Check if your IPN endpoint is accessible via HTTPS.`);
+      throw new Error(`Step 2 (IPN Registration) Failed: ${err.message}`);
     });
 
     return NextResponse.json({
@@ -24,15 +25,15 @@ export async function GET() {
       message: 'IPN Registered successfully (Live Production).',
       ipn_id: ipnId,
       ipn_url: ipnUrl,
-      next_step: 'Add the "ipn_id" above to your Vercel Environment Variables as PESAPAL_IPN_ID and redeploy.'
+      next_step: 'Add the "ipn_id" above to your Environment Variables as PESAPAL_IPN_ID and redeploy.'
     });
   } catch (error: any) {
     return NextResponse.json({
-      status: 'PesaPal API Error',
-      message: error.message,
+      status: 'Setup Error',
+      error: error.message,
       debug: {
-        attempted_url: ipnUrl,
-        tip: '1. Deploy your app first. 2. Ensure your keys are Live production keys from PesaPal.'
+        ipn_endpoint: ipnUrl,
+        tip: 'Check your Consumer Key and Secret are the LIVE ones from PesaPal.'
       }
     }, { status: 500 });
   }

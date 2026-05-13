@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -5,6 +6,15 @@
  */
 
 const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3';
+
+async function safeJson(response: Response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(`PesaPal returned non-JSON response (Status: ${response.status}): ${text.substring(0, 200)}...`);
+  }
+}
 
 export async function getAccessToken() {
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
@@ -26,7 +36,7 @@ export async function getAccessToken() {
     }),
   });
 
-  const data = await response.json();
+  const data = await safeJson(response);
   if (!response.ok || !data.token) {
     throw new Error(`PesaPal Auth Failed: ${data.message || 'Check your keys.'}`);
   }
@@ -51,9 +61,9 @@ export async function registerIPN(token: string) {
     }),
   });
 
-  const data = await response.json();
+  const data = await safeJson(response);
   if (!response.ok) {
-    throw new Error(`IPN Registration Failed: ${JSON.stringify(data)}`);
+    throw new Error(`IPN Registration Failed (Status ${response.status}): ${JSON.stringify(data)}`);
   }
 
   return data.ipn_id;
@@ -71,7 +81,7 @@ export async function getTransactionStatus(orderTrackingId: string) {
       },
     });
 
-    const data = await response.json();
+    const data = await safeJson(response);
     if (!response.ok) {
       throw new Error(data.message || 'Failed to fetch transaction status.');
     }
@@ -91,7 +101,6 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
       throw new Error('PESAPAL_IPN_ID is missing. Deploy your app and visit /api/pesapal/setup to get one.');
     }
 
-    // Reference format: RECHARGE_userId_amount_timestamp
     const merchantReference = `RECHARGE_${userId}_${amount}_${Date.now()}`;
     const appUrl = 'https://matchflow-iota.vercel.app';
 
@@ -117,7 +126,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = await safeJson(response);
     if (!response.ok || !data.redirect_url) {
       throw new Error(data.message || 'Payment initiation failed.');
     }
