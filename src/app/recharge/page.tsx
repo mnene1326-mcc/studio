@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check } from "lucide-react"
+import { ChevronLeft, Menu, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { initiatePayment } from "@/app/actions/pesapal"
+import { useToast } from "@/hooks/use-toast"
 
 interface UserProfile {
+  uid: string
   name: string
   email: string
   coins?: number
@@ -37,7 +40,9 @@ export default function RechargePage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
+  const [loading, setLoading] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
@@ -45,6 +50,22 @@ export default function RechargePage() {
   const selectedPkgData = useMemo(() => 
     PACKAGES.find(p => p.amount === selectedPackage) || PACKAGES[1]
   , [selectedPackage])
+
+  const handlePayment = async () => {
+    if (!user || !profile) return
+    setLoading(true)
+    try {
+      const { redirectUrl } = await initiatePayment(selectedPkgData.price, profile.email, user.uid)
+      window.location.href = redirectUrl
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: error.message || "Could not initiate payment. Check your configuration.",
+      })
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
@@ -108,10 +129,11 @@ export default function RechargePage() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-gray-100 text-gray-400 font-black text-base active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-3 cursor-not-allowed"
-          disabled
+          className="w-full h-16 rounded-full bg-[#FF3B30] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-red-100 uppercase tracking-widest flex items-center justify-center gap-3"
+          onClick={handlePayment}
+          disabled={loading}
         >
-          Payment Maintenance
+          {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : "Recharge Now"}
         </Button>
       </footer>
     </div>
