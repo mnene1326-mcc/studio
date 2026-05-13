@@ -65,13 +65,13 @@ export default function RechargePage() {
       if (result.success && result.redirect_url) {
         window.location.href = result.redirect_url
       } else {
-        throw new Error(result.error || "No redirect URL received from PesaPal.")
+        throw new Error(result.error || "PesaPal initiation failed.")
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Payment Error",
-        description: error.message || "Could not initiate payment. Please try again later.",
+        description: error.message || "Could not start payment. Please check your internet or setup.",
       })
       setIsProcessing(false)
     }
@@ -79,7 +79,6 @@ export default function RechargePage() {
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
-      {/* Top Header */}
       <header className="px-4 h-16 flex items-center justify-between border-b bg-white sticky top-0 z-50">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
           <ChevronLeft className="w-6 h-6" />
@@ -138,7 +137,6 @@ export default function RechargePage() {
         </div>
       </main>
 
-      {/* Bottom Payment Button */}
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
           disabled={isProcessing}
@@ -148,7 +146,7 @@ export default function RechargePage() {
           {isProcessing ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Processing...
+              Redirecting to PesaPal...
             </>
           ) : (
             `Pay KES ${selectedPkgData.price.toFixed(1)} Now`

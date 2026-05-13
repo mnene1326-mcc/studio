@@ -48,7 +48,6 @@ export async function getAccessToken() {
 
 /**
  * Registers an IPN URL with PesaPal and returns the IPN ID.
- * @param url - The site URL (e.g., https://matchflow-iota.vercel.app)
  */
 export async function registerIPN(url: string) {
   const token = await getAccessToken();
@@ -83,7 +82,6 @@ export async function registerIPN(url: string) {
 
 /**
  * Initiates a PesaPal order for coin recharge.
- * Returns a result object instead of throwing to prevent Next.js obfuscation in production.
  */
 export async function initiatePayment(input: {
   amount: number;
@@ -100,7 +98,7 @@ export async function initiatePayment(input: {
     if (!ipnId) {
       return { 
         success: false, 
-        error: "Missing PESAPAL_IPN_ID. Please run matchflow-iota.vercel.app/api/pesapal/setup and add the ID to Vercel settings." 
+        error: "Missing PESAPAL_IPN_ID. Visit matchflow-iota.vercel.app/api/pesapal/setup to generate one." 
       };
     }
 
@@ -130,25 +128,19 @@ export async function initiatePayment(input: {
       body: JSON.stringify(orderData),
     });
 
-    const responseText = await response.text();
-    let data: any = {};
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      return { success: false, error: 'PesaPal returned an invalid response. Check your credentials.' };
-    }
+    const data = await response.json();
 
     if (!response.ok) {
       return { success: false, error: data.message || 'PesaPal Order Submission Failed.' };
     }
 
-    // PesaPal v3 returns the redirect_url in the root of the JSON or a 'message' property
-    const redirectUrl = data.redirect_url || data.redirectUrl || (data.message && typeof data.message === 'string' ? data.message : null);
+    // PesaPal v3 can return redirect_url or redirectUrl
+    const redirectUrl = data.redirect_url || data.redirectUrl || data.message;
 
-    if (!redirectUrl) {
+    if (!redirectUrl || typeof redirectUrl !== 'string' || !redirectUrl.startsWith('http')) {
       return { 
         success: false, 
-        error: `Order accepted but no redirect URL was returned by PesaPal. Status: ${data.status || 'Unknown'}` 
+        error: `Order accepted but no valid redirect URL returned. Status: ${data.status || 'Unknown'}` 
       };
     }
 
@@ -159,6 +151,6 @@ export async function initiatePayment(input: {
     };
   } catch (error: any) {
     console.error('PesaPal Payment Error:', error);
-    return { success: false, error: error.message || 'Payment initiation failed due to a server error.' };
+    return { success: false, error: error.message || 'Payment initiation failed.' };
   }
 }

@@ -8,15 +8,15 @@ import { registerIPN } from '@/app/actions/pesapal';
 export async function GET() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app';
   
-  // Check for credentials first to provide clear error feedback
+  // Check for credentials first
   const key = process.env.PESAPAL_CONSUMER_KEY;
   const secret = process.env.PESAPAL_CONSUMER_SECRET;
 
   if (!key || !secret) {
     return NextResponse.json({ 
-      status: 'Configuration Error',
-      message: 'PesaPal Consumer Key or Secret is missing from environment variables.',
-      action_required: 'Please add PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET to your Vercel Project Settings.',
+      status: 'Configuration Missing',
+      message: 'PESAPAL_CONSUMER_KEY or PESAPAL_CONSUMER_SECRET is not set in Vercel.',
+      action_required: 'Add your Live PesaPal keys to Vercel Environment Variables.',
       current_env: {
         PESAPAL_SANDBOX: process.env.PESAPAL_SANDBOX || 'false (default)',
         NEXT_PUBLIC_APP_URL: appUrl
@@ -28,16 +28,16 @@ export async function GET() {
     const result = await registerIPN(appUrl);
     return NextResponse.json({ 
       status: 'Success',
-      message: 'PesaPal IPN Registration Completed', 
+      message: 'PesaPal IPN Registered Successfully', 
       ipn_id: result.ipn_id,
       registered_url: result.url,
-      next_step: 'Add this IPN_ID to your environment variables as PESAPAL_IPN_ID on Vercel.'
+      next_step: 'Add this IPN_ID to your Vercel environment variables as PESAPAL_IPN_ID.'
     });
   } catch (error: any) {
     return NextResponse.json({ 
       status: 'PesaPal API Error',
-      message: error.message || 'Failed to communicate with PesaPal servers.',
-      details: 'Check if your PesaPal keys are for Sandbox or Live and ensure PESAPAL_SANDBOX is set correctly.'
+      message: error.message || 'Could not communicate with PesaPal.',
+      tip: 'Verify if your keys are for Sandbox or Live and set PESAPAL_SANDBOX accordingly.'
     }, { status: 500 });
   }
 }
