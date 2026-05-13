@@ -62,7 +62,6 @@ export default function MePage() {
   }
 
   if (authLoading || profileLoading) return null
-
   if (!user || !profile) return null
 
   return (

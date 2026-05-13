@@ -9,7 +9,7 @@ import { doc, getDoc } from "firebase/firestore"
 /**
  * Silent Entry Point for MatchFlow.
  * Handles instant redirection based on auth status without any visible splash screen.
- * Using a mounting check to prevent hydration mismatches.
+ * This prevents hydration mismatches by rendering NOTHING during the initial phase.
  */
 export default function EntryPage() {
   const [mounted, setMounted] = useState(false)
@@ -44,6 +44,6 @@ export default function EntryPage() {
     }
   }, [mounted, authLoading, user, db, router])
 
-  // Return nothing to ensure a silent, blank transition during the redirect phase
+  // Return null to ensure a silent transition during the redirect phase
   return null
 }
