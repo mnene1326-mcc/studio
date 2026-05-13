@@ -14,7 +14,7 @@ import {
   User
 } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/utils"
+import { cn } from "@/lib/utils"
 
 interface UserProfile {
   uid: string
@@ -81,7 +81,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      {/* Profile Details with Refined Typography */}
       <div className="relative -mt-24 bg-white px-6 pt-6 space-y-3 min-h-[50vh] z-20 rounded-t-[2.5rem] shadow-2xl">
         <div className="flex justify-between items-start">
           <div className="space-y-0.5">
@@ -122,7 +121,6 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      {/* Action Button */}
       <div className="fixed bottom-0 inset-x-0 p-4 bg-white/80 backdrop-blur-xl border-t z-50">
         <Button 
           className="w-full h-11 rounded-full bg-[#FF3B30] text-white text-[10px] font-black flex items-center justify-center gap-2 shadow-xl uppercase tracking-widest"

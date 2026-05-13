@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Target, Search, ShoppingBag, FileText } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/utils"
+import { cn } from "@/lib/utils"
 
 interface UserProfile {
   id: string
@@ -68,10 +68,8 @@ export default function HomePage() {
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Unified Red Header Section */}
       <div className="bg-[#FF3B30] pt-2">
         <div className="px-4 pb-3">
-          {/* Top Feature Cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] rounded-3xl p-4 flex flex-col justify-between h-32 shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
               <div className="flex items-start justify-between">
@@ -103,7 +101,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tab Navigation - Unified Red Background */}
         <div className="sticky top-0 z-40 bg-[#FF3B30] px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <button 
@@ -132,7 +129,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* User Grid */}
       <main className="px-4 pt-4">
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-2">
@@ -160,7 +156,6 @@ export default function HomePage() {
                   data-ai-hint="person portrait"
                 />
                 
-                {/* Enhanced Red Chat Button */}
                 <div 
                   className="absolute top-3 right-3 bg-[#FF3B30] rounded-2xl px-5 py-2 shadow-lg flex items-center justify-center z-20 active:scale-95 transition-transform"
                   onClick={(e) => handleChatClick(e, user.uid)}
@@ -174,11 +169,9 @@ export default function HomePage() {
                   <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none mb-2">{user.name}</h4>
                   
                   <div className="flex items-center gap-1.5">
-                    {/* Dark Green Background for Age */}
                     <span className="bg-[#006400] px-2.5 py-1 rounded-md text-white font-black text-[11px] leading-none shadow-sm">
                       {calculateAge(user.dob)}
                     </span>
-                    {/* Blur Background for Country */}
                     <span className="bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-md text-white font-bold text-[11px] border border-white/20 leading-none shadow-sm">
                       {user.country ? user.country.charAt(0).toUpperCase() + user.country.slice(1) : "Kenya"}
                     </span>
