@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation"
 import { Home, MessageSquare, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+/**
+ * Bottom navigation component for the mobile-first MatchFlow experience.
+ * Features a clean, gesture-friendly design with active state highlighting.
+ */
 export function BottomNav() {
   const pathname = usePathname()
 

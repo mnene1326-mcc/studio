@@ -5,7 +5,7 @@ import WelcomeContent from "./WelcomeContent"
 
 /**
  * Entry point for the app. Handles initial mount to prevent hydration mismatches.
- * Renders a stable shell that matches on both server and client.
+ * Returns null during the first pass to ensure a stable hydration phase.
  */
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
@@ -14,13 +14,10 @@ export default function WelcomePage() {
     setMounted(true)
   }, [])
 
-  // Render a minimal, stable shell during the first pass (SSR and hydration)
+  // To prevent hydration mismatch, we return null on the server and initial client pass.
+  // This ensures the DOM matches perfectly before we render the dynamic content.
   if (!mounted) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-white min-h-screen">
-        <h1 className="text-5xl font-logo text-primary drop-shadow-sm">MatchFlow</h1>
-      </div>
-    )
+    return null
   }
 
   // Once mounted, render the interactive content which handles auth redirects

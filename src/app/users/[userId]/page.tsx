@@ -68,6 +68,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-24">
+      {/* Immersive Profile Image Section */}
       <div className="relative h-[55vh] w-full">
         <Image
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`}
@@ -99,6 +100,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
+      {/* Profile Details Section with Compact Typography */}
       <div className="relative -mt-24 bg-white px-6 pt-6 space-y-4 min-h-[50vh] z-20 rounded-t-[2.5rem] shadow-2xl">
         <div className="flex justify-between items-start">
           <div className="space-y-1">

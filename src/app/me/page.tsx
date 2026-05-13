@@ -78,6 +78,7 @@ export default function MePage() {
 
       <div className="relative z-10">
         <header className="relative pt-10 pb-6 px-6 flex flex-col items-center text-center">
+          {/* Top Right Visitor Count Badge */}
           <div className="absolute top-4 right-6">
             <div className="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
               <span className="text-[9px] font-black text-white">12.5k Visitors</span>
@@ -94,6 +95,7 @@ export default function MePage() {
                 data-ai-hint="person profile"
               />
             </div>
+            {/* Centered edit button with pencil icon */}
             <button className="absolute bottom-0 right-0 bg-white p-2.5 rounded-full shadow-lg active:scale-90 transition-transform border border-black/5">
               <Pencil className="w-3.5 h-3.5 text-[#FF3B30]" />
             </button>
@@ -118,6 +120,7 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
+          {/* Action buttons layering over the red background */}
           <div className="grid grid-cols-2 gap-4 relative z-20">
             <Button 
               className="h-16 bg-white hover:bg-gray-50 border-none rounded-2xl shadow-xl flex flex-col items-center justify-center gap-0.5 text-[#FF3B30] active:scale-95 transition-all"
