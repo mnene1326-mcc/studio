@@ -72,7 +72,7 @@ export default function HomePage() {
       <div className="bg-[#FF3B30] pt-2 pb-6">
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-5 flex flex-col justify-between h-36 rounded-2xl shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all">
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-5 flex flex-col justify-between h-36 rounded-2xl shadow-lg shadow-orange-900/20 relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
               <div className="flex items-start justify-between">
                 <div className="bg-white/30 p-2 rounded-xl backdrop-blur-md">
                   <FileText className="w-5 h-5 text-black" />
@@ -84,7 +84,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-5 flex flex-col justify-between h-36 rounded-2xl shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all">
+            <div className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-5 flex flex-col justify-between h-36 rounded-2xl shadow-lg shadow-purple-900/20 relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
               <div className="flex items-start justify-between">
                 <div className="bg-white/30 p-2 rounded-xl backdrop-blur-md">
                   <Target className="w-5 h-5 text-black" />
