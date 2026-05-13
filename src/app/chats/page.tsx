@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limitToLast, updateDoc, increment, orderBy } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -59,7 +59,7 @@ interface UserProfile {
 }
 
 const toMillisSafe = (ts: any): number => {
-  if (!ts) return 0;
+  if (!ts) return Date.now(); // Handle null timestamps (temporary state)
   if (typeof ts.toMillis === 'function') return ts.toMillis();
   if (ts.seconds !== undefined) return ts.seconds * 1000;
   if (typeof ts === 'number') return ts;
@@ -68,7 +68,7 @@ const toMillisSafe = (ts: any): number => {
 };
 
 const toDateSafe = (ts: any): Date => {
-  if (!ts) return new Date(0);
+  if (!ts) return new Date();
   if (typeof ts.toDate === 'function') return ts.toDate();
   if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
   return new Date(ts);
@@ -140,7 +140,6 @@ function ChatsContent() {
   const startWithId = searchParams.get("startWith")
   const { user: currentUser } = useUser()
   const db = useFirestore()
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [chatId, setChatId] = useState<string | null>(null)
@@ -154,13 +153,14 @@ function ChatsContent() {
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
+  // FIX: Use limit() with orderBy("desc") to get newest chats at the top.
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
     return query(
       collection(db, "chats"), 
       where("participants", "array-contains", currentUser.uid),
       orderBy("lastMessageAt", "desc"),
-      limitToLast(chatListLimit)
+      limit(chatListLimit)
     )
   }, [db, currentUser?.uid, chatListLimit])
 
@@ -244,12 +244,13 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db, toast])
 
+  // FIX: Use orderBy desc to handle newest messages correctly with flex-col-reverse
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
     return query(
       collection(db, "chats", chatId, "messages"), 
-      orderBy("timestamp", "asc"),
-      limitToLast(messagesLimit)
+      orderBy("timestamp", "desc"),
+      limit(messagesLimit)
     )
   }, [db, chatId, messagesLimit])
 
@@ -262,16 +263,6 @@ function ChatsContent() {
     const clearedAtMillis = toMillisSafe(clearedAt)
     return messagesRaw.filter(m => toMillisSafe(m.timestamp) > clearedAtMillis)
   }, [messagesRaw, currentUser?.uid, currentChatData])
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom()
-    }
-  }, [messages.length])
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
@@ -440,28 +431,11 @@ function ChatsContent() {
         </div>
       </header>
 
-      <main ref={scrollContainerRef} className="flex-1 overflow-y-auto no-scrollbar bg-white">
-        <div className="flex flex-col min-h-full px-4 py-6 space-y-6">
-          {messagesRaw.length >= messagesLimit && messagesRaw.length > 0 && (
-            <div className="flex justify-center py-4">
-               <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
-                onClick={() => setMessagesLimit(prev => prev + 20)}
-               >
-                 <ChevronDown className="w-3 h-3 rotate-180" />
-                 Load previous messages
-               </Button>
-            </div>
-          )}
-
-          {(isInitializingChat || (messagesLoading && messages.length === 0)) && (
-            <div className="flex justify-center p-8">
-              <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
-            </div>
-          )}
-
+      {/* FIX: Use flex-col-reverse for chat history. Newest messages are at the "start" of the DOM (visually bottom). */}
+      <main className="flex-1 overflow-y-auto no-scrollbar bg-white flex flex-col-reverse">
+        <div className="flex flex-col-reverse px-4 py-6 space-y-6 space-y-reverse">
+          <div ref={messagesEndRef} />
+          
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
               {msg.senderId !== currentUser.uid && (
@@ -481,7 +455,25 @@ function ChatsContent() {
             </div>
           ))}
 
-          <div ref={messagesEndRef} />
+          {(isInitializingChat || (messagesLoading && messages.length === 0)) && (
+            <div className="flex justify-center p-8">
+              <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
+            </div>
+          )}
+
+          {messagesRaw.length >= messagesLimit && messagesRaw.length > 0 && (
+            <div className="flex justify-center py-4">
+               <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
+                onClick={() => setMessagesLimit(prev => prev + 20)}
+               >
+                 <ChevronDown className="w-3 h-3" />
+                 Load previous messages
+               </Button>
+            </div>
+          )}
 
           {isBlocked && (
             <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">

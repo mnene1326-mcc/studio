@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, Menu, Check, CreditCard, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { initiatePayment } from "@/app/actions/payments"
 
 interface UserProfile {
   uid: string
@@ -48,44 +47,11 @@ function RechargeContent() {
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  useEffect(() => {
-    if (searchParams.get('status') === 'success') {
-      toast({
-        title: "Payment Initiated",
-        description: "Your coins will be credited as soon as the transaction is confirmed.",
-      })
-    }
-  }, [searchParams, toast])
-
   const handlePayment = async () => {
-    if (!user || !profile) return
-    
-    setLoading(true)
-    const pkg = PACKAGES.find(p => p.amount === selectedPackage)
-    
-    if (!pkg) {
-      setLoading(false)
-      return
-    }
-
-    const result = await initiatePayment({
-      amount: pkg.price,
-      email: profile.email || `${user.uid}@matchflow.app`,
-      name: profile.name || 'User',
-      uid: user.uid,
-      packageAmount: pkg.amount
+    toast({
+      title: "Feature Unavailable",
+      description: "Payment integration is currently being updated. Please check back later.",
     })
-
-    if (result.success && result.url) {
-      window.location.href = result.url
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Payment Error",
-        description: result.error || "Failed to start payment process.",
-      })
-      setLoading(false)
-    }
   }
 
   return (
