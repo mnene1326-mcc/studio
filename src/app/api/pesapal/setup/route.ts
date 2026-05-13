@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { registerIPN } from '@/app/actions/pesapal';
+import { registerIPN, getAccessToken } from '@/app/actions/pesapal';
 
 /**
  * Diagnostic endpoint to register the PesaPal IPN ID for the live site.
@@ -23,7 +23,20 @@ export async function GET() {
   }
   
   try {
+    // Step 1: Verify Token (Auth check)
+    try {
+      await getAccessToken();
+    } catch (authError: any) {
+      return NextResponse.json({
+        status: 'Authentication Failed',
+        message: authError.message,
+        tip: 'Your Consumer Key or Secret is likely invalid or for the wrong environment (Sandbox vs Live).'
+      }, { status: 401 });
+    }
+
+    // Step 2: Register IPN
     const result = await registerIPN(appUrl);
+    
     return NextResponse.json({ 
       status: 'Success',
       message: 'PesaPal Live IPN Registered Successfully', 
@@ -35,7 +48,7 @@ export async function GET() {
     return NextResponse.json({ 
       status: 'PesaPal API Error',
       message: error.message,
-      tip: 'This error usually means your Keys are incorrect or blocked by PesaPal. Check if you are using Live Keys with PESAPAL_SANDBOX=false.'
+      tip: 'Check if you are using Live Keys with PESAPAL_SANDBOX=false. Also ensure your site is accessible via HTTPS.'
     }, { status: 500 });
   }
 }

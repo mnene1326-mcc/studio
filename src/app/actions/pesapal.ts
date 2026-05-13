@@ -42,7 +42,7 @@ export async function getAccessToken() {
         const errorJson = JSON.parse(responseText);
         errorMessage += errorJson.message || 'Unknown error';
       } catch (e) {
-        errorMessage += responseText.substring(0, 100); // Show start of HTML if it's not JSON
+        errorMessage += responseText.substring(0, 100);
       }
       throw new Error(errorMessage);
     }
@@ -50,7 +50,7 @@ export async function getAccessToken() {
     const data = JSON.parse(responseText);
     return data.token;
   } catch (error: any) {
-    throw new Error(`PesaPal Connection Error: ${error.message}`);
+    throw new Error(`PesaPal Token Connection Error: ${error.message}`);
   }
 }
 
@@ -58,10 +58,12 @@ export async function getAccessToken() {
  * Registers an IPN URL with PesaPal and returns the IPN ID.
  * Used by the /api/pesapal/setup endpoint.
  */
-export async function registerIPN(url: string) {
+export async function registerIPN(baseUrl: string) {
   const token = await getAccessToken();
-  const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
-  const ipnUrl = `${cleanUrl}/api/pesapal/ipn`;
+  
+  // Ensure the URL is clean and points to our IPN handler
+  const cleanBaseUrl = baseUrl.replace(/\/$/, ""); 
+  const ipnUrl = `${cleanBaseUrl}/api/pesapal/ipn`;
 
   try {
     const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
@@ -92,7 +94,7 @@ export async function registerIPN(url: string) {
 
     return JSON.parse(responseText);
   } catch (error: any) {
-    throw new Error(`IPN Registration Error: ${error.message}`);
+    throw new Error(`IPN Registration Fetch Error: ${error.message}`);
   }
 }
 
