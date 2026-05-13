@@ -66,11 +66,11 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Premium Red Header Background - Perfectly Straight End */}
-      <div className="absolute top-0 left-0 w-full h-[242px] bg-[#FF3B30]" />
+      {/* Premium Red Header Background - Perfectly Straight End, Adjusted height for halfway buttons */}
+      <div className="absolute top-0 left-0 w-full h-[280px] bg-[#FF3B30] z-0" />
 
       <div className="relative z-10">
-        <header className="relative pt-12 pb-8 px-6 flex flex-col items-center text-center">
+        <header className="relative pt-12 pb-10 px-6 flex flex-col items-center text-center">
           {/* Top Right Visitor Count Badge */}
           <div className="absolute top-6 right-6">
             <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
@@ -98,6 +98,7 @@ export default function MePage() {
             <BadgeCheck className="w-4 h-4 text-white" />
           </div>
 
+          {/* User ID Section - Strictly in Header */}
           <div 
             className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all"
             onClick={handleCopyId}
@@ -112,7 +113,7 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Layered action cards sitting halfway on the red background */}
+          {/* Layered action cards sitting halfway on the red background transition */}
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-10">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#FF3B30] active:scale-95 transition-all"
