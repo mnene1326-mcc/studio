@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo } from "react"
@@ -49,10 +48,7 @@ interface UserProfile {
   uid: string
   name: string
   photoURL: string
-  country?: string
   gender?: string
-  dob?: string
-  interests?: string
   coins?: number
 }
 
@@ -72,7 +68,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
       onClick={() => router.push(`/chats?startWith=${partnerId}`)}
     >
       <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
-        <AvatarImage src={partner.photoURL || `https://picsum.photos/seed/${partner.uid}/200/200`} className="object-cover" />
+        <AvatarImage src={partner.photoURL} className="object-cover" />
         <AvatarFallback className="bg-[#FF3B30] text-white font-black text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
       </Avatar>
       
@@ -80,7 +76,7 @@ function ChatListItem({ chat, currentUserUid }: { chat: Chat, currentUserUid: st
         <div className="flex justify-between items-center mb-0.5">
           <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
           <span className="text-[10px] text-gray-400 font-bold">
-            {chat.lastMessageAt && chat.lastMessageAt.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "Just now"}
+            {chat.lastMessageAt?.toDate ? format(chat.lastMessageAt.toDate(), "HH:mm") : "Just now"}
           </span>
         </div>
         <p className="text-xs text-gray-500 truncate font-bold">
@@ -157,8 +153,7 @@ function ChatsContent() {
           if (isMounted) setChatId(newChatDoc.id)
         }
       } catch (err) {
-        if (!isMounted) return
-        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'chats', operation: 'list' }))
+        if (isMounted) errorEmitter.emit('permission-error', new FirestorePermissionError({ path: 'chats', operation: 'list' }))
       } finally {
         if (isMounted) setIsInitializingChat(false)
       }
@@ -177,21 +172,20 @@ function ChatsContent() {
   const handleSendMessage = (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile) return
     
+    // Monetization: Males pay 15 coins, Females are free
     if (currentUserProfile.gender === 'male') {
       const currentCoins = currentUserProfile.coins || 0
       if (currentCoins < 15) {
         toast({
           variant: "destructive",
           title: "Insufficient Coins",
-          description: "Sending a message costs 15 coins.",
+          description: "Sending a message costs 15 coins. Please recharge.",
         })
         return
       }
       
       const userRef = doc(db, "users", currentUser.uid)
-      updateDoc(userRef, {
-        coins: increment(-15)
-      }).catch(() => {
+      updateDoc(userRef, { coins: increment(-15) }).catch(() => {
          errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userRef.path, operation: 'update' }))
       })
     }
@@ -207,8 +201,8 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
-        <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-10 pb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-logo text-white drop-shadow-sm">MatchFlow</h1>
+        <header className="sticky top-0 z-40 bg-[#FF3B30] px-4 pt-12 pb-4 flex items-center justify-between">
+          <h1 className="text-2xl font-logo text-white">MatchFlow</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20">
                 <ShoppingBag className="w-6 h-6" />
@@ -252,7 +246,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      {/* Architectural Red Header */}
+      {/* Straight Architectural Red Header */}
       <header className="bg-[#FF3B30] px-4 pt-12 pb-4 flex items-center justify-between shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
@@ -267,7 +261,7 @@ function ChatsContent() {
         </div>
         
         <h3 className="font-black text-sm tracking-tight text-center flex-1 text-white">
-          {chatPartner?.name || 'MatchFlow User'}
+          {chatPartner?.name || 'Loading...'}
         </h3>
 
         <div className="flex items-center gap-3">
@@ -281,7 +275,7 @@ function ChatsContent() {
       <ScrollArea className="flex-1">
         <div className="pb-48 pt-4">
           <div className="text-center my-6">
-            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest">
+            <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
               {format(new Date(), "HH:mm")}
             </span>
           </div>
@@ -313,7 +307,7 @@ function ChatsContent() {
         </div>
       </ScrollArea>
 
-      {/* Floating Game Button */}
+      {/* Floating Game Widget */}
       <div className="fixed bottom-40 right-4 z-50">
         <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
           <Gamepad2 className="w-7 h-7 text-blue-500" />
@@ -324,10 +318,10 @@ function ChatsContent() {
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
         {/* Quick Suggestion Chips */}
         <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar items-center border-b border-gray-50">
-          <button className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
+          <button onClick={() => handleSendMessage("Can we talk?")} className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
             Can we talk?
           </button>
-          <button className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
+          <button onClick={() => handleSendMessage("hey dear are you single?")} className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
             hey dear are you single?
           </button>
         </div>

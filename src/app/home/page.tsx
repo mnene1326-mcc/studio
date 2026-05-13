@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -17,11 +16,9 @@ interface UserProfile {
   name: string
   photoURL: string
   country: string
-  lookingFor: string
   gender: string
   dob: string
   onboardingComplete: boolean
-  interests?: string
 }
 
 function calculateAge(dob: string) {
@@ -41,162 +38,76 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
 
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
+  useEffect(() => { setIsMounted(true) }, [])
 
-  // Fetch current user's profile to determine gender filtering
-  const currentUserProfileRef = useMemoFirebase(() => {
-    return currentUser?.uid ? doc(db, "users", currentUser.uid) : null
-  }, [db, currentUser?.uid])
-  
+  const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  const usersQuery = useMemoFirebase(() => {
-    return query(
-      collection(db, "users"), 
-      where("onboardingComplete", "==", true),
-      limit(40) // Fetch more to allow for filtering
-    )
-  }, [db])
-
+  const usersQuery = useMemoFirebase(() => query(collection(db, "users"), where("onboardingComplete", "==", true), limit(40)), [db])
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
 
   const filteredUsers = useMemo(() => {
-    if (!users) return []
+    if (!users || !currentUserProfile) return users || []
     return users.filter(u => {
-      // Don't show self
       if (u.uid === currentUser?.uid) return false
-
-      // Gender filtering: Male see Female, Female see Male
-      if (currentUserProfile?.gender === 'male') {
-        return u.gender === 'female'
-      }
-      if (currentUserProfile?.gender === 'female') {
-        return u.gender === 'male'
-      }
-
-      // If current user gender not set or 'other', show all except self
+      if (currentUserProfile.gender === 'male') return u.gender === 'female'
+      if (currentUserProfile.gender === 'female') return u.gender === 'male'
       return true
     })
-  }, [users, currentUser?.uid, currentUserProfile?.gender])
-
-  const handleChatClick = (e: React.MouseEvent, userId: string) => {
-    e.stopPropagation()
-    router.push(`/chats?startWith=${userId}`)
-  }
+  }, [users, currentUser?.uid, currentUserProfile])
 
   if (!isMounted) return null
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
-      {/* Architectural Header - Perfectly Straight End, Reduced Height */}
-      <div className="bg-[#FF3B30] pt-2 pb-4">
+      {/* Straight Architectural Header with Reduced Height */}
+      <div className="bg-[#FF3B30] pt-4 pb-4">
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer">
-              <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
-                  <FileText className="w-6 h-6 text-black" />
-                </div>
-              </div>
+            <div className="bg-gradient-to-br from-[#FFB800] to-[#FF8A00] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg cursor-pointer">
+              <div className="bg-white/30 p-2 rounded-2xl w-fit"><FileText className="w-6 h-6 text-black" /></div>
               <div className="space-y-0.5">
-                <h3 className="text-white font-black text-sm leading-none">Mystery Note</h3>
+                <h3 className="text-white font-black text-sm">Mystery Note</h3>
                 <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Send a note</p>
               </div>
             </div>
 
-            <div 
-              onClick={() => router.push('/tasks')}
-              className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg relative overflow-hidden group active:scale-95 transition-all cursor-pointer"
-            >
-              <div className="flex items-start justify-between">
-                <div className="bg-white/30 p-2 rounded-2xl backdrop-blur-md">
-                  <Target className="w-6 h-6 text-black" />
-                </div>
-              </div>
+            <div onClick={() => router.push('/tasks')} className="bg-gradient-to-br from-[#A88CFF] to-[#7B61FF] p-4 flex flex-col justify-between h-32 rounded-2xl shadow-lg cursor-pointer">
+              <div className="bg-white/30 p-2 rounded-2xl w-fit"><Target className="w-6 h-6 text-black" /></div>
               <div className="space-y-0.5">
-                <h3 className="text-white font-black text-sm leading-none">Task Center</h3>
+                <h3 className="text-white font-black text-sm">Task Center</h3>
                 <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">Earn rewards</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="sticky top-0 z-40 px-4 pt-1 flex items-center justify-between">
+        <div className="px-4 pt-1 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <button 
-              onClick={() => setActiveTab('Recommend')}
-              className={cn(
-                "relative text-lg font-black transition-all tracking-tight",
-                activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50"
-              )}
-            >
-              Recommend
-            </button>
-            <button 
-              onClick={() => setActiveTab('Nearby')}
-              className={cn(
-                "relative text-lg font-black transition-all tracking-tight",
-                activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50"
-              )}
-            >
-              Nearby
-            </button>
+            <button onClick={() => setActiveTab('Recommend')} className={cn("text-lg font-black transition-all", activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50")}>Recommend</button>
+            <button onClick={() => setActiveTab('Nearby')} className={cn("text-lg font-black transition-all", activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50")}>Nearby</button>
           </div>
-          <div className="flex items-center gap-5">
-             <ShoppingBag className="w-6 h-6 text-white" />
-             <Search className="w-6 h-6 text-white" />
-          </div>
+          <div className="flex items-center gap-5 text-white"><ShoppingBag className="w-6 h-6" /><Search className="w-6 h-6" /></div>
         </div>
       </div>
 
       <main className="px-4 pt-6">
         {loading && filteredUsers.length === 0 ? (
           <div className="grid grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={`skeleton-${i}`} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />
-            ))}
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center opacity-30">
-            <p className="font-bold">No users found matching your preference...</p>
+            {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />)}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {filteredUsers.map((user) => (
-              <Card 
-                key={user.id} 
-                className="relative overflow-hidden border-none aspect-[1/1.2] rounded-3xl group cursor-pointer shadow-xl premium-shadow"
-                onClick={() => router.push(`/users/${user.uid}`)}
-              >
-                <Image 
-                  src={user.photoURL || `https://picsum.photos/seed/${user.uid}/400/480`} 
-                  alt={user.name}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  data-ai-hint="person portrait"
-                />
-                
-                <div 
-                  className="absolute top-4 right-4 bg-[#FF3B30] px-5 py-2.5 rounded-full shadow-xl flex items-center justify-center z-20 active:scale-95 transition-transform"
-                  onClick={(e) => handleChatClick(e, user.uid)}
-                >
-                  <span className="text-white font-black text-[10px] tracking-widest uppercase">CHAT</span>
-                </div>
-
+              <Card key={user.id} className="relative overflow-hidden border-none aspect-[1/1.2] rounded-3xl group cursor-pointer shadow-xl" onClick={() => router.push(`/users/${user.uid}`)}>
+                <Image src={user.photoURL} alt={user.name} fill className="object-cover transition-transform group-hover:scale-105" />
+                <div className="absolute top-4 right-4 bg-[#FF3B30] px-5 py-2.5 rounded-full z-20 text-white font-black text-[10px] uppercase tracking-widest">CHAT</div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
-
-                <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col items-start">
-                  <h4 className="text-white font-black text-sm drop-shadow-md truncate leading-none mb-2">{user.name}</h4>
-                  
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <h4 className="text-white font-black text-sm truncate mb-2">{user.name}</h4>
                   <div className="flex items-center gap-2">
-                    <span className="bg-[#006400] px-3 py-1 rounded-full text-white font-black text-[10px] leading-none shadow-sm">
-                      {calculateAge(user.dob)}
-                    </span>
-                    <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white font-bold text-[10px] border border-white/20 leading-none shadow-sm">
-                      {user.country || "Kenya"}
-                    </span>
+                    <span className="bg-[#006400] px-3 py-1 rounded-full text-white font-black text-[10px]">{calculateAge(user.dob)}</span>
+                    <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-white font-bold text-[10px] border border-white/20">{user.country || "Kenya"}</span>
                   </div>
                 </div>
               </Card>
@@ -204,7 +115,6 @@ export default function HomePage() {
           </div>
         )}
       </main>
-
       <BottomNav />
     </div>
   )

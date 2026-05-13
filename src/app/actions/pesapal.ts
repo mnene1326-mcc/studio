@@ -43,13 +43,11 @@ export async function getAccessToken() {
 
 /**
  * Registers an IPN URL with PesaPal and returns the IPN ID.
- * @param url - The URL where PesaPal will send instant payment notifications.
+ * @param url - The site URL (e.g., https://matchflow-iota.vercel.app)
  */
 export async function registerIPN(url: string) {
   try {
     const token = await getAccessToken();
-    
-    // Ensure URL doesn't have a trailing slash for consistency
     const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
     const ipnUrl = `${cleanUrl}/api/pesapal/ipn`;
 
@@ -84,8 +82,7 @@ export async function registerIPN(url: string) {
 }
 
 /**
- * Initiates a PesaPal order.
- * @param input - The payment details and user metadata.
+ * Initiates a PesaPal order for coin recharge.
  */
 export async function initiatePayment(input: {
   amount: number;
@@ -103,7 +100,7 @@ export async function initiatePayment(input: {
       currency: 'KES',
       amount: input.amount,
       description: `Recharge for MatchFlow Coins - User: ${input.userId}`,
-      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/home`,
+      callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app'}/home`,
       notification_id: process.env.PESAPAL_IPN_ID, 
       billing_address: {
         email_address: input.email,
@@ -136,6 +133,6 @@ export async function initiatePayment(input: {
     };
   } catch (error: any) {
     console.error('PesaPal Payment Error:', error);
-    throw new Error(error.message || 'Payment initiation failed. Please check your configuration.');
+    throw new Error(error.message || 'Payment initiation failed.');
   }
 }
