@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Heart } from "lucide-react"
+import { Heart, Loader2 } from "lucide-react"
 
 const AFRICAN_COUNTRIES = [
   "Kenya", "Tanzania", "Uganda", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "Somalia", "Eritrea", "Djibouti", "South Africa", "Nigeria", "Ghana", "Egypt"
@@ -22,7 +22,10 @@ const LOOKING_FOR_OPTIONS = [
   "Serious partner", "Casual friendship", "Networking", "Dating", "Travel buddy"
 ]
 
-const RANDOM_NAMES = ["Amani", "Zahara", "Kwame", "Jabari", "Malik", "Zendaya", "Tunde", "Folami", "Nala", "Simba", "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu"];
+const RANDOM_NAMES = [
+  "Amani", "Zahara", "Kwame", "Jabari", "Malik", "Zendaya", "Tunde", "Folami", "Nala", "Simba", 
+  "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu", "Guest 102", "Guest 441", "Guest 982", "Guest 773"
+];
 
 function OnboardingContent() {
   const searchParams = useSearchParams()
@@ -58,8 +61,8 @@ function OnboardingContent() {
   }
 
   const generateMatchFlowId = () => {
-    const min = 1000000;
-    const max = 999999999;
+    const min = 1000000; // 7 digits
+    const max = 999999999; // 9 digits
     return Math.floor(Math.random() * (max - min + 1) + min).toString();
   }
 
@@ -116,10 +119,7 @@ function OnboardingContent() {
       diamonds: initialDiamonds,
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
-    }
-
-    if (!existingData?.matchFlowId) {
-      updateData.matchFlowId = generateMatchFlowId()
+      matchFlowId: existingData?.matchFlowId || generateMatchFlowId(),
     }
 
     setDoc(userRef, updateData, { merge: true })
@@ -140,7 +140,7 @@ function OnboardingContent() {
   return (
     <div className="flex-1 flex flex-col p-6 max-w-md mx-auto space-y-8 min-h-screen bg-background">
       <header className="text-center space-y-2 mt-8">
-        <Heart className="w-12 h-12 text-primary mx-auto fill-current" />
+        <Heart className="w-12 h-12 text-[#00A2FF] mx-auto fill-current" />
         <h1 className="text-3xl font-black text-black tracking-tight">
           {isFast ? "Fast Matching" : "Create Profile"}
         </h1>
@@ -177,7 +177,7 @@ function OnboardingContent() {
               </Select>
             </div>
             <Button 
-              className="w-full rounded-full h-14 font-black text-lg mt-4 shadow-lg active:scale-95 transition-all" 
+              className="w-full rounded-full h-14 font-black text-lg mt-4 shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
               onClick={() => setStep(2)}
               disabled={isFast ? !gender : (!name || !gender)}
             >
@@ -217,11 +217,11 @@ function OnboardingContent() {
             </div>
             <div className="flex flex-col gap-4">
               <Button 
-                className="w-full rounded-full h-14 font-black text-lg shadow-lg active:scale-95 transition-all" 
+                className="w-full rounded-full h-14 font-black text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
                 onClick={isFast ? handleComplete : () => setStep(3)}
                 disabled={isFast ? (!country || loading) : (!dob || !country)}
               >
-                {isFast ? (loading ? "Matching..." : "Let's Go!") : "Continue"}
+                {isFast ? (loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Let's Go!") : "Continue"}
               </Button>
               <Button variant="ghost" className="text-muted-foreground font-black text-xs" onClick={() => setStep(1)}>
                 Back
@@ -247,11 +247,11 @@ function OnboardingContent() {
             </div>
             <div className="flex flex-col gap-4">
               <Button 
-                className="w-full rounded-full h-14 font-black text-lg shadow-lg active:scale-95 transition-all" 
+                className="w-full rounded-full h-14 font-black text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
                 onClick={handleComplete}
                 disabled={!lookingFor || loading}
               >
-                {loading ? "Saving Profile..." : "Complete Setup"}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Setup"}
               </Button>
               <Button variant="ghost" className="text-muted-foreground font-black text-xs" onClick={() => setStep(2)}>
                 Back
@@ -266,7 +266,7 @@ function OnboardingContent() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<div className="p-16 text-center font-black text-xl text-primary animate-pulse">MatchFlow...</div>}>
+    <Suspense fallback={<div className="p-16 text-center font-black text-xl text-[#00A2FF] animate-pulse">MatchFlow...</div>}>
       <OnboardingContent />
     </Suspense>
   )

@@ -8,7 +8,7 @@ import { deleteUser, signOut } from "firebase/auth"
 import { doc, deleteDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react"
+import { ChevronLeft, ChevronRight, ShieldAlert, Link as LinkIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import {
@@ -27,12 +27,16 @@ interface SettingItemProps {
   label: string
   onClick?: () => void
   href?: string
+  icon?: React.ReactNode
 }
 
-function SettingItem({ label, onClick, href }: SettingItemProps) {
+function SettingItem({ label, onClick, href, icon }: SettingItemProps) {
   const content = (
     <div className="flex items-center justify-between py-5 px-6 border-b border-gray-100 active:bg-gray-50 transition-colors cursor-pointer">
-      <span className="text-[15px] font-medium text-black">{label}</span>
+      <div className="flex items-center gap-3">
+        {icon}
+        <span className="text-[15px] font-medium text-black">{label}</span>
+      </div>
       <ChevronRight className="w-5 h-5 text-gray-300" />
     </div>
   )
@@ -97,19 +101,14 @@ export default function SettingsPage() {
   }
 
   const settingsList = [
-    { label: "Bind account", href: "#" },
     { label: "Charge settings", href: "/recharge" },
-    { label: "Rights Center", href: "#" },
-    { label: "Chat settings", href: "#" },
     { label: "Blocked List", href: "/blocked-list" },
-    { label: "Language", href: "#" },
     { label: "Clear Cache", onClick: () => toast({ title: "Cache Cleared", description: "Temporary files have been removed." }) },
-    { label: "About Bibo", href: "#" },
   ]
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen">
-      <header className="flex items-center justify-between px-4 h-16 bg-white sticky top-0 z-50">
+      <header className="flex items-center justify-between px-4 h-16 bg-white sticky top-0 z-50 border-b">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
           <ChevronLeft className="w-6 h-6 text-black" />
         </Button>
@@ -118,9 +117,18 @@ export default function SettingsPage() {
 
       <main className="flex-1">
         <div className="flex flex-col">
+          {user?.isAnonymous && (
+            <SettingItem 
+              label="Bind Account" 
+              href="/settings/bind-account" 
+              icon={<LinkIcon className="w-4 h-4 text-[#00A2FF]" />} 
+            />
+          )}
+          
           {settingsList.map((item, idx) => (
             <SettingItem key={idx} {...item} />
           ))}
+          
           <SettingItem label="Sign Out" onClick={handleSignOut} />
         </div>
       </main>
@@ -130,8 +138,6 @@ export default function SettingsPage() {
           <Link href="#" className="hover:text-black">Privacy Policy</Link>
           <span className="opacity-30">|</span>
           <Link href="#" className="hover:text-black">Terms of Service</Link>
-          <span className="opacity-30">|</span>
-          <Link href="#" className="hover:text-black">Contact us</Link>
           <span className="opacity-30">|</span>
           
           <AlertDialog>
