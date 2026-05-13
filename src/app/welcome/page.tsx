@@ -10,6 +10,7 @@ import Image from "next/image"
 /**
  * MatchFlow Welcome Screen.
  * A spacious, premium landing page designed to be the primary entry point.
+ * Optimized with balanced vertical distribution and refined branding.
  */
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
@@ -39,11 +40,11 @@ export default function WelcomePage() {
 
       <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between items-center text-center">
         {/* Spacious Branding Section */}
-        <div className="flex flex-col items-center justify-center space-y-8 mt-4">
+        <div className="flex flex-col items-center justify-center space-y-10 mt-4">
           <div className="relative">
             <Heart className="w-14 h-14 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>

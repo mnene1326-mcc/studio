@@ -1,21 +1,13 @@
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open('matchflow-v1').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/home',
-        '/me',
-        '/chats'
-      ]);
-    })
-  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+  // Basic pass-through fetch handler for PWA compliance
+  event.respondWith(fetch(event.request));
 });
