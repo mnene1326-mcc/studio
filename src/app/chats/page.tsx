@@ -146,6 +146,7 @@ function ChatsContent() {
   const startWithId = searchParams.get("startWith")
   const { user: currentUser } = useUser()
   const db = useFirestore()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
@@ -268,7 +269,16 @@ function ChatsContent() {
     return messagesRaw.filter(m => toMillisSafe(m.timestamp) > clearedAtMillis)
   }, [messagesRaw, currentUser?.uid, currentChatData])
 
-  const handleSendMessage = (text: string) => {
+  // Native reverse column anchoring: Ensure we are at the "bottom" (scrollTop 0 in reverse column) when messages update
+  useEffect(() => {
+    if (scrollContainerRef.current && messages.length > 0) {
+      // Browsers handle flex-col-reverse scrolling naturally by keeping the user at the visual bottom
+      // if they were already there. To force it for new messages, we can ensure scrollTop is 0.
+      scrollContainerRef.current.scrollTop = 0
+    }
+  }, [messages.length])
+
+  const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
     
     if (currentUserProfile.gender === 'male') {
@@ -283,19 +293,29 @@ function ChatsContent() {
       }
       
       const userRef = doc(db, "users", currentUser.uid)
-      updateDoc(userRef, { coins: increment(-15) }).catch((err) => {
+      await updateDoc(userRef, { coins: increment(-15) }).catch((err) => {
          toast({ variant: "destructive", title: "Error", description: err.message })
       })
     }
 
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
-    addDoc(collection(db, "chats", chatId, "messages"), msgData)
-    updateDoc(doc(db, "chats", chatId), { 
-      lastMessage: text.trim(), 
-      lastMessageAt: serverTimestamp(),
-      [`clearedAt.${currentUser.uid}`]: null
-    })
     setNewMessage("")
+    
+    try {
+      await addDoc(collection(db, "chats", chatId, "messages"), msgData)
+      await updateDoc(doc(db, "chats", chatId), { 
+        lastMessage: text.trim(), 
+        lastMessageAt: serverTimestamp(),
+        [`clearedAt.${currentUser.uid}`]: null
+      })
+      
+      // Force scroll to bottom (scrollTop 0 for flex-col-reverse) after sending
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message })
+    }
   }
 
   const handleSoftDelete = async () => {
@@ -440,7 +460,7 @@ function ChatsContent() {
       </header>
 
       {/* Main content using reverse column to anchor to bottom naturally and scroll beneath header */}
-      <main className="flex-1 overflow-y-auto no-scrollbar bg-white">
+      <main ref={scrollContainerRef} className="flex-1 overflow-y-auto no-scrollbar bg-white">
         <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
