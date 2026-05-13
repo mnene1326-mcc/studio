@@ -1,16 +1,14 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, Loader2, CreditCard, AlertCircle } from "lucide-react"
+import { ChevronLeft, Menu, Check, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { initiatePayment } from "@/app/actions/pesapal"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface UserProfile {
   uid: string
@@ -42,39 +40,15 @@ export default function RechargePage() {
   const db = useFirestore()
   const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState(1000)
-  const [loading, setLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
   const handlePayment = async () => {
-    if (!user || !profile) return
-    
-    setLoading(true)
-    setErrorMessage(null)
-    
-    try {
-      const pkg = PACKAGES.find(p => p.amount === selectedPackage)
-      if (!pkg) throw new Error("Invalid package selected")
-
-      const result = await initiatePayment(pkg.price, profile.email, user.uid)
-      
-      if (result.success && result.redirectUrl) {
-        window.location.href = result.redirectUrl
-      } else {
-        setErrorMessage(result.error || "Payment initialization failed. Please check your network or try again later.")
-        setLoading(false)
-        toast({
-          variant: "destructive",
-          title: "Payment Error",
-          description: result.error || "Unable to start payment."
-        })
-      }
-    } catch (error: any) {
-      setErrorMessage("An unexpected error occurred. Please try again.")
-      setLoading(false)
-    }
+    toast({
+      title: "Coming Soon",
+      description: "Payment services are currently being updated. Please check back later.",
+    })
   }
 
   return (
@@ -91,16 +65,6 @@ export default function RechargePage() {
 
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
-          {errorMessage && (
-            <Alert variant="destructive" className="rounded-2xl border-2 animate-in fade-in slide-in-from-top-4 duration-300">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle className="font-black uppercase text-[10px] tracking-widest">Payment Notice</AlertTitle>
-              <AlertDescription className="text-xs font-bold leading-relaxed">
-                {errorMessage}
-              </AlertDescription>
-            </Alert>
-          )}
-
           <div className="space-y-1">
              <h2 className="text-sm font-black text-black">My Balance</h2>
              <div className="flex items-center gap-4 py-4">
@@ -112,9 +76,6 @@ export default function RechargePage() {
           <div className="flex items-center justify-between">
              <h3 className="text-sm font-black text-black">Top Up Packages</h3>
              <div className="bg-black text-white px-2.5 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-transform cursor-pointer">
-                <div className="w-4 h-3 bg-gradient-to-r from-black via-green-800 to-black rounded-sm overflow-hidden flex items-center justify-center">
-                    <div className="w-full h-[2px] bg-red-600 rotate-45 scale-150" />
-                </div>
                 <span className="text-[10px] font-black uppercase">Kenya</span>
              </div>
           </div>
@@ -123,7 +84,7 @@ export default function RechargePage() {
             {PACKAGES.map((pkg) => (
               <div 
                 key={pkg.amount}
-                onClick={() => !loading && setSelectedPackage(pkg.amount)}
+                onClick={() => setSelectedPackage(pkg.amount)}
                 className={cn(
                   "aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-2 relative transition-all active:scale-95 cursor-pointer",
                   selectedPackage === pkg.amount 
@@ -149,21 +110,11 @@ export default function RechargePage() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-70"
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3"
           onClick={handlePayment}
-          disabled={loading}
         >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Initializing...
-            </>
-          ) : (
-            <>
-              <CreditCard className="w-5 h-5" />
-              Recharge Now
-            </>
-          )}
+          <CreditCard className="w-5 h-5" />
+          Recharge Now
         </Button>
       </footer>
     </div>
