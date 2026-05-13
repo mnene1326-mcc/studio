@@ -102,13 +102,13 @@ export default function HomePage() {
           <div className="flex items-center gap-8">
             <button 
               onClick={() => setActiveTab('Recommend')} 
-              className={cn("text-lg font-black transition-all", activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50")}
+              className={cn("text-base font-black transition-all", activeTab === 'Recommend' ? "text-white scale-105" : "text-white/50")}
             >
               Recommend
             </button>
             <button 
               onClick={() => setActiveTab('Nearby')} 
-              className={cn("text-lg font-black transition-all", activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50")}
+              className={cn("text-base font-black transition-all", activeTab === 'Nearby' ? "text-white scale-105" : "text-white/50")}
             >
               Nearby
             </button>
