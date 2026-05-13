@@ -1,9 +1,8 @@
-
 'use server';
 
 /**
  * @fileOverview Server actions for PesaPal v3 integration.
- * Handles authentication and transaction initiation.
+ * Handles authentication and transaction initiation for both Sandbox and Live environments.
  */
 
 const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
@@ -14,6 +13,13 @@ const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true'
  * Gets an access token from PesaPal using Consumer Key and Secret.
  */
 async function getAccessToken() {
+  const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
+  const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET;
+
+  if (!consumerKey || !consumerSecret) {
+    throw new Error('PesaPal credentials are not configured in environment variables.');
+  }
+
   const response = await fetch(`${PESAPAL_BASE_URL}/api/Auth/RequestToken`, {
     method: 'POST',
     headers: {
@@ -21,8 +27,8 @@ async function getAccessToken() {
       'Accept': 'application/json',
     },
     body: JSON.stringify({
-      consumer_key: process.env.PESAPAL_CONSUMER_KEY,
-      consumer_secret: process.env.PESAPAL_CONSUMER_SECRET,
+      consumer_key: consumerKey,
+      consumer_secret: consumerSecret,
     }),
   });
 
@@ -37,6 +43,7 @@ async function getAccessToken() {
 
 /**
  * Initiates a PesaPal order.
+ * @param input - The payment details and user metadata.
  */
 export async function initiatePayment(input: {
   amount: number;
@@ -53,9 +60,9 @@ export async function initiatePayment(input: {
       id: trackingId,
       currency: 'KES',
       amount: input.amount,
-      description: `Recharge ${input.amount} KES for MatchFlow Coins`,
+      description: `Recharge for MatchFlow Coins - User: ${input.userId}`,
       callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/home`,
-      notification_id: process.env.PESAPAL_IPN_ID, // Pre-registered IPN ID from PesaPal dashboard
+      notification_id: process.env.PESAPAL_IPN_ID, // Must be pre-registered in PesaPal dashboard
       billing_address: {
         email_address: input.email,
         phone_number: input.phoneNumber || '',
@@ -86,7 +93,7 @@ export async function initiatePayment(input: {
       order_tracking_id: data.order_tracking_id,
     };
   } catch (error: any) {
-    console.error('PesaPal Error:', error);
-    throw new Error(error.message || 'Payment initiation failed');
+    console.error('PesaPal Payment Error:', error);
+    throw new Error(error.message || 'Payment initiation failed. Please check your configuration.');
   }
 }
