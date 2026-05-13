@@ -27,6 +27,7 @@ export default function WelcomePage() {
 
   return (
     <div className="relative flex-1 flex flex-col min-h-screen bg-black overflow-hidden">
+      {/* Background Image with optimized overlay */}
       <div className="absolute inset-0 z-0">
         <Image 
           src="https://picsum.photos/seed/matchwelcome/1000/1500" 
@@ -40,6 +41,7 @@ export default function WelcomePage() {
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between">
+        {/* Top Branding Section */}
         <div className="flex flex-col items-center justify-center space-y-10 mt-12">
           <div className="relative">
             <Heart className="w-14 h-14 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
@@ -54,6 +56,7 @@ export default function WelcomePage() {
           </div>
         </div>
 
+        {/* Bottom Actions Section */}
         <div className="w-full max-w-sm mx-auto space-y-5 mb-8">
           <Button 
             asChild
