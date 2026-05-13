@@ -268,7 +268,7 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
-        <header className="sticky top-0 z-40 bg-[#00A2FF] px-4 pt-12 pb-4 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-[#00A2FF] px-4 pt-8 pb-3 flex items-center justify-between">
           <h1 className="text-3xl font-logo text-white tracking-tight">Chat</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-white hover:bg-white/20" onClick={() => router.push('/recharge')}>
@@ -344,7 +344,7 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-screen bg-white relative overflow-hidden">
-      <header className="bg-[#00A2FF] px-4 pt-12 pb-4 flex items-center justify-between shadow-sm z-50">
+      <header className="bg-[#00A2FF] px-4 pt-8 pb-3 flex items-center justify-between shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -412,15 +412,6 @@ function ChatsContent() {
       </div>
 
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
-        <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar items-center border-b border-gray-50 bg-white">
-          <button onClick={() => handleSendMessage("Can we talk?")} className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
-            Can we talk?
-          </button>
-          <button onClick={() => handleSendMessage("hey dear are you single?")} className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
-            hey dear are you single?
-          </button>
-        </div>
-
         <div className="px-4 py-3 flex items-center gap-3">
           <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-gray-400">
             <Mic className="w-6 h-6" />
