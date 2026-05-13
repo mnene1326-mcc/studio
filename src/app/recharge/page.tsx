@@ -31,8 +31,6 @@ const PACKAGES = [
   { amount: 5000, price: 500.0 },
   { amount: 10000, price: 1000.0 },
   { amount: 20000, price: 2000.0 },
-  { amount: 50000, price: 5000.0 },
-  { amount: 100000, price: 10000.0 },
 ]
 
 export default function RechargePage() {
