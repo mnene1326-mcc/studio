@@ -19,7 +19,9 @@
         "interests": { "type": "string" },
         "matchFlowId": { "type": "string", "description": "Unique 7-9 digit numeric ID." },
         "coins": { "type": "number", "description": "Currency for males to send messages." },
-        "diamonds": { "type": "number", "description": "Currency for females earned from interactions." }
+        "diamonds": { "type": "number", "description": "Currency for females earned from interactions." },
+        "lastCheckInDate": { "type": "object", "description": "Firestore Timestamp of last check-in." },
+        "checkInStreak": { "type": "number", "description": "Number of consecutive or cumulative check-in days (0-7)." }
       },
       "required": ["uid", "email", "onboardingComplete"]
     },

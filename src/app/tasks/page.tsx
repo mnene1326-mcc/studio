@@ -1,9 +1,9 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { doc, updateDoc, increment } from "firebase/firestore"
+import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore"
 import { useFirestore, useUser, useDoc } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, X, Coins, Gift, Zap, Star, CheckCircle2, Trophy, Flame } from "lucide-react"
@@ -12,26 +12,29 @@ import { useToast } from "@/hooks/use-toast"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 
+interface UserProfile {
+  coins?: number
+  checkInStreak?: number
+  lastCheckInDate?: any
+}
+
 export default function TaskCenterPage() {
   const router = useRouter()
   const db = useFirestore()
   const { user } = useUser()
   const { toast } = useToast()
   
-  // Starting with some mock progress that can be updated
-  const [checkedDays, setCheckedDays] = useState([true, true, false, false, false, false, false])
-
   const userRef = useMemo(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
-  const { data: profile } = useDoc(userRef)
+  const { data: profile } = useDoc<UserProfile>(userRef)
 
   const days = [
-    { day: "1st", reward: "2" },
-    { day: "2nd", reward: "2" },
-    { day: "3rd", reward: "5" },
-    { day: "4th", reward: "2" },
-    { day: "5th", reward: "2" },
-    { day: "6th", reward: "2" },
-    { day: "7th", reward: "10" },
+    { day: "1st", reward: 2 },
+    { day: "2nd", reward: 2 },
+    { day: "3rd", reward: 5 },
+    { day: "4th", reward: 2 },
+    { day: "5th", reward: 2 },
+    { day: "6th", reward: 2 },
+    { day: "7th", reward: 10 },
   ]
 
   const newcomerTasks = [
@@ -45,28 +48,33 @@ export default function TaskCenterPage() {
     { title: "Daily Login", reward: "2", icon: CheckCircle2, color: "text-green-500", progress: "1/1" },
   ]
 
-  const handleCheckIn = () => {
-    if (!user || !userRef) return
-
-    const nextDayIndex = checkedDays.findIndex(d => !d)
-    if (nextDayIndex === -1) {
-      toast({
-        title: "All Caught Up!",
-        description: "You've completed this week's check-ins. Great job!",
-      })
-      return
-    }
-
-    const rewardAmount = parseInt(days[nextDayIndex].reward)
+  // Check if user has already checked in today
+  const hasCheckedInToday = useMemo(() => {
+    if (!profile?.lastCheckInDate) return false
     
-    // Optimistically update UI
-    const newChecked = [...checkedDays]
-    newChecked[nextDayIndex] = true
-    setCheckedDays(newChecked)
+    const lastDate = profile.lastCheckInDate.toDate()
+    const today = new Date()
+    
+    return (
+      lastDate.getDate() === today.getDate() &&
+      lastDate.getMonth() === today.getMonth() &&
+      lastDate.getFullYear() === today.getFullYear()
+    )
+  }, [profile?.lastCheckInDate])
 
-    // Persist to Firestore
+  const currentStreak = profile?.checkInStreak || 0
+
+  const handleCheckIn = () => {
+    if (!user || !userRef || hasCheckedInToday) return
+
+    const streakIndex = currentStreak % 7
+    const rewardAmount = days[streakIndex].reward
+    
+    // Persist to Firestore: update coins, update last check-in date, and increment streak
     updateDoc(userRef, {
-      coins: increment(rewardAmount)
+      coins: increment(rewardAmount),
+      lastCheckInDate: serverTimestamp(),
+      checkInStreak: increment(1)
     }).catch(async () => {
       const permissionError = new FirestorePermissionError({
         path: userRef.path,
@@ -103,38 +111,52 @@ export default function TaskCenterPage() {
               <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily Check-in</h2>
             </div>
             <span className="text-[10px] font-black text-gray-400">
-              Streak: {checkedDays.filter(d => d).length} Days
+              Total: {currentStreak} Days
             </span>
           </div>
           
           <div className="grid grid-cols-4 gap-3">
-            {days.map((d, i) => (
-              <div 
-                key={i} 
-                className={cn(
-                  "aspect-square rounded-2xl flex flex-col items-center justify-center border-2 transition-all",
-                  checkedDays[i] 
-                    ? "bg-green-50 border-green-200" 
-                    : "bg-gray-50 border-transparent"
-                )}
-              >
-                {checkedDays[i] ? (
-                  <CheckCircle2 className="w-6 h-6 text-green-500" />
-                ) : (
-                  <>
-                    <Coins className="w-5 h-5 text-yellow-500 mb-1" />
-                    <span className="text-[10px] font-black text-gray-500">+{d.reward}</span>
-                  </>
-                )}
-                <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{d.day}</span>
-              </div>
-            ))}
+            {days.map((d, i) => {
+              // A day is "checked" if currentStreak covers it (simplistic streak visualization)
+              const isChecked = i < (currentStreak % 7) || (currentStreak > 0 && currentStreak % 7 === 0 && i < 7)
+              // If user just checked in today, highlight the most recent day in the 1-7 cycle
+              const isToday = hasCheckedInToday && (i === (currentStreak - 1) % 7)
+
+              return (
+                <div 
+                  key={i} 
+                  className={cn(
+                    "aspect-square rounded-2xl flex flex-col items-center justify-center border-2 transition-all",
+                    (isChecked || isToday)
+                      ? "bg-green-50 border-green-200" 
+                      : "bg-gray-50 border-transparent"
+                  )}
+                >
+                  {(isChecked || isToday) ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <>
+                      <Coins className="w-5 h-5 text-yellow-500 mb-1" />
+                      <span className="text-[10px] font-black text-gray-500">+{d.reward}</span>
+                    </>
+                  )}
+                  <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{d.day}</span>
+                </div>
+              )
+            })}
           </div>
+          
           <Button 
             onClick={handleCheckIn}
-            className="w-full mt-6 h-14 rounded-full bg-[#FF3B30] text-white font-black uppercase tracking-widest text-sm shadow-lg shadow-red-200 active:scale-95 transition-all"
+            disabled={hasCheckedInToday}
+            className={cn(
+              "w-full mt-6 h-14 rounded-full text-white font-black uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all",
+              hasCheckedInToday 
+                ? "bg-gray-300 shadow-none cursor-default" 
+                : "bg-[#FF3B30] shadow-red-200"
+            )}
           >
-            Check-in Now
+            {hasCheckedInToday ? "Already Checked-in" : "Check-in Now"}
           </Button>
         </section>
 
