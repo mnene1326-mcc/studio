@@ -1,13 +1,10 @@
-
 'use server';
 
 /**
  * @fileOverview PesaPal v3 Live Production actions.
  */
 
-const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
-  ? 'https://cybqa.pesapal.com/pesapalv3' 
-  : 'https://pay.pesapal.com/v3';
+const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3';
 
 export async function getAccessToken() {
   const consumerKey = process.env.PESAPAL_CONSUMER_KEY;
