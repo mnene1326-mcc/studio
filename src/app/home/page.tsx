@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Target, Search, ShoppingBag, FileText } from "lucide-react"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils"
 
 interface UserProfile {
   id: string
