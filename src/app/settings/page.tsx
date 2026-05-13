@@ -44,7 +44,7 @@ export default function SettingsPage() {
 
     try {
       const uid = user.uid
-      const userRef = doc(db, uid)
+      const userRef = doc(db, "users", uid)
       
       // Non-blocking delete with centralized error handling
       deleteDoc(userRef)
@@ -56,7 +56,7 @@ export default function SettingsPage() {
           errorEmitter.emit('permission-error', permissionError)
         })
 
-      // Delete auth user
+      // Delete auth user - Firebase requires recent login for this sensitive action
       await deleteUser(user)
       
       toast({
@@ -65,10 +65,15 @@ export default function SettingsPage() {
       })
       router.push("/")
     } catch (error: any) {
+      // Specifically handle the re-authentication error required by Firebase for sensitive ops
+      const description = error.code === 'auth/requires-recent-login' 
+        ? "For security reasons, please sign out and sign back in before deleting your account." 
+        : error.message || "Failed to delete account."
+        
       toast({
         variant: "destructive",
         title: "Deletion failed",
-        description: "For security reasons, please re-authenticate and try again.",
+        description: description,
       })
     }
   }
