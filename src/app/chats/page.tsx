@@ -260,7 +260,7 @@ function ChatsContent() {
           </Button>
         </div>
         
-        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-white">
+        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-white uppercase">
           {chatPartner?.name || 'Loading...'}
         </h3>
 
@@ -272,7 +272,7 @@ function ChatsContent() {
         </div>
       </header>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 bg-white">
         <div className="pb-48 pt-4">
           <div className="text-center my-6">
             <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-4 py-1.5 rounded-full tracking-widest uppercase">
@@ -308,7 +308,7 @@ function ChatsContent() {
       </ScrollArea>
 
       {/* Floating Game Widget */}
-      <div className="fixed bottom-40 right-4 z-50">
+      <div className="fixed bottom-44 right-4 z-50">
         <div className="bg-white p-2.5 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-0.5 active:scale-95 transition-transform cursor-pointer">
           <Gamepad2 className="w-7 h-7 text-blue-500" />
           <span className="text-[8px] font-black uppercase text-gray-500">GAME</span>
@@ -317,7 +317,7 @@ function ChatsContent() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white border-t z-50 pb-safe">
         {/* Quick Suggestion Chips */}
-        <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar items-center border-b border-gray-50">
+        <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar items-center border-b border-gray-50 bg-white">
           <button onClick={() => handleSendMessage("Can we talk?")} className="h-9 px-5 rounded-full border-2 border-[#66BB6A] text-[#2E7D32] font-black text-xs shrink-0 active:scale-95 transition-all">
             Can we talk?
           </button>

@@ -2,6 +2,7 @@
 
 /**
  * @fileOverview PesaPal v3 Live Production actions.
+ * Corrected endpoints for v3 specification to avoid 404 errors.
  */
 
 const PESAPAL_BASE_URL = process.env.PESAPAL_SANDBOX === 'true' 
@@ -30,7 +31,7 @@ export async function getAccessToken() {
 
   const data = await response.json();
   if (!response.ok || !data.token) {
-    throw new Error(`Auth Failed: ${data.message || response.statusText}`);
+    throw new Error(`Auth Failed (Status ${response.status}): ${data.message || 'Invalid Credentials'}`);
   }
 
   return data.token;
@@ -38,10 +39,10 @@ export async function getAccessToken() {
 
 export async function registerIPN(token: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://matchflow-iota.vercel.app';
-  // Use the exact IPN URL requested by the user
   const ipnUrl = `${appUrl.replace(/\/$/, '')}/api/pesapal-ipn`;
 
-  const response = await fetch(`${PESAPAL_BASE_URL}/api/Services/RegisterIPN`, {
+  // PesaPal v3 uses /api/Queues/RegisterIPN for IPN registration
+  const response = await fetch(`${PESAPAL_BASE_URL}/api/Queues/RegisterIPN`, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -55,7 +56,7 @@ export async function registerIPN(token: string) {
   });
 
   const data = await response.json();
-  if (!response.ok || !data.ipn_id) {
+  if (!response.ok) {
     throw new Error(`IPN Registration Failed (Status ${response.status}): ${JSON.stringify(data)}`);
   }
 
@@ -68,7 +69,7 @@ export async function initiatePayment(amount: number, userEmail: string, userId:
     const ipnId = process.env.PESAPAL_IPN_ID;
 
     if (!ipnId) {
-      throw new Error('PESAPAL_IPN_ID is missing. Please run the setup link first.');
+      throw new Error('PESAPAL_IPN_ID is missing. Please run the setup link (/api/pesapal/setup) first.');
     }
 
     const merchantReference = `RECHARGE_${userId}_${Date.now()}`;
