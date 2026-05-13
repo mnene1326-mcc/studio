@@ -120,6 +120,7 @@ function OnboardingContent() {
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
       matchFlowId: existingData?.matchFlowId || generateMatchFlowId(),
+      isDeleted: false
     }
 
     setDoc(userRef, updateData, { merge: true })

@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { doc, updateDoc, increment } from "firebase/firestore"
+import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,7 +62,8 @@ export default function IncomePage() {
     try {
       await updateDoc(userRef, {
         diamonds: increment(-amount),
-        coins: increment(expectedCoins)
+        coins: increment(expectedCoins),
+        updatedAt: serverTimestamp()
       })
       
       toast({

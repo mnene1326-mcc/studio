@@ -6,23 +6,29 @@ import { DocumentReference, onSnapshot } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
-const docCache = new Map<string, any>();
+const getCacheKey = (ref: DocumentReference | null) => {
+  if (!ref) return null;
+  return `firestore_cache_doc_${ref.path.replace(/\//g, '_')}`;
+};
 
 export function useDoc<T = any>(ref: DocumentReference | null) {
+  const queryKey = getCacheKey(ref);
+
   const [data, setData] = useState<T | null>(() => {
-    if (ref && docCache.has(ref.path)) {
-      return docCache.get(ref.path);
+    if (typeof window !== 'undefined' && queryKey) {
+      const cached = localStorage.getItem(queryKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          return null;
+        }
+      }
     }
     return null;
   });
   
-  const [loading, setLoading] = useState(() => {
-    if (ref && docCache.has(ref.path)) {
-      return false;
-    }
-    return ref !== null;
-  });
-  
+  const [loading, setLoading] = useState(ref !== null && data === null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -36,7 +42,9 @@ export function useDoc<T = any>(ref: DocumentReference | null) {
       (snapshot) => {
         const docData = snapshot.exists() ? (snapshot.data() as T) : null;
         
-        docCache.set(ref.path, docData);
+        if (queryKey) {
+          localStorage.setItem(queryKey, JSON.stringify(docData));
+        }
         
         setData(docData);
         setLoading(false);
@@ -58,7 +66,7 @@ export function useDoc<T = any>(ref: DocumentReference | null) {
     );
 
     return unsubscribe;
-  }, [ref]);
+  }, [ref, queryKey]);
 
   return { data, loading, error };
 }

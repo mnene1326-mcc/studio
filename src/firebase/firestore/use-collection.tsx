@@ -6,25 +6,29 @@ import { Query, onSnapshot } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
-const collectionCache = new Map<string, any[]>();
+const getCacheKey = (q: Query | null) => {
+  if (!q) return null;
+  return `firestore_cache_coll_${(q as any)._query?.path?.segments?.join('_') || 'unknown'}`;
+};
 
 export function useCollection<T = any>(q: Query | null) {
-  const queryKey = q ? (q as any).path || (q as any)._query?.path?.segments?.join('/') || JSON.stringify((q as any)._query) : null;
+  const queryKey = getCacheKey(q);
   
   const [data, setData] = useState<T[]>(() => {
-    if (queryKey && collectionCache.has(queryKey)) {
-      return collectionCache.get(queryKey)!;
+    if (typeof window !== 'undefined' && queryKey) {
+      const cached = localStorage.getItem(queryKey);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {
+          return [];
+        }
+      }
     }
     return [];
   });
   
-  const [loading, setLoading] = useState(() => {
-    if (queryKey && collectionCache.has(queryKey)) {
-      return false;
-    }
-    return q !== null;
-  });
-  
+  const [loading, setLoading] = useState(q !== null && data.length === 0);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -42,7 +46,7 @@ export function useCollection<T = any>(q: Query | null) {
         }));
         
         if (queryKey) {
-          collectionCache.set(queryKey, items);
+          localStorage.setItem(queryKey, JSON.stringify(items));
         }
         
         setData(items);
@@ -51,7 +55,6 @@ export function useCollection<T = any>(q: Query | null) {
       (err) => {
         const path = (q as any).path || (q as any)._query?.path?.segments?.join('/') || 'collection';
         
-        // Check if it's actually a permission error
         if (err.code === 'permission-denied') {
           const permissionError = new FirestorePermissionError({
             path: path,

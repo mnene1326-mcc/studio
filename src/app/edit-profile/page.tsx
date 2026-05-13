@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { doc, updateDoc, getDoc } from "firebase/firestore"
+import { doc, updateDoc, getDoc, serverTimestamp } from "firebase/firestore"
 import { useFirestore, useUser } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -79,7 +79,7 @@ export default function EditProfilePage() {
       const userRef = doc(db, "users", user.uid)
       await updateDoc(userRef, {
         ...formData,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       })
       
       toast({
