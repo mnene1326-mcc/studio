@@ -58,23 +58,17 @@ interface UserProfile {
   blockedBy?: string[]
 }
 
-/**
- * Safely converts a Firestore timestamp (live or cached) to milliseconds.
- */
 const toMillisSafe = (ts: any): number => {
   if (!ts) return 0;
-  if (typeof ts.toMillis === 'function') return ts.toMillis();
+  if (ts.toMillis) return ts.toMillis();
   if (ts.seconds !== undefined) return ts.seconds * 1000;
   if (typeof ts === 'number') return ts;
   return 0;
 };
 
-/**
- * Safely converts a Firestore timestamp (live or cached) to a Date object.
- */
 const toDateSafe = (ts: any): Date => {
   if (!ts) return new Date(0);
-  if (typeof ts.toDate === 'function') return ts.toDate();
+  if (ts.toDate) return ts.toDate();
   if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
   return new Date(ts);
 };
@@ -176,6 +170,7 @@ function ChatsContent() {
     
     return [...userChatsRaw]
       .filter(chat => {
+        // Strictly show only chats that have at least one message
         if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
 
         const clearedAt = chat.clearedAt?.[currentUser.uid]
@@ -316,7 +311,7 @@ function ChatsContent() {
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
-        <header className="sticky top-0 z-40 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b">
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-logo text-[#00A2FF] tracking-tight">Chat</h1>
           <div className="flex items-center gap-2">
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#00A2FF] hover:bg-blue-50" onClick={() => router.push('/recharge')}>
@@ -405,7 +400,8 @@ function ChatsContent() {
 
   return (
     <div className="flex-1 flex flex-col h-[100dvh] bg-white relative overflow-hidden">
-      <header className="shrink-0 bg-white px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
+      {/* Fixed Header with Blur */}
+      <header className="absolute top-0 left-0 right-0 h-24 bg-white/80 backdrop-blur-xl px-4 pt-8 pb-3 flex items-center justify-between border-b shadow-sm z-50">
         <div className="flex items-center gap-1">
           <Button 
             variant="ghost" 
@@ -418,7 +414,7 @@ function ChatsContent() {
           </Button>
         </div>
         
-        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-black uppercase">
+        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-black uppercase truncate px-2">
           {chatPartner?.name || 'Loading...'}
         </h3>
 
@@ -430,8 +426,9 @@ function ChatsContent() {
         </div>
       </header>
 
+      {/* Main content with full-height scrolling */}
       <main className="flex-1 overflow-y-auto bg-white no-scrollbar">
-        <div className="flex flex-col-reverse min-h-full px-4 py-6 space-y-6 space-y-reverse">
+        <div className="flex flex-col-reverse min-h-full px-4 pt-28 pb-6 space-y-6 space-y-reverse">
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
               {msg.senderId !== currentUser.uid && (
@@ -489,7 +486,7 @@ function ChatsContent() {
       </main>
 
       {!isBlocked && (
-        <footer className="shrink-0 bg-white border-t z-50 pb-safe sticky bottom-0">
+        <footer className="shrink-0 bg-white border-t z-50 pb-safe">
           <div className="px-4 py-3 flex items-center gap-3">
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
               <input 
