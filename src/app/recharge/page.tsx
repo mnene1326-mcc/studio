@@ -1,14 +1,15 @@
 
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, CreditCard } from "lucide-react"
+import { ChevronLeft, Menu, Check, CreditCard, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { initiatePayment } from "@/app/actions/payments"
 
 interface UserProfile {
   uid: string
@@ -34,21 +35,57 @@ const PACKAGES = [
   { amount: 20000, price: 2000.0 },
 ]
 
-export default function RechargePage() {
+function RechargeContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
+  
   const [selectedPackage, setSelectedPackage] = useState(1000)
+  const [loading, setLoading] = useState(false)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
+  useEffect(() => {
+    if (searchParams.get('status') === 'success') {
+      toast({
+        title: "Payment Initiated",
+        description: "Your coins will be credited as soon as the transaction is confirmed.",
+      })
+    }
+  }, [searchParams, toast])
+
   const handlePayment = async () => {
-    toast({
-      title: "Coming Soon",
-      description: "Payment services are currently being updated. Please check back later.",
+    if (!user || !profile) return
+    
+    setLoading(true)
+    const pkg = PACKAGES.find(p => p.amount === selectedPackage)
+    
+    if (!pkg) {
+      setLoading(false)
+      return
+    }
+
+    const result = await initiatePayment({
+      amount: pkg.price,
+      email: profile.email || `${user.uid}@matchflow.app`,
+      name: profile.name || 'User',
+      uid: user.uid,
+      packageAmount: pkg.amount
     })
+
+    if (result.success && result.url) {
+      window.location.href = result.url
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: result.error || "Failed to start payment process.",
+      })
+      setLoading(false)
+    }
   }
 
   return (
@@ -110,13 +147,22 @@ export default function RechargePage() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
+          disabled={loading}
           className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3"
           onClick={handlePayment}
         >
-          <CreditCard className="w-5 h-5" />
+          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
           Recharge Now
         </Button>
       </footer>
     </div>
+  )
+}
+
+export default function RechargePage() {
+  return (
+    <Suspense fallback={null}>
+      <RechargeContent />
+    </Suspense>
   )
 }
