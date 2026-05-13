@@ -38,21 +38,21 @@ export default function WelcomePage() {
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20">
-        <div className="flex-1 flex flex-col items-center justify-center space-y-12">
+        <div className="flex-1 flex flex-col items-center justify-center space-y-8">
           <div className="relative">
-            <Heart className="w-24 h-24 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
+            <Heart className="w-20 h-20 text-[#FF3B30] fill-current drop-shadow-[0_0_40px_rgba(255,59,48,0.7)] animate-pulse" />
           </div>
-          <div className="text-center space-y-6">
-            <h1 className="text-7xl font-logo text-white drop-shadow-2xl tracking-tight">
+          <div className="text-center space-y-4">
+            <h1 className="text-6xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
-            <p className="text-white/80 font-black text-[11px] uppercase tracking-[0.6em] ml-2">
+            <p className="text-white/80 font-black text-[10px] uppercase tracking-[0.6em] ml-2">
               Connect with Heart
             </p>
           </div>
         </div>
 
-        <div className="w-full max-w-sm mx-auto space-y-6">
+        <div className="w-full max-w-sm mx-auto space-y-5">
           <Button 
             asChild
             className="w-full h-16 rounded-full bg-[#FF3B30] hover:bg-[#FF3B30]/90 text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
@@ -74,7 +74,7 @@ export default function WelcomePage() {
             </Link>
           </Button>
 
-          <div className="pt-6">
+          <div className="pt-4">
             <p className="text-[10px] text-center text-white/40 font-bold px-6 leading-relaxed">
               By entering, you confirm you are 18+ and agree to our <span className="underline text-white/60">Terms</span> and <span className="underline text-white/60">Privacy Policy</span>.
             </p>
