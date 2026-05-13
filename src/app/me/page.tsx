@@ -38,8 +38,11 @@ export default function MePage() {
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
 
+  // Strict Redirect
   useEffect(() => {
-    if (!authLoading && !user) router.push("/")
+    if (!authLoading && !user) {
+      router.replace("/welcome")
+    }
   }, [user, authLoading, router])
 
   const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
@@ -58,7 +61,6 @@ export default function MePage() {
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
-      {/* Straight Architectural Blue Header */}
       <div className="absolute top-0 left-0 w-full h-[280px] bg-[#00A2FF] z-0" />
 
       <div className="relative z-10">
@@ -90,7 +92,6 @@ export default function MePage() {
         </header>
 
         <main className="px-6 space-y-6">
-          {/* Lowered position of buttons: Changed -mt-10 to -mt-6 for more ID breathing room */}
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-6">
             <Button 
               className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#00A2FF] active:scale-95 transition-all"

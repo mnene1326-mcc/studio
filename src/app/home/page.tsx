@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { collection, query, where, limit, doc, orderBy } from "firebase/firestore"
+import { collection, query, where, limit, doc } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
@@ -36,7 +36,7 @@ function calculateAge(dob: string) {
 
 export default function HomePage() {
   const router = useRouter()
-  const { user: currentUser } = useUser()
+  const { user: currentUser, loading: authLoading } = useUser()
   const db = useFirestore()
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
@@ -46,10 +46,16 @@ export default function HomePage() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
+  // Strict Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !currentUser) {
+      router.replace("/welcome")
+    }
+  }, [currentUser, authLoading, router])
+
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  // Cost Optimization: Load only 10 users initially
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
@@ -61,7 +67,6 @@ export default function HomePage() {
   const handleRefresh = () => {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
-    // We don't change the limit, just reshuffle what we have locally
     setTimeout(() => {
       setIsRefreshing(false)
     }, 800)
@@ -96,13 +101,12 @@ export default function HomePage() {
       if (aOnline && !bOnline) return -1
       if (!aOnline && bOnline) return 1
       
-      // Use refreshSeed to ensure the reshuffle only happens when clicking the refresh button
       const seed = refreshSeed || 0;
       return (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed))
     });
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
-  if (!isMounted) return null
+  if (!isMounted || authLoading || !currentUser) return null
 
   return (
     <div className="flex-1 pb-24 bg-white min-h-screen">
@@ -204,7 +208,6 @@ export default function HomePage() {
               })}
             </div>
             
-            {/* Pagination Trigger */}
             {users.length >= displayLimit && (
               <div className="flex justify-center pb-8">
                 <Button 

@@ -53,9 +53,10 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     try {
       await signOut(auth)
-      router.push("/")
+      // Use replace to clear the history stack so back button doesn't work
+      router.replace("/welcome")
     } catch (error) {
-      // Errors handled centrally if needed
+      // Errors handled centrally
     }
   }
 
@@ -82,7 +83,7 @@ export default function SettingsPage() {
         title: "Account deleted",
         description: "Your account and data have been removed.",
       })
-      router.push("/")
+      router.replace("/welcome")
     } catch (error: any) {
       const description = error.code === 'auth/requires-recent-login' 
         ? "For security reasons, please sign out and sign back in before deleting your account." 

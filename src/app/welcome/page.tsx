@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -5,18 +6,26 @@ import { Button } from "@/components/ui/button"
 import { Heart, Mail, Zap, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { signInAnonymously } from "firebase/auth"
-import { useAuth } from "@/firebase"
+import { useAuth, useUser } from "@/firebase"
 import Image from "next/image"
 
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const auth = useAuth()
+  const { user, loading: authLoading } = useUser()
   const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // If already logged in, skip welcome
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/home")
+    }
+  }, [user, authLoading, router])
 
   const handleFastLogin = async () => {
     setLoading(true)
@@ -28,7 +37,7 @@ export default function WelcomePage() {
     }
   }
 
-  if (!mounted) {
+  if (!mounted || authLoading || user) {
     return <div className="flex-1 bg-black min-h-screen" />
   }
 

@@ -1,13 +1,14 @@
+
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@/firebase"
 import { Heart } from "lucide-react"
 
 /**
  * Root Redirector with Splash Screen.
- * Prevents the "white screen" effect by rendering a branded loading state.
+ * Uses router.replace to ensure the splash screen doesn't stay in history.
  */
 export default function RootPage() {
   const router = useRouter()
