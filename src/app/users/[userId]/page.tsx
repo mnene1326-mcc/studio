@@ -81,9 +81,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      <div className="relative -mt-24 bg-white px-6 pt-6 space-y-4 min-h-[50vh] z-20 rounded-t-[2.5rem] shadow-2xl">
+      <div className="relative -mt-24 bg-white px-6 pt-6 space-y-3 min-h-[50vh] z-20 rounded-t-[2.5rem] shadow-2xl">
         <div className="flex justify-between items-start">
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
               <h1 className="text-sm font-black text-black tracking-tight">{profile.name}</h1>
               <div className="w-2.5 h-2.5 bg-yellow-400 rounded-full flex items-center justify-center border border-white">
@@ -91,7 +91,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
               </div>
             </div>
             
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1">
               <span className="bg-[#006400] text-white px-2 py-0.5 rounded-md text-[8px] font-black">
                 {profile.gender === 'female' ? '♀' : '♂'} {age}
               </span>

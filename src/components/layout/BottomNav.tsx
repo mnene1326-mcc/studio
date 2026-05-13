@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 
 /**
  * Bottom navigation component for the mobile-first MatchFlow experience.
- * Features a clean design with active state highlighting.
+ * Features a clean design with active state highlighting and no unread counts.
  */
 export function BottomNav() {
   const pathname = usePathname()

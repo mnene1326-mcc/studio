@@ -1,22 +1,28 @@
 
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser, useFirestore } from "@/firebase"
 import { doc, getDoc } from "firebase/firestore"
 
 /**
  * Silent Entry Point for MatchFlow.
- * Handles instant redirection based on auth status without a splash screen.
+ * Handles instant redirection based on auth status without any visible splash screen.
+ * Using a mounting check to prevent hydration mismatches.
  */
 export default function EntryPage() {
+  const [mounted, setMounted] = useState(false)
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
   const router = useRouter()
 
   useEffect(() => {
-    if (!authLoading) {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && !authLoading) {
       if (user) {
         const checkStatus = async () => {
           try {
@@ -36,8 +42,8 @@ export default function EntryPage() {
         router.replace("/login")
       }
     }
-  }, [authLoading, user, db, router])
+  }, [mounted, authLoading, user, db, router])
 
-  // Minimal empty shell to avoid hydration mismatches
+  // Return nothing to ensure a silent, blank transition during the redirect phase
   return null
 }

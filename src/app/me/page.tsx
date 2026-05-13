@@ -72,7 +72,7 @@ export default function MePage() {
 
       <div className="relative z-10">
         <header className="relative pt-10 pb-6 px-6 flex flex-col items-center text-center">
-          {/* Top Right Visitor Count */}
+          {/* Top Right Visitor Count Badge */}
           <div className="absolute top-4 right-6">
             <div className="bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
               <span className="text-[9px] font-black text-white">12.5k Visitors</span>
@@ -80,7 +80,7 @@ export default function MePage() {
           </div>
 
           <div className="relative mb-3">
-            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted">
+            <div className="relative w-24 h-24 rounded-full shadow-2xl overflow-hidden bg-muted border-none">
               <Image 
                 src={profile.photoURL || `https://picsum.photos/seed/${user.uid}/300/300`} 
                 alt={profile.name} 
