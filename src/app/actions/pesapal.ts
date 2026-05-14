@@ -7,7 +7,7 @@ import { PESAPAL_CONFIG } from '@/lib/pesapal-config';
  */
 export async function getAccessToken() {
   if (!PESAPAL_CONFIG.CONSUMER_KEY || !PESAPAL_CONFIG.CONSUMER_SECRET) {
-    return { error: "PesaPal credentials missing. Please check your environment variables." };
+    return { error: "PesaPal credentials missing in environment variables (PESAPAL_CONSUMER_KEY/SECRET)." };
   }
 
   try {
@@ -24,15 +24,17 @@ export async function getAccessToken() {
     });
 
     const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      return { error: `Invalid response format from PesaPal (Status ${response.status}): ${text.substring(0, 200)}` };
+    if (!response.ok) {
+      return { error: `Auth failed (Status ${response.status}): ${text.substring(0, 200)}` };
     }
 
-    if (data.token) return { token: data.token };
-    return { error: data.error?.message || data.message || `Auth failed with status ${response.status}` };
+    try {
+      const data = JSON.parse(text);
+      if (data.token) return { token: data.token };
+      return { error: data.error?.message || data.message || "No token returned in response" };
+    } catch (e) {
+      return { error: `Invalid JSON from Auth API: ${text.substring(0, 100)}` };
+    }
   } catch (error: any) {
     return { error: error.message };
   }
@@ -46,7 +48,7 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
   if (tokenRes.error) return { success: false, error: `Auth Error: ${tokenRes.error}` };
 
   if (!PESAPAL_CONFIG.IPN_ID) {
-    return { success: false, error: "IPN ID missing. Please visit /api/pesapal/setup to register your IPN URL." };
+    return { success: false, error: "IPN ID missing. Please configure PESAPAL_IPN_ID in Vercel." };
   }
 
   const orderData = {
@@ -79,17 +81,19 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
     });
 
     const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
+    if (!response.ok) {
       return { success: false, error: `Order request failed (Status ${response.status}): ${text.substring(0, 200)}` };
     }
 
-    if (data.redirect_url) {
-      return { success: true, redirect_url: data.redirect_url, order_tracking_id: data.order_tracking_id };
+    try {
+      const data = JSON.parse(text);
+      if (data.redirect_url) {
+        return { success: true, redirect_url: data.redirect_url, order_tracking_id: data.order_tracking_id };
+      }
+      return { success: false, error: data.error?.message || data.message || "No redirect URL in response" };
+    } catch (e) {
+      return { success: false, error: `Invalid JSON from Order API: ${text.substring(0, 100)}` };
     }
-    return { success: false, error: data.error?.message || data.message || `Order failed with status ${response.status}` };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -117,10 +121,14 @@ export async function registerIPN() {
     });
 
     const text = await response.text();
+    if (!text || text.trim() === "") {
+      return { info: "Registration returned empty response (Success usually returns an object)." };
+    }
+
     try {
       return JSON.parse(text);
     } catch (e) {
-      return { error: `Register IPN failed (Status ${response.status}): ${text.substring(0, 200)}` };
+      return { error: `Parsing Register IPN failed: ${text.substring(0, 200)}` };
     }
   } catch (error: any) {
     return { error: error.message };
@@ -144,10 +152,14 @@ export async function getIpnList() {
     });
     
     const text = await response.text();
+    if (!text || text.trim() === "") {
+      return { info: "IPN List is empty." };
+    }
+
     try {
       return JSON.parse(text);
     } catch (e) {
-      return { error: `Get IPN list failed (Status ${response.status}): ${text.substring(0, 200)}` };
+      return { error: `Parsing IPN list failed: ${text.substring(0, 200)}` };
     }
   } catch (error: any) {
     return { error: error.message };
