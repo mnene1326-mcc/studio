@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, Menu, Check, CreditCard, Loader2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { initiatePesaPalPayment } from "@/app/actions/pesapal"
-import { PESAPAL_CONFIG } from "@/lib/pesapal-config"
+import { initiateIntaSendPayment } from "@/app/actions/intasend"
+import { INTASEND_CONFIG } from "@/lib/intasend-config"
 
 interface UserProfile {
   uid: string
@@ -54,14 +54,14 @@ function RechargeContent() {
     
     setLoading(true)
     try {
-      const result = await initiatePesaPalPayment(pkg.price, {
+      const result = await initiateIntaSendPayment(pkg.price, {
         uid: user.uid,
         email: user.email || `user_${user.uid}@matchflow.app`,
         name: profile.name || "MatchFlow User"
       })
 
-      if (result.success && result.redirect_url) {
-        window.location.href = result.redirect_url
+      if (result.success && result.url) {
+        window.location.href = result.url
       } else {
         toast({
           variant: "destructive",
@@ -94,12 +94,12 @@ function RechargeContent() {
 
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
-          {!PESAPAL_CONFIG.IPN_ID && (
+          {!INTASEND_CONFIG.SECRET_KEY && (
             <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Configuration Required</p>
-                <p className="text-xs font-medium text-amber-700">The IPN ID is missing. Payments will not work until you run the setup tool at <span className="font-black">/api/pesapal/setup</span>.</p>
+                <p className="text-xs font-medium text-amber-700">IntaSend Secret Key is missing. Please add it to Vercel Environment Variables.</p>
               </div>
             </div>
           )}
@@ -114,7 +114,7 @@ function RechargeContent() {
 
           <div className="flex items-center justify-between">
              <h3 className="text-sm font-black text-black">Top Up Packages</h3>
-             <div className="bg-black text-white px-2.5 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-transform cursor-pointer">
+             <div className="bg-black text-white px-2.5 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all cursor-pointer">
                 <span className="text-[10px] font-black uppercase">Kenya</span>
              </div>
           </div>
@@ -149,7 +149,7 @@ function RechargeContent() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          disabled={loading || !PESAPAL_CONFIG.IPN_ID}
+          disabled={loading || !INTASEND_CONFIG.SECRET_KEY}
           className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
           onClick={handlePayment}
         >
