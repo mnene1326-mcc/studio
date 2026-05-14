@@ -27,7 +27,9 @@
         "blocking": { "type": "array", "items": { "type": "string" }, "description": "List of UIDs this user has blocked." },
         "blockedBy": { "type": "array", "items": { "type": "string" }, "description": "List of UIDs this user is blocked by." },
         "isVerified": { "type": "boolean" },
-        "isDeleted": { "type": "boolean", "default": false }
+        "isDeleted": { "type": "boolean", "default": false },
+        "isAdmin": { "type": "boolean", "default": false },
+        "isCoinSeller": { "type": "boolean", "default": false }
       },
       "required": ["uid", "email", "onboardingComplete"]
     },

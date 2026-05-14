@@ -59,6 +59,8 @@ interface UserProfile {
   coins?: number
   blocking?: string[]
   blockedBy?: string[]
+  isAdmin?: boolean
+  isCoinSeller?: boolean
 }
 
 const toMillisSafe = (ts: any): number => {
@@ -136,7 +138,10 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
       
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
+          <div className="flex items-center gap-1">
+            <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
+            {partner.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF]" />}
+          </div>
           <span className="text-[10px] text-gray-400 font-bold">
             {chat.lastMessageAt ? format(toDateSafe(chat.lastMessageAt), "HH:mm") : "..."}
           </span>
@@ -295,7 +300,10 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
     
-    if (currentUserProfile.gender === 'male') {
+    // Check if free messaging applies (Admin or CoinSeller involved)
+    const isFree = currentUserProfile.isAdmin || currentUserProfile.isCoinSeller || chatPartner?.isAdmin || chatPartner?.isCoinSeller;
+
+    if (!isFree && currentUserProfile.gender === 'male') {
       const currentCoins = currentUserProfile.coins || 0
       if (currentCoins < 15) {
         toast({

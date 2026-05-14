@@ -18,13 +18,28 @@ import {
   CircleDollarSign,
   ShieldCheck,
   Gem,
-  Loader2
+  Loader2,
+  Trophy,
+  Coins
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { awardCoinsAction } from "@/app/actions/admin"
 
 interface UserProfile {
+  uid: string
   name: string
   photoURL: string
   matchFlowId?: string
@@ -32,6 +47,106 @@ interface UserProfile {
   diamonds?: number
   isVerified?: boolean
   onboardingComplete?: boolean
+  isAdmin?: boolean
+  isCoinSeller?: boolean
+}
+
+function AwardCoinsDialog({ callerUid }: { callerUid: string }) {
+  const [targetId, setTargetId] = useState("")
+  const [amount, setAmount] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+
+  const handleAward = async () => {
+    if (!targetId || !amount || isNaN(Number(amount))) return
+    
+    setLoading(true)
+    try {
+      const result = await awardCoinsAction(callerUid, targetId, Number(amount))
+      if (result.success) {
+        toast({
+          title: "Coins Awarded",
+          description: result.message
+        })
+        setTargetId("")
+        setAmount("")
+        setOpen(false)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error
+        })
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button 
+          className="h-20 bg-gradient-to-br from-yellow-400 to-orange-500 hover:opacity-90 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-white active:scale-95 transition-all col-span-2 mt-4"
+        >
+          <div className="flex items-center gap-2">
+            <Trophy className="w-6 h-6" />
+            <span className="text-sm font-black uppercase tracking-widest">Award Coins Tool</span>
+          </div>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="rounded-3xl border-none p-8 max-w-[90vw] sm:max-w-md">
+        <DialogHeader className="items-center text-center space-y-2">
+          <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-2">
+            <Coins className="w-8 h-8 text-yellow-500" />
+          </div>
+          <DialogTitle className="text-xl font-black text-black">Award MatchFlow Coins</DialogTitle>
+          <DialogDescription className="text-xs font-bold text-gray-400">
+            Enter the user's numeric ID and the amount of coins to add to their balance instantly.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6 py-6">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Numeric MatchFlow ID</Label>
+            <Input 
+              placeholder="e.g. 7349281" 
+              value={targetId}
+              onChange={(e) => setTargetId(e.target.value)}
+              className="rounded-2xl h-14 border-gray-100 bg-gray-50 font-black text-center text-lg"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Amount to Award</Label>
+            <Input 
+              type="number" 
+              placeholder="e.g. 500" 
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="rounded-2xl h-14 border-gray-100 bg-gray-50 font-black text-center text-lg"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button 
+            onClick={handleAward}
+            disabled={loading || !targetId || !amount}
+            className="w-full h-16 rounded-full bg-black text-white font-black uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Award"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 export default function MePage() {
@@ -80,6 +195,8 @@ export default function MePage() {
     )
   }
 
+  const canAwardCoins = profile.isAdmin || profile.isCoinSeller
+
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
       <div className="absolute top-0 left-0 w-full h-[280px] bg-[#00A2FF] z-0" />
@@ -88,7 +205,9 @@ export default function MePage() {
         <header className="relative pt-12 pb-10 px-6 flex flex-col items-center text-center">
           <div className="absolute top-6 right-6">
             <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 shadow-sm flex items-center gap-1.5 active:scale-95 transition-transform cursor-pointer">
-              <span className="text-[9px] font-black text-white">12.5k Visitors</span>
+              <span className="text-[9px] font-black text-white">
+                {profile.isAdmin ? "SYSTEM ADMIN" : (profile.isCoinSeller ? "COIN SELLER" : "VERIFIED USER")}
+              </span>
             </div>
           </div>
 
@@ -106,7 +225,7 @@ export default function MePage() {
 
           <div className="flex items-center justify-center gap-1.5 mb-1">
             <h2 className="text-xl font-black text-white tracking-tight">{profile.name}</h2>
-            {profile.isVerified && <BadgeCheck className="w-4 h-4 text-white fill-blue-500" />}
+            {(profile.isVerified || profile.isAdmin) && <BadgeCheck className="w-4 h-4 text-white fill-blue-500" />}
           </div>
 
           <div className="inline-flex items-center gap-1.5 cursor-pointer active:opacity-60 transition-all" onClick={handleCopyId}>
@@ -138,6 +257,8 @@ export default function MePage() {
               </div>
               <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Diamond Income</span>
             </Button>
+
+            {canAwardCoins && <AwardCoinsDialog callerUid={user.uid} />}
           </div>
 
           <div className="bg-white rounded-3xl p-2 shadow-sm border border-black/5 overflow-hidden">
@@ -151,7 +272,7 @@ export default function MePage() {
                     <span className="font-black text-xs text-black">Identity Verification</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {profile.isVerified && <span className="text-[10px] font-black text-green-500 uppercase">Verified</span>}
+                    {(profile.isVerified || profile.isAdmin) && <span className="text-[10px] font-black text-green-500 uppercase">Verified</span>}
                     <ChevronRight className="w-4 h-4 text-gray-300" />
                   </div>
                 </Link>
