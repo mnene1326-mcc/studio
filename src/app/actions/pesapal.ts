@@ -108,7 +108,7 @@ export async function registerIPN() {
   if (tokenRes.error) return { error: tokenRes.error };
 
   try {
-    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLRegister/RegisterIPN`, {
+    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLSetup/RegisterIPN`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${tokenRes.token}`,
@@ -142,7 +142,7 @@ export async function getIpnList() {
   if (tokenRes.error) return { error: tokenRes.error };
 
   try {
-    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLRegister/GetIpnList`, {
+    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLSetup/GetIpnList`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${tokenRes.token}`,
