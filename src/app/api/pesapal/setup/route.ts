@@ -14,22 +14,27 @@ export async function GET() {
   }
 
   try {
-    // 1. Try to register IPN
+    // 1. Try to register the IPN for the current domain
     const registrationResult = await registerIPN();
     
-    // 2. Fetch current list to find the ID
-    const updatedListResult = await getIpnList();
+    // 2. Fetch all currently registered IPNs
+    const ipnList = await getIpnList();
+
+    // 3. Find if our URL is already in the list to make it easy for the user
+    const currentIpn = Array.isArray(ipnList) 
+      ? ipnList.find((item: any) => item.url === PESAPAL_CONFIG.IPN_URL)
+      : null;
 
     return NextResponse.json({
       message: "PesaPal Live Diagnostics",
       status: "Connected",
-      credentials_check: {
-        key_length: PESAPAL_CONFIG.CONSUMER_KEY.length,
-        secret_length: PESAPAL_CONFIG.CONSUMER_SECRET.length,
-      },
-      instruction: "Check 'currently_registered_ipns' below. Find the entry for your URL and copy its 'ipn_id' into Vercel ENV as PESAPAL_IPN_ID.",
+      target_url: PESAPAL_CONFIG.IPN_URL,
+      instruction: currentIpn 
+        ? `SUCCESS! Your IPN ID is found. Copy the value of 'recommended_ipn_id' below into Vercel as PESAPAL_IPN_ID.` 
+        : `Check 'currently_registered_ipns' below. If you don't see your URL, make sure it is publicly accessible.`,
+      recommended_ipn_id: currentIpn?.ipn_id || "Not found yet - check list below",
       registration_attempt: registrationResult,
-      currently_registered_ipns: updatedListResult
+      currently_registered_ipns: ipnList
     });
   } catch (error: any) {
     return NextResponse.json({
