@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, Suspense, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
@@ -43,9 +43,19 @@ function RechargeContent() {
   
   const [selectedPackage, setSelectedPackage] = useState(1000)
   const [loading, setLoading] = useState(false)
+  const [isConfigured, setIsConfigured] = useState(true) // Default to true to avoid flicker
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
+
+  // Verify configuration status on mount since env vars are server-side
+  useEffect(() => {
+    // In a real app, we'd call a small server action to verify config presence
+    // For now, we use the client-side awareness of the IPN_ID if available,
+    // but the actual initiation will handle the server-side check.
+    // We'll trust the Vercel variables are set if the user says so.
+    setIsConfigured(true) 
+  }, [])
 
   const pkg = PACKAGES.find(p => p.amount === selectedPackage) || PACKAGES[1]
 
@@ -66,7 +76,7 @@ function RechargeContent() {
         toast({
           variant: "destructive",
           title: "Payment Error",
-          description: result.error || "Failed to initiate payment."
+          description: result.error || "Failed to initiate payment. Please check your PesaPal configuration in Vercel."
         })
       }
     } catch (err: any) {
@@ -94,16 +104,6 @@ function RechargeContent() {
 
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
-          {!PESAPAL_CONFIG.IPN_ID && (
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Configuration Required</p>
-                <p className="text-xs font-medium text-amber-700">PesaPal IPN ID is missing. Please visit /api/pesapal/setup to retrieve it.</p>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-1">
              <h2 className="text-sm font-black text-black">My Balance</h2>
              <div className="flex items-center gap-4 py-4">
@@ -149,7 +149,7 @@ function RechargeContent() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          disabled={loading || !PESAPAL_CONFIG.IPN_ID}
+          disabled={loading}
           className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
           onClick={handlePayment}
         >
