@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, Menu, Check, CreditCard, Loader2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { initiateIntaSendPayment } from "@/app/actions/intasend"
-import { INTASEND_CONFIG } from "@/lib/intasend-config"
+import { initiatePesaPalPayment } from "@/app/actions/pesapal"
+import { PESAPAL_CONFIG } from "@/lib/pesapal-config"
 
 interface UserProfile {
   uid: string
@@ -54,14 +54,14 @@ function RechargeContent() {
     
     setLoading(true)
     try {
-      const result = await initiateIntaSendPayment(pkg.price, {
+      const result = await initiatePesaPalPayment(pkg.price, {
         uid: user.uid,
         email: user.email || `user_${user.uid}@matchflow.app`,
         name: profile.name || "MatchFlow User"
       })
 
-      if (result.success && result.url) {
-        window.location.href = result.url
+      if (result.success && result.redirect_url) {
+        window.location.href = result.redirect_url
       } else {
         toast({
           variant: "destructive",
@@ -94,12 +94,12 @@ function RechargeContent() {
 
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
-          {!INTASEND_CONFIG.SECRET_KEY && (
+          {!PESAPAL_CONFIG.IPN_ID && (
             <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Configuration Required</p>
-                <p className="text-xs font-medium text-amber-700">IntaSend Secret Key is missing. Please add it to Vercel Environment Variables.</p>
+                <p className="text-xs font-medium text-amber-700">PesaPal IPN ID is missing. Please visit /api/pesapal/setup to retrieve it.</p>
               </div>
             </div>
           )}
@@ -149,7 +149,7 @@ function RechargeContent() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          disabled={loading || !INTASEND_CONFIG.SECRET_KEY}
+          disabled={loading || !PESAPAL_CONFIG.IPN_ID}
           className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
           onClick={handlePayment}
         >

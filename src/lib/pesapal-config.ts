@@ -3,9 +3,9 @@
  */
 
 export const PESAPAL_CONFIG = {
-  // PesaPal Live Credentials - Now exclusively from Environment Variables
-  CONSUMER_KEY: process.env.PESAPAL_CONSUMER_KEY || "",
-  CONSUMER_SECRET: process.env.PESAPAL_CONSUMER_SECRET || "",
+  // PesaPal Live Credentials
+  CONSUMER_KEY: process.env.PESAPAL_CONSUMER_KEY || "+j6AMtLc7pWxJeMYW5dU1pi6yNoqk46D",
+  CONSUMER_SECRET: process.env.PESAPAL_CONSUMER_SECRET || "AENKdAqQnK3MxzEcmX7n90GRHOQ=",
   
   // IPN ID from PesaPal dashboard or setup tool
   IPN_ID: process.env.PESAPAL_IPN_ID || "", 

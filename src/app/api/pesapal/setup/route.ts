@@ -3,13 +3,13 @@ import { registerIPN, getIpnList } from '@/app/actions/pesapal';
 import { PESAPAL_CONFIG } from '@/lib/pesapal-config';
 
 /**
- * @fileOverview Setup tool to retrieve IPN ID from PesaPal Live using Environment Variables.
+ * @fileOverview Setup tool to retrieve IPN ID from PesaPal Live.
  */
 export async function GET() {
   if (!PESAPAL_CONFIG.CONSUMER_KEY || !PESAPAL_CONFIG.CONSUMER_SECRET) {
     return NextResponse.json({
       status: "Config Error",
-      message: "PesaPal credentials missing. Ensure PESAPAL_CONSUMER_KEY and PESAPAL_CONSUMER_SECRET are set in Vercel Environment Variables."
+      message: "PesaPal credentials missing. Check src/lib/pesapal-config.ts"
     }, { status: 400 });
   }
 
@@ -30,7 +30,7 @@ export async function GET() {
         key_length: PESAPAL_CONFIG.CONSUMER_KEY.length,
         secret_length: PESAPAL_CONFIG.CONSUMER_SECRET.length,
       },
-      instruction: "Check 'currently_registered_ipns' below. Find the entry for your URL and copy its 'ipn_id' into Vercel ENV as PESAPAL_IPN_ID.",
+      instruction: "Check 'currently_registered_ipns' below. Find the entry for your URL and copy its 'ipn_id' into Vercel ENV as PESAPAL_IPN_ID or src/lib/pesapal-config.ts.",
       initial_list: ipnList,
       registration_attempt: registrationResult,
       currently_registered_ipns: updatedList
