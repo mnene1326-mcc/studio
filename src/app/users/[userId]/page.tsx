@@ -9,7 +9,6 @@ import {
   ChevronLeft, 
   MessageSquare, 
   MoreHorizontal, 
-  User,
   BadgeCheck,
   Ban,
   Flag,
@@ -17,8 +16,7 @@ import {
   GraduationCap,
   Heart,
   Globe,
-  Calendar,
-  Info
+  Calendar
 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -215,21 +213,29 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
       {/* Full Screen Photo Modal */}
       {isPhotoOpen && (
-        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center animate-in fade-in duration-300">
+        <div 
+          className="fixed inset-0 z-[100] bg-black flex items-center justify-center animate-in fade-in duration-300"
+          onClick={() => setIsPhotoOpen(false)}
+        >
+          {/* Close button at top right */}
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => setIsPhotoOpen(false)}
-            className="absolute top-12 right-6 rounded-full bg-white/10 backdrop-blur-md text-white w-12 h-12 z-[110]"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsPhotoOpen(false);
+            }}
+            className="absolute top-12 right-6 rounded-full bg-white/20 backdrop-blur-xl text-white w-14 h-14 z-[110] hover:bg-white/40 border border-white/20 shadow-2xl"
           >
-            <X className="w-8 h-8" />
+            <X className="w-8 h-8 stroke-[3]" />
           </Button>
-          <div className="relative w-full h-full">
+          
+          <div className="relative w-full h-full p-4 flex items-center justify-center pointer-events-none">
             <Image 
               src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} 
               alt={profile.name} 
               fill 
-              className="object-contain" 
+              className="object-contain pointer-events-auto" 
               priority 
             />
           </div>
