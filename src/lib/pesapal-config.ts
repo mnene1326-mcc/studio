@@ -1,12 +1,16 @@
 /**
  * @fileOverview PesaPal Live Configuration
- * Replace the placeholder values with your actual PesaPal Live credentials.
  */
 
 export const PESAPAL_CONFIG = {
-  CONSUMER_KEY: process.env.PESAPAL_CONSUMER_KEY || "REPLACE_WITH_YOUR_LIVE_KEY",
-  CONSUMER_SECRET: process.env.PESAPAL_CONSUMER_SECRET || "REPLACE_WITH_YOUR_LIVE_SECRET",
-  IPN_ID: process.env.PESAPAL_IPN_ID || "", // Once you get this from /api/pesapal/setup, put it here
+  // Use the key provided by the user. 
+  // IMPORTANT: Replace the secret placeholder with your actual secret from PesaPal dashboard.
+  CONSUMER_KEY: process.env.PESAPAL_CONSUMER_KEY || "+j6AMtLc7pWxJeMYW5dU1pi6yNoqk46D",
+  CONSUMER_SECRET: process.env.PESAPAL_CONSUMER_SECRET || "REPLACE_WITH_YOUR_ACTUAL_LIVE_SECRET",
+  
+  // Once you get this from /api/pesapal/setup, paste it here:
+  IPN_ID: process.env.PESAPAL_IPN_ID || "", 
+  
   BASE_URL: "https://pay.pesapal.com/v3", // LIVE API URL
   IPN_URL: "https://matchflow-iota.vercel.app/api/pesapal-ipn"
 };
