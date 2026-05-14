@@ -19,9 +19,16 @@ export async function getAccessToken() {
       }),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return { error: `Invalid JSON response (Status ${response.status}): ${text.substring(0, 100)}` };
+    }
+
     if (data.token) return { token: data.token };
-    return { error: data.error?.message || 'Failed to get token' };
+    return { error: data.error?.message || data.message || 'Failed to get token' };
   } catch (error: any) {
     return { error: error.message };
   }
@@ -67,11 +74,18 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
       body: JSON.stringify(orderData),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return { success: false, error: `Order failed (Status ${response.status}): ${text.substring(0, 100)}` };
+    }
+
     if (data.redirect_url) {
       return { success: true, redirect_url: data.redirect_url, order_tracking_id: data.order_tracking_id };
     }
-    return { success: false, error: data.error?.message || 'Order failed' };
+    return { success: false, error: data.error?.message || data.message || 'Order failed' };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -98,7 +112,12 @@ export async function registerIPN() {
       }),
     });
 
-    return await response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { error: `Register IPN failed (Status ${response.status}): ${text.substring(0, 100)}` };
+    }
   } catch (error: any) {
     return { error: error.message };
   }
@@ -119,7 +138,13 @@ export async function getIpnList() {
         'Accept': 'application/json',
       }
     });
-    return await response.json();
+    
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      return { error: `Get IPN list failed (Status ${response.status}): ${text.substring(0, 100)}` };
+    }
   } catch (error: any) {
     return { error: error.message };
   }
