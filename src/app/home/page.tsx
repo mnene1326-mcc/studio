@@ -49,6 +49,7 @@ export default function HomePage() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
+  // Check authentication and onboarding status
   useEffect(() => {
     if (!authLoading) {
       if (!currentUser) {
@@ -77,9 +78,34 @@ export default function HomePage() {
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
 
+  // --- Scroll Restoration Logic ---
+  useEffect(() => {
+    if (!isMounted) return
+    const handleScroll = () => {
+      sessionStorage.setItem('home_scroll_pos', window.scrollY.toString())
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isMounted])
+
+  useEffect(() => {
+    if (!loading && users.length > 0 && isMounted) {
+      const savedPos = sessionStorage.getItem('home_scroll_pos')
+      if (savedPos) {
+        // Delay slightly to ensure layout has stabilized
+        const timer = setTimeout(() => {
+          window.scrollTo({ top: parseInt(savedPos), behavior: 'instant' })
+        }, 100)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [loading, users.length, isMounted])
+  // --------------------------------
+
   const handleRefresh = () => {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
+    sessionStorage.removeItem('home_scroll_pos') // Clear position on manual refresh
     setTimeout(() => {
       setIsRefreshing(false)
     }, 800)
@@ -105,7 +131,6 @@ export default function HomePage() {
   return (
     <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
-        {/* Blue Header - 72px high to land halfway through 112px buttons placed 16px from top */}
         <div className="h-[72px] bg-[#00A2FF] relative overflow-hidden">
           <div className="absolute -right-4 -top-10 rotate-[-12deg] opacity-20 select-none pointer-events-none">
             <span className="text-7xl font-logo text-white whitespace-nowrap">MatchFlow</span>

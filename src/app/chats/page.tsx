@@ -465,7 +465,7 @@ function ChatsContent() {
                 className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
                 onClick={() => setMessagesLimit(prev => prev + 20)}
                >
-                 <ChevronDown className="w-3 h-3" />
+                 <ChevronDown className="w-3.5 h-3.5" />
                  Load previous messages
                </Button>
             </div>
