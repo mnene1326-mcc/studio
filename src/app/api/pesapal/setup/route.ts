@@ -27,7 +27,7 @@ export async function GET() {
         key_length: PESAPAL_CONFIG.CONSUMER_KEY.length,
         secret_length: PESAPAL_CONFIG.CONSUMER_SECRET.length,
       },
-      instruction: "Look for the entry with your URL in 'currently_registered_ipns' below. Copy the 'ipn_id' and add it to PESAPAL_IPN_ID.",
+      instruction: "Check 'currently_registered_ipns' below. Find the entry for your URL and copy its 'ipn_id' into Vercel ENV as PESAPAL_IPN_ID.",
       registration_attempt: registrationResult,
       currently_registered_ipns: updatedListResult
     });

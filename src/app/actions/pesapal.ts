@@ -122,7 +122,7 @@ export async function registerIPN() {
     });
 
     const text = await response.text();
-    if (!text) return { error: "Empty response from RegisterIPN" };
+    if (!text) return { error: "Empty response from RegisterIPN (Status " + response.status + ")" };
     
     try {
       return JSON.parse(text);
@@ -152,7 +152,7 @@ export async function getIpnList() {
     });
 
     const text = await response.text();
-    if (!text) return { error: "Empty response from GetIpnList" };
+    if (!text) return { error: "Empty response from GetIpnList (Status " + response.status + ")" };
 
     try {
       return JSON.parse(text);
