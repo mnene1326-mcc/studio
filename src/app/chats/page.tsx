@@ -59,7 +59,7 @@ interface UserProfile {
 }
 
 const toMillisSafe = (ts: any): number => {
-  if (!ts) return Date.now(); // Handle null timestamps (temporary state)
+  if (!ts) return Date.now();
   if (typeof ts.toMillis === 'function') return ts.toMillis();
   if (ts.seconds !== undefined) return ts.seconds * 1000;
   if (typeof ts === 'number') return ts;
@@ -141,6 +141,7 @@ function ChatsContent() {
   const { user: currentUser } = useUser()
   const db = useFirestore()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
@@ -153,7 +154,6 @@ function ChatsContent() {
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
-  // FIX: Use limit() with orderBy("desc") to get newest chats at the top.
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
     return query(
@@ -173,12 +173,9 @@ function ChatsContent() {
     
     return [...userChatsRaw].filter(chat => {
       if (!chat.lastMessage || chat.lastMessage.trim() === "") return false
-
       const clearedAt = chat.clearedAt?.[currentUser.uid]
       const partnerId = chat.participants.find(p => p !== currentUser.uid)
-      
       if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
-
       if (!clearedAt) return true
       const lastAtMillis = toMillisSafe(chat.lastMessageAt)
       const clearedAtMillis = toMillisSafe(clearedAt)
@@ -205,7 +202,6 @@ function ChatsContent() {
       setChatId(null)
       return
     }
-
     let isMounted = true
     const findOrCreateChat = async () => {
       setIsInitializingChat(true)
@@ -213,12 +209,10 @@ function ChatsContent() {
         const chatsRef = collection(db, "chats")
         const chatsSnap = await getDocs(query(chatsRef, where("participants", "array-contains", currentUser.uid)))
         let existingChatId = null
-        
         chatsSnap.forEach((doc) => {
           const data = doc.data()
           if (data.participants?.includes(startWithId)) existingChatId = doc.id
         })
-
         if (!isMounted) return
         if (existingChatId) {
           setChatId(existingChatId)
@@ -244,7 +238,6 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db, toast])
 
-  // FIX: Use orderBy desc to handle newest messages correctly with flex-col-reverse
   const messagesQuery = useMemoFirebase(() => {
     if (!chatId) return null
     return query(
@@ -277,7 +270,6 @@ function ChatsContent() {
         })
         return
       }
-      
       const userRef = doc(db, "users", currentUser.uid)
       await updateDoc(userRef, { coins: increment(-15) }).catch((err) => {
          toast({ variant: "destructive", title: "Error", description: err.message })
@@ -286,6 +278,11 @@ function ChatsContent() {
 
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
     setNewMessage("")
+    
+    // Maintain focus on the input to keep the keyboard open
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
     
     try {
       await addDoc(collection(db, "chats", chatId, "messages"), msgData)
@@ -431,7 +428,6 @@ function ChatsContent() {
         </div>
       </header>
 
-      {/* FIX: Use flex-col-reverse for chat history. Newest messages are at the "start" of the DOM (visually bottom). */}
       <main className="flex-1 overflow-y-auto no-scrollbar bg-white flex flex-col-reverse">
         <div className="flex flex-col-reverse px-4 py-6 space-y-6 space-y-reverse">
           <div ref={messagesEndRef} />
@@ -491,18 +487,28 @@ function ChatsContent() {
           <div className="px-4 py-3 flex items-center gap-3">
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
               <input 
+                ref={inputRef}
                 placeholder="Start chatting..." 
                 className="bg-transparent border-none flex-1 outline-none text-sm font-bold placeholder:text-gray-400 text-black" 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSendMessage(newMessage);
+                  }
+                }}
               />
             </div>
             <Button 
               variant="ghost" 
               size="icon" 
               className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
-              onClick={() => handleSendMessage(newMessage)}
+              onMouseDown={(e) => {
+                // Prevent the button from taking focus which would close the keyboard
+                e.preventDefault();
+                handleSendMessage(newMessage);
+              }}
             >
               <Send className="w-6 h-6" />
             </Button>
