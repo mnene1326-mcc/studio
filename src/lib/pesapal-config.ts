@@ -9,7 +9,7 @@ export const PESAPAL_CONFIG = {
   
   // IPN ID from PesaPal dashboard or setup tool
   // Visit /api/pesapal/setup to get this.
-  IPN_ID: process.env.PESAPAL_IPN_ID || "", 
+  IPN_ID: process.env.PESAPAL_IPN_ID || "44ea6bc7-1865-4d88-99e6-da62d66142cb", 
   
   BASE_URL: "https://pay.pesapal.com/v3", // LIVE API URL
   IPN_URL: "https://matchflow-iota.vercel.app/api/pesapal-ipn"
