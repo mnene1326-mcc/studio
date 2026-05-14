@@ -1,14 +1,14 @@
+'use client';
 
-import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { usePresence } from '@/hooks/use-presence';
 
-export const metadata: Metadata = {
-  title: 'MatchFlow - Connect with Heart',
-  description: 'The premier dating app for East Africa.',
-  manifest: '/manifest.json',
-};
+function PresenceManager({ children }: { children: React.ReactNode }) {
+  usePresence();
+  return <>{children}</>;
+}
 
 export default function RootLayout({
   children,
@@ -25,24 +25,15 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
       </head>
       <body className="font-body antialiased bg-background min-h-screen flex flex-col">
         <FirebaseClientProvider>
-          <div className="native-page-transition flex-1 flex flex-col">
-            {children}
-          </div>
-          <Toaster />
+          <PresenceManager>
+            <div className="native-page-transition flex-1 flex flex-col">
+              {children}
+            </div>
+            <Toaster />
+          </PresenceManager>
         </FirebaseClientProvider>
       </body>
     </html>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -27,10 +26,12 @@ import {
   Loader2, 
   ChevronDown,
   Lock,
-  Trash2
+  Trash2,
+  Circle
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { useUserPresence } from "@/hooks/use-presence"
 
 interface Message {
   id: string
@@ -46,6 +47,7 @@ interface Chat {
   lastMessageAt?: any
   createdAt: any
   clearedAt?: Record<string, any>
+  unreadCount?: Record<string, number>
 }
 
 interface UserProfile {
@@ -80,12 +82,13 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
   const [partner, setPartner] = useState<UserProfile | null>(null)
+  const presence = useUserPresence(partner?.uid)
   
   const partnerId = chat.participants.find(id => id !== currentUserUid)
+  const unread = chat.unreadCount?.[currentUserUid] || 0
 
   useEffect(() => {
     if (!partnerId) return
-    // Fetch partner data once rather than keeping a listener to save on usage
     getDoc(doc(db, "users", partnerId)).then(snap => {
       if (snap.exists()) setPartner({ uid: snap.id, ...snap.data() } as UserProfile)
     })
@@ -120,10 +123,15 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
-        <AvatarImage src={partner.photoURL} className="object-cover" />
-        <AvatarFallback className="bg-[#00A2FF] text-white font-black text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
-      </Avatar>
+      <div className="relative">
+        <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
+          <AvatarImage src={partner.photoURL} className="object-cover" />
+          <AvatarFallback className="bg-[#00A2FF] text-white font-black text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
+        </Avatar>
+        {presence?.state === 'online' && (
+          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
+        )}
+      </div>
       
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
@@ -132,9 +140,16 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
             {chat.lastMessageAt ? format(toDateSafe(chat.lastMessageAt), "HH:mm") : "..."}
           </span>
         </div>
-        <p className="text-xs text-gray-500 truncate font-bold">
-          {chat.lastMessage || "Start talking..."}
-        </p>
+        <div className="flex justify-between items-center">
+          <p className={cn("text-xs truncate font-bold flex-1 pr-2", unread > 0 ? "text-black font-black" : "text-gray-500")}>
+            {chat.lastMessage || "Start talking..."}
+          </p>
+          {unread > 0 && (
+            <div className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+              {unread}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -196,6 +211,7 @@ function ChatsContent() {
 
   const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
   const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
+  const partnerPresence = useUserPresence(chatPartner?.uid)
 
   const isBlocked = useMemo(() => {
     if (!chatPartner || !currentUserProfile) return false
@@ -203,6 +219,16 @@ function ChatsContent() {
     const blockedBy = currentUserProfile.blockedBy || []
     return blocking.includes(chatPartner.uid) || blockedBy.includes(chatPartner.uid)
   }, [chatPartner, currentUserProfile])
+
+  // Clear unread count when opening chat
+  useEffect(() => {
+    if (chatId && currentUser?.uid) {
+      const chatRef = doc(db, "chats", chatId);
+      updateDoc(chatRef, {
+        [`unreadCount.${currentUser.uid}`]: 0
+      });
+    }
+  }, [chatId, currentUser?.uid, db]);
 
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) {
@@ -229,6 +255,7 @@ function ChatsContent() {
             createdAt: serverTimestamp(),
             lastMessage: "",
             lastMessageAt: serverTimestamp(),
+            unreadCount: { [currentUser.uid]: 0, [startWithId]: 0 }
           }
           const newChatDoc = await addDoc(chatsRef, chatData)
           if (isMounted) setChatId(newChatDoc.id)
@@ -283,6 +310,8 @@ function ChatsContent() {
       })
     }
 
+    const partnerId = currentChatData?.participants.find(p => p !== currentUser.uid);
+
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
     setNewMessage("")
     
@@ -292,10 +321,14 @@ function ChatsContent() {
     
     try {
       await addDoc(collection(db, "chats", chatId, "messages"), msgData)
-      await updateDoc(doc(db, "chats", chatId), { 
+      const chatUpdate: any = { 
         lastMessage: text.trim(), 
         lastMessageAt: serverTimestamp()
-      })
+      };
+      if (partnerId) {
+        chatUpdate[`unreadCount.${partnerId}`] = increment(1);
+      }
+      await updateDoc(doc(db, "chats", chatId), chatUpdate)
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
     }
@@ -306,7 +339,8 @@ function ChatsContent() {
     try {
       const chatRef = doc(db, "chats", chatToDelete.id)
       await updateDoc(chatRef, {
-        [`clearedAt.${currentUser.uid}`]: serverTimestamp()
+        [`clearedAt.${currentUser.uid}`]: serverTimestamp(),
+        [`unreadCount.${currentUser.uid}`]: 0
       })
       toast({ title: "Chat deleted", description: "The conversation has been cleared." })
     } catch (err: any) {
@@ -422,9 +456,17 @@ function ChatsContent() {
           </Button>
         </div>
         
-        <h3 className="font-black text-sm tracking-tight text-center flex-1 text-black uppercase truncate px-2">
-          {chatPartner?.name || '...'}
-        </h3>
+        <div className="flex flex-col items-center justify-center flex-1 min-w-0 px-2">
+          <h3 className="font-black text-sm tracking-tight text-center text-black uppercase truncate w-full">
+            {chatPartner?.name || '...'}
+          </h3>
+          {partnerPresence?.state === 'online' && (
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Online</span>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-3">
           <Avatar className="w-8 h-8 rounded-full border border-gray-100">

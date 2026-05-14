@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -73,8 +72,8 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(displayLimit + 20)
-  ), [db, displayLimit])
+    limit(50) // Fetch enough for filtering
+  ), [db])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
 
@@ -92,7 +91,6 @@ export default function HomePage() {
     if (!loading && users.length > 0 && isMounted) {
       const savedPos = sessionStorage.getItem('home_scroll_pos')
       if (savedPos) {
-        // Delay slightly to ensure layout has stabilized
         const timer = setTimeout(() => {
           window.scrollTo({ top: parseInt(savedPos), behavior: 'instant' })
         }, 100)
@@ -100,12 +98,11 @@ export default function HomePage() {
       }
     }
   }, [loading, users.length, isMounted])
-  // --------------------------------
 
   const handleRefresh = () => {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
-    sessionStorage.removeItem('home_scroll_pos') // Clear position on manual refresh
+    sessionStorage.removeItem('home_scroll_pos')
     setTimeout(() => {
       setIsRefreshing(false)
     }, 800)
@@ -121,10 +118,18 @@ export default function HomePage() {
       if (!genderMatch) return false;
       if (activeTab === 'Nearby') return u.country === currentUserProfile.country;
       return true;
-    }).slice(0, displayLimit)
+    })
+    
     const seed = refreshSeed || 0;
-    return [...baseList].sort((a, b) => (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed)));
-  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, displayLimit])
+    const sorted = [...baseList].sort((a, b) => (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed)));
+    return sorted;
+  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
+
+  const paginatedUsers = useMemo(() => {
+    return filteredUsers.slice(0, displayLimit);
+  }, [filteredUsers, displayLimit]);
+
+  const hasMore = paginatedUsers.length < filteredUsers.length;
 
   if (!isMounted || authLoading || !currentUser) return null
 
@@ -171,14 +176,14 @@ export default function HomePage() {
         </div>
 
         <main className="px-4 pt-3">
-          {loading && filteredUsers.length === 0 ? (
+          {loading && paginatedUsers.length === 0 ? (
             <div className="grid grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />)}
             </div>
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-2 gap-3">
-                {filteredUsers.map((user) => (
+                {paginatedUsers.map((user) => (
                   <Card key={user.uid} className="relative overflow-hidden border-none aspect-[1/1.2] rounded-2xl group cursor-pointer shadow-xl bg-white" onClick={() => router.push(`/users/${user.uid}`)}>
                     <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
                     <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-black text-[12px] uppercase shadow-md" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
@@ -193,7 +198,7 @@ export default function HomePage() {
                   </Card>
                 ))}
               </div>
-              {users.length >= displayLimit && (
+              {hasMore && (
                 <div className="flex justify-center pb-8">
                   <Button variant="ghost" className="text-gray-400 font-black text-[9px] uppercase tracking-widest gap-2" onClick={() => setDisplayLimit(prev => prev + 10)}>
                     <ChevronDown className="w-3.5 h-3.5" />

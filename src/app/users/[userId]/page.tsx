@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, use, useState } from "react"
@@ -30,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
+import { useUserPresence } from "@/hooks/use-presence"
 
 interface UserProfile {
   uid: string
@@ -52,6 +52,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   const db = useFirestore()
   const { user: currentUser } = useUser()
   const { toast } = useToast()
+  const presence = useUserPresence(userId)
 
   const [isPhotoOpen, setIsPhotoOpen] = useState(false)
 
@@ -149,6 +150,14 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Online Badge on Image */}
+        {presence?.state === 'online' && (
+          <div className="absolute bottom-6 left-8 bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-500">
+            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+            Online Now
+          </div>
+        )}
       </div>
 
       {/* Details Section */}
@@ -172,8 +181,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         {profile.interests && (
           <section className="space-y-3">
             <div className="flex items-center gap-2 text-gray-400">
-              <Info className="w-4 h-4" />
-              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">About Me</h2>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">About Me</span>
             </div>
             <p className="text-sm font-medium text-gray-600 leading-relaxed italic border-l-4 border-blue-100 pl-4">
               "{profile.interests}"
