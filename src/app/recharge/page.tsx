@@ -27,6 +27,7 @@ function CoinIcon({ className }: { className?: string }) {
 }
 
 const PACKAGES = [
+  { amount: 10, price: 1.0 },
   { amount: 500, price: 50.0 },
   { amount: 1000, price: 100.0 },
   { amount: 2000, price: 200.0 },
