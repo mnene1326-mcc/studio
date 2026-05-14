@@ -24,18 +24,22 @@ export async function getAccessToken() {
     });
 
     const text = await response.text();
+    if (!response.ok) {
+      return { error: `Auth failed (${response.status}): ${text.substring(0, 100)}` };
+    }
+
     let data;
     try {
       data = JSON.parse(text);
     } catch {
-      return { error: `Authentication failed. Server returned non-JSON: ${text.substring(0, 100)}` };
+      return { error: `Auth returned non-JSON: ${text.substring(0, 100)}` };
     }
     
-    if (response.ok && data.token) {
+    if (data.token) {
       return { token: data.token };
     }
     
-    return { error: data.error?.message || data.message || `Authentication failed with status ${response.status}` };
+    return { error: data.message || "No token returned from PesaPal." };
   } catch (error: any) {
     return { error: `Fetch error: ${error.message}` };
   }
@@ -83,14 +87,14 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
 
     const text = await response.text();
     if (!response.ok) {
-      return { success: false, error: `Order Request failed (${response.status}): ${text.substring(0, 150)}` };
+      return { success: false, error: `Order failed (${response.status}): ${text.substring(0, 150)}` };
     }
 
     const data = JSON.parse(text);
     if (data.redirect_url) {
       return { success: true, redirect_url: data.redirect_url };
     }
-    return { success: false, error: data.message || "Failed to initiate payment: No redirect URL returned." };
+    return { success: false, error: data.message || "No redirect URL returned." };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -118,10 +122,12 @@ export async function registerIPN() {
     });
 
     const text = await response.text();
+    if (!text) return { error: "Empty response from RegisterIPN" };
+    
     try {
       return JSON.parse(text);
     } catch {
-      return { status: response.status, body: text || "Empty response from server" };
+      return { status: response.status, body: text };
     }
   } catch (error: any) {
     return { error: error.message };
@@ -146,10 +152,12 @@ export async function getIpnList() {
     });
 
     const text = await response.text();
+    if (!text) return { error: "Empty response from GetIpnList" };
+
     try {
       return JSON.parse(text);
     } catch {
-      return { status: response.status, body: text || "Empty response from server" };
+      return { status: response.status, body: text };
     }
   } catch (error: any) {
     return { error: error.message };
