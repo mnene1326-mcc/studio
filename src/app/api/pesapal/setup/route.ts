@@ -9,7 +9,7 @@ export async function GET() {
   if (!PESAPAL_CONFIG.CONSUMER_KEY || !PESAPAL_CONFIG.CONSUMER_SECRET) {
     return NextResponse.json({
       status: "Config Error",
-      message: "PesaPal credentials missing. Check src/lib/pesapal-config.ts"
+      message: "PesaPal credentials missing in src/lib/pesapal-config.ts"
     }, { status: 400 });
   }
 
@@ -30,7 +30,7 @@ export async function GET() {
         key_length: PESAPAL_CONFIG.CONSUMER_KEY.length,
         secret_length: PESAPAL_CONFIG.CONSUMER_SECRET.length,
       },
-      instruction: "Check 'currently_registered_ipns' below. Find the entry for your URL and copy its 'ipn_id' into Vercel ENV as PESAPAL_IPN_ID or src/lib/pesapal-config.ts.",
+      instruction: "Check 'currently_registered_ipns' below. Find the entry for your URL and copy its 'ipn_id' into src/lib/pesapal-config.ts.",
       initial_list: ipnList,
       registration_attempt: registrationResult,
       currently_registered_ipns: updatedList

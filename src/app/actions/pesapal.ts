@@ -23,13 +23,18 @@ export async function getAccessToken() {
       }),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      return { error: `Auth Request failed (${response.status}): ${text}` };
+    }
+
     const data = await response.json();
-    if (response.ok && data.token) {
+    if (data.token) {
       return { token: data.token };
     }
-    return { error: data.error?.message || data.message || "Authentication failed." };
+    return { error: data.error?.message || data.message || "Authentication failed: No token returned." };
   } catch (error: any) {
-    return { error: error.message };
+    return { error: `Fetch error: ${error.message}` };
   }
 }
 
@@ -41,7 +46,7 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
   if (tokenRes.error) return { success: false, error: `Auth Error: ${tokenRes.error}` };
 
   if (!PESAPAL_CONFIG.IPN_ID) {
-    return { success: false, error: "IPN ID missing. Please configure it in Vercel or the config file." };
+    return { success: false, error: "IPN ID missing. Please configure it in the config file." };
   }
 
   const orderData = {
@@ -73,11 +78,16 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
       body: JSON.stringify(orderData),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      return { success: false, error: `Order Request failed (${response.status}): ${text}` };
+    }
+
     const data = await response.json();
-    if (response.ok && data.redirect_url) {
+    if (data.redirect_url) {
       return { success: true, redirect_url: data.redirect_url };
     }
-    return { success: false, error: data.error?.message || data.message || "Failed to initiate payment." };
+    return { success: false, error: data.error?.message || data.message || "Failed to initiate payment: No redirect URL." };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -104,6 +114,11 @@ export async function registerIPN() {
       }),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      return { error: `IPN Registration failed (${response.status}): ${text}` };
+    }
+
     return await response.json();
   } catch (error: any) {
     return { error: error.message };
@@ -125,6 +140,12 @@ export async function getIpnList() {
         'Accept': 'application/json',
       }
     });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return { error: `Get IPN List failed (${response.status}): ${text}` };
+    }
+
     return await response.json();
   } catch (error: any) {
     return { error: error.message };
