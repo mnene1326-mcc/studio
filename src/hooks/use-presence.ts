@@ -1,15 +1,18 @@
+
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ref, onValue, set, onDisconnect, serverTimestamp } from 'firebase/database';
-import { useAuth, useDatabase } from '@/firebase';
+import { useAuth, useDatabase, useUser } from '@/firebase';
 
+/**
+ * Hook to manage the current user's online presence in Realtime Database.
+ */
 export function usePresence() {
-  const auth = useAuth();
+  const { user } = useUser();
   const database = useDatabase();
 
   useEffect(() => {
-    const user = auth.currentUser;
     if (!user) return;
 
     const userStatusDatabaseRef = ref(database, `/status/${user.uid}`);
@@ -34,11 +37,12 @@ export function usePresence() {
     return () => {
       unsubscribe();
     };
-  }, [auth.currentUser, database]);
+  }, [user, database]);
 }
 
-import { useState } from 'react';
-
+/**
+ * Hook to listen to a specific user's presence state.
+ */
 export function useUserPresence(uid: string | undefined) {
   const database = useDatabase();
   const [presence, setPresence] = useState<{ state: string; last_changed: number } | null>(null);
@@ -52,7 +56,12 @@ export function useUserPresence(uid: string | undefined) {
     const statusRef = ref(database, `/status/${uid}`);
     const unsubscribe = onValue(statusRef, (snapshot) => {
       const data = snapshot.val();
-      setPresence(data);
+      // Only set presence if state is actually 'online' to fulfill "don't show anything when off"
+      if (data && data.state === 'online') {
+        setPresence(data);
+      } else {
+        setPresence(null);
+      }
     });
 
     return () => unsubscribe();
