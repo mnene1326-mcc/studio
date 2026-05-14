@@ -99,6 +99,8 @@ function OnboardingContent() {
       matchFlowId: existingData?.matchFlowId || generateMatchFlowId(),
       isDeleted: false,
       isVerified: false,
+      isAdmin: false, // Default to false for all new accounts
+      isCoinSeller: false, // Default to false for all new accounts
       blocking: [],
       blockedBy: []
     }

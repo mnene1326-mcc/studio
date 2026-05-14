@@ -20,7 +20,8 @@ import {
   Gem,
   Loader2,
   Trophy,
-  Coins
+  Coins,
+  Users
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -36,7 +37,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { awardCoinsAction } from "@/app/actions/admin"
+import { awardCoinsAction, toggleCoinSellerAction } from "@/app/actions/admin"
 
 interface UserProfile {
   uid: string
@@ -49,6 +50,88 @@ interface UserProfile {
   onboardingComplete?: boolean
   isAdmin?: boolean
   isCoinSeller?: boolean
+}
+
+function ManageRolesDialog({ callerUid }: { callerUid: string }) {
+  const [targetId, setTargetId] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+
+  const handleRoleUpdate = async (setAsSeller: boolean) => {
+    if (!targetId) return
+    setLoading(true)
+    try {
+      const result = await toggleCoinSellerAction(callerUid, targetId, setAsSeller)
+      if (result.success) {
+        toast({ title: "Role Updated", description: result.message })
+        setOpen(false)
+        setTargetId("")
+      } else {
+        toast({ variant: "destructive", title: "Error", description: result.error })
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button 
+          className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-purple-600 active:scale-95 transition-all col-span-2 mt-4"
+        >
+          <div className="flex items-center gap-2">
+            <Users className="w-6 h-6" />
+            <span className="text-sm font-black uppercase tracking-widest">Manage Roles</span>
+          </div>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="rounded-3xl border-none p-8 max-w-[90vw] sm:max-w-md">
+        <DialogHeader className="items-center text-center space-y-2">
+          <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mb-2">
+            <Users className="w-8 h-8 text-purple-600" />
+          </div>
+          <DialogTitle className="text-xl font-black text-black">Manage User Roles</DialogTitle>
+          <DialogDescription className="text-xs font-bold text-gray-400">
+            Admins can appoint or remove Coin Sellers using their numeric MatchFlow ID.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6 py-6">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Numeric MatchFlow ID</Label>
+            <Input 
+              placeholder="e.g. 7349281" 
+              value={targetId}
+              onChange={(e) => setTargetId(e.target.value)}
+              className="rounded-2xl h-14 border-gray-100 bg-gray-50 font-black text-center text-lg"
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="flex-col gap-3">
+          <Button 
+            onClick={() => handleRoleUpdate(true)}
+            disabled={loading || !targetId}
+            className="w-full h-14 rounded-full bg-purple-600 text-white font-black uppercase tracking-widest text-xs"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Make Coin Seller"}
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => handleRoleUpdate(false)}
+            disabled={loading || !targetId}
+            className="w-full h-14 rounded-full border-purple-200 text-purple-600 font-black uppercase tracking-widest text-xs"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Remove Seller Role"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 function AwardCoinsDialog({ callerUid }: { callerUid: string }) {
@@ -196,6 +279,7 @@ export default function MePage() {
   }
 
   const canAwardCoins = profile.isAdmin || profile.isCoinSeller
+  const canManageRoles = profile.isAdmin
 
   return (
     <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
@@ -259,6 +343,7 @@ export default function MePage() {
             </Button>
 
             {canAwardCoins && <AwardCoinsDialog callerUid={user.uid} />}
+            {canManageRoles && <ManageRolesDialog callerUid={user.uid} />}
           </div>
 
           <div className="bg-white rounded-3xl p-2 shadow-sm border border-black/5 overflow-hidden">
