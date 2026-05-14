@@ -1,14 +1,15 @@
-
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, CreditCard, Loader2 } from "lucide-react"
+import { ChevronLeft, Menu, Check, CreditCard, Loader2, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { initiatePesaPalPayment } from "@/app/actions/pesapal"
+import { PESAPAL_CONFIG } from "@/lib/pesapal-config"
 
 interface UserProfile {
   uid: string
@@ -36,7 +37,6 @@ const PACKAGES = [
 
 function RechargeContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
@@ -47,11 +47,37 @@ function RechargeContent() {
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
+  const pkg = PACKAGES.find(p => p.amount === selectedPackage) || PACKAGES[1]
+
   const handlePayment = async () => {
-    toast({
-      title: "Feature Unavailable",
-      description: "Payment integration is currently being updated. Please check back later.",
-    })
+    if (!user || !profile) return
+    
+    setLoading(true)
+    try {
+      const result = await initiatePesaPalPayment(pkg.price, {
+        uid: user.uid,
+        email: user.email || `user_${user.uid}@matchflow.app`,
+        name: profile.name || "MatchFlow User"
+      })
+
+      if (result.success && result.redirect_url) {
+        window.location.href = result.redirect_url
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Payment Error",
+          description: result.error || "Failed to initiate payment."
+        })
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -68,6 +94,16 @@ function RechargeContent() {
 
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
+          {!PESAPAL_CONFIG.IPN_ID && (
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Configuration Required</p>
+                <p className="text-xs font-medium text-amber-700">The IPN ID is missing. Payments will not work until you run the setup tool at <span className="font-black">/api/pesapal/setup</span>.</p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1">
              <h2 className="text-sm font-black text-black">My Balance</h2>
              <div className="flex items-center gap-4 py-4">
@@ -84,23 +120,23 @@ function RechargeContent() {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            {PACKAGES.map((pkg) => (
+            {PACKAGES.map((p) => (
               <div 
-                key={pkg.amount}
-                onClick={() => setSelectedPackage(pkg.amount)}
+                key={p.amount}
+                onClick={() => setSelectedPackage(p.amount)}
                 className={cn(
                   "aspect-square rounded-2xl border-2 flex flex-col items-center justify-center p-2 relative transition-all active:scale-95 cursor-pointer",
-                  selectedPackage === pkg.amount 
+                  selectedPackage === p.amount 
                     ? "border-[#00AEFF] bg-white shadow-md" 
                     : "border-gray-50 bg-white"
                 )}
               >
                 <CoinIcon className="w-8 h-8 mb-2" />
-                <span className={cn("text-xs font-black", selectedPackage === pkg.amount ? "text-[#00AEFF]" : "text-black")}>
-                  {pkg.amount}
+                <span className={cn("text-xs font-black", selectedPackage === p.amount ? "text-[#00AEFF]" : "text-black")}>
+                  {p.amount}
                 </span>
-                <span className="text-[8px] font-bold text-gray-400 mt-1">KES {pkg.price}</span>
-                {selectedPackage === pkg.amount && (
+                <span className="text-[8px] font-bold text-gray-400 mt-1">KES {p.price}</span>
+                {selectedPackage === p.amount && (
                   <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#00AEFF] rounded-full flex items-center justify-center">
                      <Check className="w-2.5 h-2.5 text-white stroke-[4]" />
                   </div>
@@ -113,8 +149,8 @@ function RechargeContent() {
 
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
-          disabled={loading}
-          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3"
+          disabled={loading || !PESAPAL_CONFIG.IPN_ID}
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
           onClick={handlePayment}
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
