@@ -2,11 +2,11 @@
 "use client"
 
 import { useState, Suspense, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, CreditCard, Loader2, AlertCircle } from "lucide-react"
+import { ChevronLeft, Menu, Check, CreditCard, Loader2, PartyPopper } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { initiatePesaPalPayment } from "@/app/actions/pesapal"
@@ -38,6 +38,7 @@ const PACKAGES = [
 
 function RechargeContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useUser()
   const db = useFirestore()
   const { toast } = useToast()
@@ -47,6 +48,19 @@ function RechargeContent() {
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
+
+  // Handle successful return from PesaPal
+  useEffect(() => {
+    const orderTrackingId = searchParams.get('OrderTrackingId');
+    if (orderTrackingId) {
+      toast({
+        title: "Payment Received!",
+        description: "Your transaction is being processed. Your coins will reflect in a few moments.",
+      });
+      // Clear URL params to prevent re-toasting and clean up history
+      router.replace('/recharge');
+    }
+  }, [searchParams, router, toast]);
 
   const pkg = PACKAGES.find(p => p.amount === selectedPackage)
 
@@ -70,6 +84,7 @@ function RechargeContent() {
       })
 
       if (result.success && result.redirect_url) {
+        // Redirect to PesaPal
         window.location.href = result.redirect_url
       } else {
         toast({
@@ -92,7 +107,12 @@ function RechargeContent() {
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
       <header className="px-4 h-16 flex items-center justify-between border-b bg-white sticky top-0 z-50">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => router.push("/me")} 
+          className="rounded-full"
+        >
           <ChevronLeft className="w-6 h-6 text-black" />
         </Button>
         <h1 className="text-base font-black text-black">Wallet</h1>

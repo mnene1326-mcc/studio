@@ -84,7 +84,7 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
     return { success: false, error: "IPN ID missing. Please visit /api/pesapal/setup to register your IPN URL." };
   }
 
-  // Improved Merchant Reference to include full UID for reliable IPN processing
+  // Merchant Reference includes full UID for reliable IPN processing
   const merchantReference = `MF_${user.uid}_${Date.now()}`;
 
   const orderData = {
