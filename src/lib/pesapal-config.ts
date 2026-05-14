@@ -4,8 +4,8 @@
 
 export const PESAPAL_CONFIG = {
   // PesaPal Live Credentials
-  CONSUMER_KEY: "+j6AMtLc7pWxJeMYW5dU1pi6yNoqk46D",
-  CONSUMER_SECRET: "AENKdAqQnK3MxzEcmX7n90GRHOQ=",
+  CONSUMER_KEY: process.env.PESAPAL_CONSUMER_KEY || "+j6AMtLc7pWxJeMYW5dU1pi6yNoqk46D",
+  CONSUMER_SECRET: process.env.PESAPAL_CONSUMER_SECRET || "AENKdAqQnK3MxzEcmX7n90GRHOQ=",
   
   // IPN ID from PesaPal dashboard or setup tool
   // Visit /api/pesapal/setup to get this.

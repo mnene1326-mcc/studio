@@ -23,13 +23,19 @@ export async function getAccessToken() {
       }),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return { error: `Authentication failed. Server returned non-JSON: ${text.substring(0, 100)}` };
+    }
     
     if (response.ok && data.token) {
       return { token: data.token };
     }
     
-    return { error: data.error?.message || data.message || "Authentication failed." };
+    return { error: data.error?.message || data.message || `Authentication failed with status ${response.status}` };
   } catch (error: any) {
     return { error: `Fetch error: ${error.message}` };
   }
@@ -43,7 +49,7 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
   if (tokenRes.error) return { success: false, error: `Auth Error: ${tokenRes.error}` };
 
   if (!PESAPAL_CONFIG.IPN_ID) {
-    return { success: false, error: "IPN ID missing. Please configure it in the config file." };
+    return { success: false, error: "IPN ID missing. Please visit /api/pesapal/setup to register your IPN URL." };
   }
 
   const orderData = {
@@ -75,16 +81,16 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
       body: JSON.stringify(orderData),
     });
 
+    const text = await response.text();
     if (!response.ok) {
-      const text = await response.text();
-      return { success: false, error: `Order Request failed (${response.status}): ${text}` };
+      return { success: false, error: `Order Request failed (${response.status}): ${text.substring(0, 150)}` };
     }
 
-    const data = await response.json();
+    const data = JSON.parse(text);
     if (data.redirect_url) {
       return { success: true, redirect_url: data.redirect_url };
     }
-    return { success: false, error: data.message || "Failed to initiate payment: No redirect URL." };
+    return { success: false, error: data.message || "Failed to initiate payment: No redirect URL returned." };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -115,7 +121,7 @@ export async function registerIPN() {
     try {
       return JSON.parse(text);
     } catch {
-      return { status: response.status, body: text };
+      return { status: response.status, body: text || "Empty response from server" };
     }
   } catch (error: any) {
     return { error: error.message };
@@ -143,7 +149,7 @@ export async function getIpnList() {
     try {
       return JSON.parse(text);
     } catch {
-      return { status: response.status, body: text };
+      return { status: response.status, body: text || "Empty response from server" };
     }
   } catch (error: any) {
     return { error: error.message };
