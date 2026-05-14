@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy, getDoc } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -79,10 +79,17 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   const db = useFirestore()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
+  const [partner, setPartner] = useState<UserProfile | null>(null)
   
   const partnerId = chat.participants.find(id => id !== currentUserUid)
-  const partnerRef = useMemoFirebase(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
-  const { data: partner } = useDoc<UserProfile>(partnerRef)
+
+  useEffect(() => {
+    if (!partnerId) return
+    // Fetch partner data once rather than keeping a listener to save on usage
+    getDoc(doc(db, "users", partnerId)).then(snap => {
+      if (snap.exists()) setPartner({ uid: snap.id, ...snap.data() } as UserProfile)
+    })
+  }, [db, partnerId])
 
   const handleTouchStart = () => {
     isLongPress.current = false
@@ -279,7 +286,6 @@ function ChatsContent() {
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
     setNewMessage("")
     
-    // Maintain focus on the input to keep the keyboard open
     setTimeout(() => {
       inputRef.current?.focus()
     }, 0)
@@ -505,7 +511,6 @@ function ChatsContent() {
               size="icon" 
               className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
               onMouseDown={(e) => {
-                // Prevent the button from taking focus which would close the keyboard
                 e.preventDefault();
                 handleSendMessage(newMessage);
               }}
