@@ -1,3 +1,4 @@
+
 'use server';
 
 import { PESAPAL_CONFIG } from '@/lib/pesapal-config';
@@ -46,6 +47,33 @@ export async function getAccessToken() {
 }
 
 /**
+ * Fetches transaction status from PesaPal.
+ */
+export async function getTransactionStatus(orderTrackingId: string) {
+  const tokenRes = await getAccessToken();
+  if (tokenRes.error) return { error: tokenRes.error };
+
+  try {
+    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/Transactions/GetTransactionStatus?orderTrackingId=${orderTrackingId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${tokenRes.token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      return { error: `Status check failed: ${response.status}` };
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+/**
  * Initiates a PesaPal transaction.
  */
 export async function initiatePesaPalPayment(amount: number, user: { uid: string, email: string, name: string }) {
@@ -56,8 +84,11 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
     return { success: false, error: "IPN ID missing. Please visit /api/pesapal/setup to register your IPN URL." };
   }
 
+  // Improved Merchant Reference to include full UID for reliable IPN processing
+  const merchantReference = `MF_${user.uid}_${Date.now()}`;
+
   const orderData = {
-    id: `MF-${Date.now()}-${user.uid.substring(0, 5)}`,
+    id: merchantReference,
     currency: "KES",
     amount: amount,
     description: "Recharge MatchFlow Coins",
