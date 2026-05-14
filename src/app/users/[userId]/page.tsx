@@ -13,7 +13,13 @@ import {
   User,
   BadgeCheck,
   Ban,
-  Flag
+  Flag,
+  X,
+  GraduationCap,
+  Heart,
+  Globe,
+  Calendar,
+  Info
 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -36,6 +42,8 @@ interface UserProfile {
   matchFlowId?: string
   isVerified?: boolean
   blocking?: string[]
+  educationLevel?: string
+  lookingFor?: string
 }
 
 export default function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
@@ -44,6 +52,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   const db = useFirestore()
   const { user: currentUser } = useUser()
   const { toast } = useToast()
+
+  const [isPhotoOpen, setIsPhotoOpen] = useState(false)
 
   const userRef = useMemo(() => doc(db, "users", userId), [db, userId])
   const { data: profile, loading } = useDoc<UserProfile>(userRef)
@@ -64,12 +74,10 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       const myRef = doc(db, "users", currentUser.uid)
       const targetRef = doc(db, "users", profile.uid)
 
-      // 1. Add to my blocking list
       await updateDoc(myRef, {
         blocking: arrayUnion(profile.uid)
       })
 
-      // 2. Add to their blockedBy list
       await updateDoc(targetRef, {
         blockedBy: arrayUnion(currentUser.uid)
       })
@@ -100,7 +108,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
   return (
     <div className="flex-1 bg-white flex flex-col min-h-screen pb-40">
-      <div className="relative h-[60vh] w-full">
+      {/* Photo Header */}
+      <div className="relative h-[65vh] w-full cursor-pointer" onClick={() => setIsPhotoOpen(true)}>
         <Image 
           src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} 
           alt={profile.name} 
@@ -109,7 +118,9 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           priority 
           data-ai-hint="person portrait" 
         />
-        <div className="absolute top-12 inset-x-0 px-6 flex justify-between items-center z-20">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        
+        <div className="absolute top-12 inset-x-0 px-6 flex justify-between items-center z-20" onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full bg-black/30 backdrop-blur-xl text-white w-10 h-10 shadow-xl border border-white/10">
             <ChevronLeft className="w-6 h-6" />
           </Button>
@@ -140,32 +151,85 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         </div>
       </div>
 
-      <div className="relative -mt-20 bg-white px-8 pt-8 space-y-6 min-h-[45vh] z-20 rounded-t-[3.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-black tracking-tight leading-none">{profile.name}</h1>
-              {profile.isVerified && <BadgeCheck className="w-5 h-5 text-[#00A2FF] fill-white" />}
-              <div className="w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                <User className="w-2 h-2 text-black" />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="bg-[#006400] text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">{profile.gender === 'female' ? '♀' : '♂'} {age}</span>
-              <span className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-[10px] font-black border border-black/5 uppercase tracking-widest">{profile.country || "Kenya"}</span>
-            </div>
+      {/* Details Section */}
+      <div className="relative z-10 bg-white px-8 pt-8 space-y-8">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-black text-black tracking-tight leading-none">{profile.name}</h1>
+            {profile.isVerified && <BadgeCheck className="w-6 h-6 text-[#00A2FF] fill-white" />}
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="bg-[#006400] text-white px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-sm">
+              {profile.gender === 'female' ? '♀' : '♂'} {age}
+            </span>
+            <span className="bg-blue-50 text-[#00A2FF] px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-blue-100">
+              ID: {profile.matchFlowId || "---"}
+            </span>
           </div>
         </div>
-        
+
         {profile.interests && (
-          <section className="space-y-2 pt-2 pb-10">
-            <h2 className="text-[10px] font-black text-black uppercase tracking-[0.2em] opacity-30">About Me</h2>
-            <p className="text-sm font-medium text-gray-600 leading-relaxed italic">"{profile.interests}"</p>
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-gray-400">
+              <Info className="w-4 h-4" />
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">About Me</h2>
+            </div>
+            <p className="text-sm font-medium text-gray-600 leading-relaxed italic border-l-4 border-blue-100 pl-4">
+              "{profile.interests}"
+            </p>
           </section>
         )}
+
+        <div className="grid grid-cols-1 gap-6 pt-4">
+          <DetailItem 
+            icon={Globe} 
+            label="From" 
+            value={profile.country || "Not specified"} 
+          />
+          <DetailItem 
+            icon={GraduationCap} 
+            label="Education" 
+            value={profile.educationLevel || "Not specified"} 
+          />
+          <DetailItem 
+            icon={Heart} 
+            label="Looking For" 
+            value={profile.lookingFor || "Not specified"} 
+          />
+          <DetailItem 
+            icon={Calendar} 
+            label="Birthday" 
+            value={profile.dob ? new Date(profile.dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : "Not specified"} 
+          />
+        </div>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-50">
+      {/* Full Screen Photo Modal */}
+      {isPhotoOpen && (
+        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center animate-in fade-in duration-300">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsPhotoOpen(false)}
+            className="absolute top-12 right-6 rounded-full bg-white/10 backdrop-blur-md text-white w-12 h-12 z-[110]"
+          >
+            <X className="w-8 h-8" />
+          </Button>
+          <div className="relative w-full h-full">
+            <Image 
+              src={profile.photoURL || `https://picsum.photos/seed/${profile.uid}/800/1000`} 
+              alt={profile.name} 
+              fill 
+              className="object-contain" 
+              priority 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Action Button */}
+      <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-50">
         <Button 
           className="w-full h-16 rounded-full bg-[#00A2FF] text-white text-sm font-black flex items-center justify-center gap-3 shadow-2xl premium-shadow uppercase tracking-widest active:scale-95 transition-all"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
@@ -173,6 +237,20 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
           <MessageSquare className="w-5 h-5 fill-current" />
           Send Message
         </Button>
+      </div>
+    </div>
+  )
+}
+
+function DetailItem({ icon: Icon, label, value }: { icon: any, label: string, value: string }) {
+  return (
+    <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100/50">
+      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+        <Icon className="w-5 h-5 text-[#00A2FF]" />
+      </div>
+      <div>
+        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
+        <p className="text-sm font-black text-black">{value}</p>
       </div>
     </div>
   )
