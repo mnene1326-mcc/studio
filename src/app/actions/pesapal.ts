@@ -3,9 +3,13 @@
 import { PESAPAL_CONFIG } from '@/lib/pesapal-config';
 
 /**
- * Fetches the Access Token from PesaPal Live API.
+ * Fetches the Access Token from PesaPal Live API with robust error handling.
  */
 export async function getAccessToken() {
+  if (!PESAPAL_CONFIG.CONSUMER_KEY || !PESAPAL_CONFIG.CONSUMER_SECRET) {
+    return { error: "PesaPal credentials missing. Please check your environment variables." };
+  }
+
   try {
     const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/Auth/RequestToken`, {
       method: 'POST',
@@ -24,11 +28,11 @@ export async function getAccessToken() {
     try {
       data = JSON.parse(text);
     } catch (e) {
-      return { error: `Invalid JSON response (Status ${response.status}): ${text.substring(0, 100)}` };
+      return { error: `Invalid response format from PesaPal (Status ${response.status}): ${text.substring(0, 200)}` };
     }
 
     if (data.token) return { token: data.token };
-    return { error: data.error?.message || data.message || 'Failed to get token' };
+    return { error: data.error?.message || data.message || `Auth failed with status ${response.status}` };
   } catch (error: any) {
     return { error: error.message };
   }
@@ -79,13 +83,13 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
     try {
       data = JSON.parse(text);
     } catch (e) {
-      return { success: false, error: `Order failed (Status ${response.status}): ${text.substring(0, 100)}` };
+      return { success: false, error: `Order request failed (Status ${response.status}): ${text.substring(0, 200)}` };
     }
 
     if (data.redirect_url) {
       return { success: true, redirect_url: data.redirect_url, order_tracking_id: data.order_tracking_id };
     }
-    return { success: false, error: data.error?.message || data.message || 'Order failed' };
+    return { success: false, error: data.error?.message || data.message || `Order failed with status ${response.status}` };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -116,7 +120,7 @@ export async function registerIPN() {
     try {
       return JSON.parse(text);
     } catch (e) {
-      return { error: `Register IPN failed (Status ${response.status}): ${text.substring(0, 100)}` };
+      return { error: `Register IPN failed (Status ${response.status}): ${text.substring(0, 200)}` };
     }
   } catch (error: any) {
     return { error: error.message };
@@ -143,7 +147,7 @@ export async function getIpnList() {
     try {
       return JSON.parse(text);
     } catch (e) {
-      return { error: `Get IPN list failed (Status ${response.status}): ${text.substring(0, 100)}` };
+      return { error: `Get IPN list failed (Status ${response.status}): ${text.substring(0, 200)}` };
     }
   } catch (error: any) {
     return { error: error.message };
