@@ -23,16 +23,13 @@ export async function getAccessToken() {
       }),
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      return { error: `Auth Request failed (${response.status}): ${text}` };
-    }
-
     const data = await response.json();
-    if (data.token) {
+    
+    if (response.ok && data.token) {
       return { token: data.token };
     }
-    return { error: data.error?.message || data.message || "Authentication failed: No token returned." };
+    
+    return { error: data.error?.message || data.message || "Authentication failed." };
   } catch (error: any) {
     return { error: `Fetch error: ${error.message}` };
   }
@@ -87,7 +84,7 @@ export async function initiatePesaPalPayment(amount: number, user: { uid: string
     if (data.redirect_url) {
       return { success: true, redirect_url: data.redirect_url };
     }
-    return { success: false, error: data.error?.message || data.message || "Failed to initiate payment: No redirect URL." };
+    return { success: false, error: data.message || "Failed to initiate payment: No redirect URL." };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -101,7 +98,7 @@ export async function registerIPN() {
   if (tokenRes.error) return { error: tokenRes.error };
 
   try {
-    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLRegisterIPN`, {
+    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLRegister/RegisterIPN`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${tokenRes.token}`,
@@ -114,12 +111,12 @@ export async function registerIPN() {
       }),
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      return { error: `IPN Registration failed (${response.status}): ${text}` };
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { status: response.status, body: text };
     }
-
-    return await response.json();
   } catch (error: any) {
     return { error: error.message };
   }
@@ -133,20 +130,21 @@ export async function getIpnList() {
   if (tokenRes.error) return { error: tokenRes.error };
 
   try {
-    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/GetIpnList`, {
+    const response = await fetch(`${PESAPAL_CONFIG.BASE_URL}/api/URLRegister/GetIpnList`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${tokenRes.token}`,
+        'Content-Type': 'application/json',
         'Accept': 'application/json',
       }
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      return { error: `Get IPN List failed (${response.status}): ${text}` };
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { status: response.status, body: text };
     }
-
-    return await response.json();
   } catch (error: any) {
     return { error: error.message };
   }
