@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useAuth, useFirestore, useUser } from "@/firebase"
+import { useAuth, useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { deleteUser, signOut } from "firebase/auth"
@@ -22,6 +22,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+
+interface UserProfile {
+  isAdmin?: boolean
+}
 
 interface SettingItemProps {
   label: string
@@ -54,6 +58,9 @@ export default function SettingsPage() {
   const auth = useAuth()
   const db = useFirestore()
   const { user } = useUser()
+
+  const profileRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
+  const { data: profile } = useDoc<UserProfile>(profileRef)
 
   const handleSignOut = async () => {
     try {
@@ -138,34 +145,37 @@ export default function SettingsPage() {
           <Link href="#" className="hover:text-black">Privacy Policy</Link>
           <span className="opacity-30">|</span>
           <Link href="#" className="hover:text-black">Terms of Service</Link>
-          <span className="opacity-30">|</span>
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="hover:text-red-500 transition-colors">Delete Account</button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-2xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-destructive" />
-                  Are you absolutely sure?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete your account
-                  and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  className="bg-destructive hover:bg-destructive/90 rounded-full"
-                  onClick={handleDeleteAccount}
-                >
-                  Delete Account
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {!profile?.isAdmin && (
+            <>
+              <span className="opacity-30">|</span>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="hover:text-red-500 transition-colors">Delete Account</button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-2xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <ShieldAlert className="w-5 h-5 text-destructive" />
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your account
+                      and remove your data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      className="bg-destructive hover:bg-destructive/90 rounded-full"
+                      onClick={handleDeleteAccount}
+                    >
+                      Delete Account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
         </div>
       </footer>
     </div>
