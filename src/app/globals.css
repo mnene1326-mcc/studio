@@ -31,6 +31,15 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html, body {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -38,25 +47,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  html {
-    scroll-behavior: smooth;
-    height: 100%;
-    overflow-x: hidden;
-  }
-
   body {
     @apply bg-background text-foreground;
-    overscroll-behavior-y: none;
-    min-height: 100%;
-    width: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    position: relative;
-    -webkit-overflow-scrolling: touch;
   }
 
-  /* Allow text selection only in inputs and textareas if absolutely needed, 
-     but keeping app-wide restriction as requested. */
+  /* Allow text selection only where absolutely necessary */
   input, textarea {
     -webkit-user-select: auto;
     -moz-user-select: auto;
@@ -64,7 +59,6 @@
     user-select: auto;
   }
 
-  /* Hide scrollbar but allow scrolling */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -73,33 +67,10 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-
-  /* Selection Lock strictly enforced */
-  .select-none {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-}
-
-.native-page-transition {
-  @apply flex-1 flex flex-col;
-  min-height: 100%;
-}
-
-.premium-blur {
-  @apply backdrop-blur-2xl bg-white/60 border border-white/40;
 }
 
 .premium-shadow {
   box-shadow: 0 20px 40px -15px rgba(0, 162, 255, 0.15);
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .text-balance {

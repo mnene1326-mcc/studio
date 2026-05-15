@@ -1,3 +1,4 @@
+
 import './globals.css';
 import { Inter, Pacifico } from 'next/font/google';
 import { Providers } from './providers';

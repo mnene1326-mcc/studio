@@ -3,7 +3,7 @@
 
 import { useState, Suspense, useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { doc, query, collection, where, limit } from "firebase/firestore"
+import { doc, getDoc } from "firebase/firestore"
 import { ref, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"

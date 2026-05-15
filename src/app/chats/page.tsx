@@ -113,9 +113,7 @@ function ChatListItem({ summary, onClick, onDelete }: { summary: ChatSummary, on
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <div className="flex items-center gap-1 max-w-[70%]">
-            <h4 className="font-semibold text-sm text-black truncate">{summary.partnerName}</h4>
-          </div>
+          <h4 className="font-semibold text-sm text-black truncate max-w-[70%]">{summary.partnerName}</h4>
           <span className="text-[10px] text-gray-400 font-medium">{format(lastAt, "HH:mm")}</span>
         </div>
         <div className="flex justify-between items-center">
@@ -164,7 +162,6 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
-  // Listen to unreads at a high level
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -274,7 +271,7 @@ function ChatsContent() {
 
     const timestamp = Date.now()
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
-    await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
+    await set(push(ref(rtdb, `chat_messages/${chatId}`), msgData))
 
     const updates: any = {}
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
