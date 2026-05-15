@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { doc, getDocs, collection, query, where, updateDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get } from "firebase/database"
-import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
+import { doc, getDocs, collection, query, where, addDoc } from "firebase/firestore"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off } from "firebase/database"
+import { useFirestore, useUser, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,8 @@ import {
   BadgeCheck,
   Gift as GiftIcon,
   Coins,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -35,14 +37,14 @@ interface Message {
   isGift?: boolean
 }
 
-interface Chat {
+interface ChatSummary {
   id: string
-  participants: string[]
-  lastMessage?: string
-  lastMessageAt?: any
-  createdAt: any
-  clearedAt?: Record<string, any>
-  maleMessageCount?: number
+  partnerId: string
+  partnerName: string
+  partnerPhoto: string
+  lastMessage: string
+  lastMessageAt: number
+  unreadCount: number
 }
 
 interface UserProfile {
@@ -53,139 +55,48 @@ interface UserProfile {
   blocking?: string[]
   blockedBy?: string[]
   isAdmin?: boolean
-  isCoinSeller?: boolean
   isVerified?: boolean
 }
 
 const GIFTS = [
-  { id: '2026', name: '2026', price: 20, icon: '🎆' },
   { id: 'heart', name: 'Heart', price: 150, icon: '❤️' },
-  { id: 'e-heart', name: 'Electric heart', price: 500, icon: '⚡' },
-  { id: 'flower', name: 'Flower diamond', price: 25990, icon: '💎' },
-  { id: 'nigeria', name: 'Nigeria', price: 300, icon: '🇳🇬' },
-  { id: 'butterfly', name: 'Shiny Butterfly', price: 500, icon: '🦋' },
-  { id: 'necklace', name: 'Gold Necklace', price: 1500, icon: '📿' },
-  { id: 'parrot', name: 'Flying Parrot', price: 500, icon: '🦜' },
-  { id: 'drum', name: 'African drum', price: 300, icon: '🪘' },
-  { id: 'harley', name: 'Harley Motors', price: 3000, icon: '🏍️' },
-  { id: 'dress', name: 'Dress', price: 800, icon: '👗' },
-  { id: 'phone', name: 'Antique Telephone', price: 400, icon: '☎️' },
+  { id: 'butterfly', name: 'Butterfly', price: 500, icon: '🦋' },
+  { id: 'flower', name: 'Diamond', price: 25000, icon: '💎' },
+  { id: 'motor', name: 'Harley', price: 3000, icon: '🏍️' },
 ]
 
-function ChatListItem({ 
-  chat, 
-  currentUserUid, 
-  blocking, 
-  blockedBy, 
-  onDelete, 
-  unreadCount 
-}: { 
-  chat: Chat, 
-  currentUserUid: string, 
-  blocking: string[], 
-  blockedBy: string[], 
-  onDelete: (chat: Chat) => void,
-  unreadCount: number
-}) {
-  const router = useRouter()
-  const db = useFirestore()
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const isLongPress = useRef(false)
+function ChatListItem({ summary, onClick }: { summary: ChatSummary, onClick: () => void }) {
+  const presence = useUserPresence(summary.partnerId)
   
-  const partnerId = useMemo(() => chat.participants.find(id => id !== currentUserUid), [chat.participants, currentUserUid])
-  const partnerRef = useMemo(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
-  
-  const { data: partner } = useDoc<UserProfile>(partnerRef)
-  const presence = useUserPresence(partner?.uid)
-
-  const handleTouchStart = () => {
-    isLongPress.current = false
-    timerRef.current = setTimeout(() => {
-      isLongPress.current = true
-      onDelete(chat)
-    }, 400)
-  }
-
-  const handleTouchEnd = () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  const handleClick = () => { if (isLongPress.current) return; router.push(`/chats?startWith=${partnerId}`) }
-
-  if (!partnerId || blocking.includes(partnerId) || blockedBy.includes(partnerId)) return null
-  
-  const lastAtRaw = chat.lastMessageAt;
-  const lastAt = lastAtRaw?.toDate ? lastAtRaw.toDate() : (lastAtRaw?.seconds ? new Date(lastAtRaw.seconds * 1000) : new Date(lastAtRaw || Date.now()))
+  const lastAt = new Date(summary.lastMessageAt || Date.now())
 
   return (
     <div 
       className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50 select-none min-h-[80px]"
-      onClick={handleClick}
-      onMouseDown={handleTouchStart}
-      onMouseUp={handleTouchEnd}
-      onMouseLeave={handleTouchEnd}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onClick={onClick}
     >
       <div className="relative">
         <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
-          <AvatarImage src={partner?.photoURL} className="object-cover" />
-          <AvatarFallback className="bg-[#00A2FF] text-white font-semibold text-sm">{partner?.name?.[0] || '?'}</AvatarFallback>
+          <AvatarImage src={summary.partnerPhoto} className="object-cover" />
+          <AvatarFallback className="bg-[#00A2FF] text-white font-semibold text-sm">{summary.partnerName?.[0] || '?'}</AvatarFallback>
         </Avatar>
         {presence?.state === 'online' && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
           <div className="flex items-center gap-1 max-w-[70%]">
-            <h4 className="font-semibold text-sm text-black truncate">{partner?.name || '...'}</h4>
-            {partner?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
-            {partner?.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF] shrink-0" />}
+            <h4 className="font-semibold text-sm text-black truncate">{summary.partnerName}</h4>
           </div>
           <span className="text-[10px] text-gray-400 font-medium">{format(lastAt, "HH:mm")}</span>
         </div>
         <div className="flex justify-between items-center">
-          <p className={cn("text-xs truncate flex-1 pr-2", unreadCount > 0 ? "text-black font-semibold" : "text-gray-500 font-medium")}>
-            {chat.lastMessage || "Start talking..."}
+          <p className={cn("text-xs truncate flex-1 pr-2", summary.unreadCount > 0 ? "text-black font-semibold" : "text-gray-500 font-medium")}>
+            {summary.lastMessage || "Start talking..."}
           </p>
-          {unreadCount > 0 && <div className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{unreadCount}</div>}
+          {summary.unreadCount > 0 && <div className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">{summary.unreadCount}</div>}
         </div>
       </div>
     </div>
-  )
-}
-
-function GiftDrawer({ onSend, userBalance, open, onOpenChange }: { onSend: (gift: typeof GIFTS[0]) => void, userBalance: number, open: boolean, onOpenChange: (open: boolean) => void }) {
-  const [selectedGiftId, setSelectedGiftId] = useState(GIFTS[0].id)
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 border-none bg-[#1A1C21] text-white rounded-t-[2.5rem] max-w-md mx-auto fixed bottom-0 top-auto translate-y-0">
-        <div className="p-4 space-y-4">
-          <div className="flex items-center gap-6 px-4 overflow-x-auto no-scrollbar py-2 border-b border-white/5">
-            <span className="text-xs font-bold uppercase tracking-widest text-white border-b-2 border-[#D4FF00] pb-1">Gifts</span>
-          </div>
-          <div className="grid grid-cols-4 gap-2 max-h-[40vh] overflow-y-auto no-scrollbar px-2">
-            {GIFTS.map(gift => (
-              <div 
-                key={gift.id}
-                onClick={() => setSelectedGiftId(gift.id)}
-                className={cn("flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all cursor-pointer aspect-square", selectedGiftId === gift.id ? "border-[#D4FF00] bg-white/5" : "border-transparent")}
-              >
-                <span className="text-3xl mb-1">{gift.icon}</span>
-                <div className="flex items-center gap-0.5 mt-1">
-                  <Coins className="w-2.5 h-2.5 text-yellow-500 fill-current" />
-                  <span className="text-[10px] font-bold">{gift.price}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between pt-4 pb-6 px-4">
-            <div className="flex items-center gap-1.5 cursor-pointer">
-              <Coins className="w-5 h-5 text-yellow-500 fill-current" />
-              <span className="text-lg font-bold">{userBalance}</span>
-              <ChevronRight className="w-4 h-4 text-gray-500" />
-            </div>
-            <Button onClick={() => onSend(GIFTS.find(g => g.id === selectedGiftId)!)} className="bg-[#D4FF00] text-black font-bold h-12 px-8 rounded-full">Send</Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }
 
@@ -194,199 +105,167 @@ function ChatsContent() {
   const router = useRouter()
   const { toast } = useToast()
   const startWithId = searchParams.get("startWith")
-  const initialMsg = searchParams.get("msg")
   const { user: currentUser } = useUser()
   const db = useFirestore()
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const hasSentInitial = useRef(false)
   
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
-  const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
-  const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
-  const [unreadsMap, setUnreadsMap] = useState<Record<string, number>>({})
+  const [chatSummaries, setChatSummaries] = useState<ChatSummary[]>([])
+  const [summariesLoading, setSummariesLoading] = useState(true)
+  const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
 
-  // Fetch balances and initialize cache
+  // Listen to RTDB Chat Summaries (Optimized List)
   useEffect(() => {
     if (!currentUser?.uid) return
-    const fetchBalance = async () => {
-      const snap = await get(ref(rtdb, `balances/${currentUser.uid}`))
+    const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
+    const unsubscribe = onValue(summariesRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const list = Object.entries(data).map(([id, val]: [string, any]) => ({
+          id,
+          ...val
+        })).sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+        setChatSummaries(list)
+      } else {
+        setChatSummaries([])
+      }
+      setSummariesLoading(false)
+    })
+    return () => off(summariesRef, 'value', unsubscribe)
+  }, [rtdb, currentUser?.uid])
+
+  // Mark Read in Summary when entering chat
+  useEffect(() => {
+    if (chatId && currentUser?.uid) {
+      update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
+    }
+  }, [chatId, currentUser?.uid, rtdb])
+
+  // Fetch balances
+  useEffect(() => {
+    if (!currentUser?.uid) return
+    const balRef = ref(rtdb, `balances/${currentUser.uid}`)
+    const unsubscribe = onValue(balRef, (snap) => {
       if (snap.exists()) {
         const data = snap.val()
         setUserBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
       }
-    }
-    fetchBalance()
+    })
+    return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Single listener for all unread counts to prevent per-item flickering and lower cost
+  // Listen to Messages (Limited to 50)
   useEffect(() => {
-    if (!currentUser?.uid) return
-    const unreadRef = ref(rtdb, `unreads/${currentUser.uid}`)
-    const unsubscribe = onValue(unreadRef, (snapshot) => {
-      setUnreadsMap(snapshot.val() || {})
+    if (!chatId) return
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []
+      setMessages(msgs)
     })
-    return () => unsubscribe()
-  }, [rtdb, currentUser?.uid])
+    return () => off(messagesRef, 'value', unsubscribe)
+  }, [chatId, rtdb])
 
-  const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
-  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
+  const { data: currentUserProfile } = useDoc<UserProfile>(currentUser?.uid ? doc(db, "users", currentUser.uid) : null)
+  const { data: partnerProfile } = useDoc<UserProfile>(startWithId ? doc(db, "users", startWithId) : null)
 
-  const chatListQuery = useMemoFirebase(() => {
-    if (!currentUser?.uid) return null
-    return query(
-      collection(db, "chats"), 
-      where("participants", "array-contains", currentUser.uid), 
-      orderBy("lastMessageAt", "desc"), 
-      limit(20)
-    )
-  }, [db, currentUser?.uid])
-
-  const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
-  
-  // Stable filtered list that doesn't "blink" when profile is loading
-  const userChats = useMemo(() => {
-    if (!currentUser?.uid) return []
-    // Use empty arrays as fallback if profile is still loading to avoid hiding everything
-    const blocking = currentUserProfile?.blocking || []
-    const blockedBy = currentUserProfile?.blockedBy || []
-    
-    return [...userChatsRaw].filter(chat => {
-      if (!chat.lastMessage) return false
-      const partnerId = chat.participants.find(p => p !== currentUser.uid)
-      if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
-      return true
-    })
-  }, [userChatsRaw, currentUser?.uid, currentUserProfile])
-
-  useEffect(() => {
-    if (chatId && currentUser?.uid) {
-      set(ref(rtdb, `unreads/${currentUser.uid}/${chatId}`), 0)
-    }
-  }, [chatId, currentUser?.uid, rtdb])
-
+  // Find or Create Chat ID
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
     setIsInitializingChat(true)
-    const findOrCreateChat = async () => {
+    const findOrCreate = async () => {
       try {
-        const chatsRef = collection(db, "chats")
-        const chatsSnap = await getDocs(query(chatsRef, where("participants", "array-contains", currentUser.uid)))
-        let existingChatId = null
-        chatsSnap.forEach((doc) => {
-          if (doc.data().participants?.includes(startWithId)) existingChatId = doc.id
+        const summariesSnap = await get(ref(rtdb, `user_chats/${currentUser.uid}`))
+        const summaries = summariesSnap.val() || {}
+        let foundId = null
+        Object.entries(summaries).forEach(([id, val]: [string, any]) => {
+          if (val.partnerId === startWithId) foundId = id
         })
-        if (existingChatId) setChatId(existingChatId)
+
+        if (foundId) setChatId(foundId)
         else {
-          const newChatDoc = await addDoc(chatsRef, {
+          // New chat initialization
+          const newChatRef = await addDoc(collection(db, "chats"), {
             participants: [currentUser.uid, startWithId],
-            createdAt: serverTimestamp(),
-            lastMessage: "",
-            lastMessageAt: serverTimestamp(),
-            maleMessageCount: 0
+            createdAt: new Date().toISOString()
           })
-          setChatId(newChatDoc.id)
+          setChatId(newChatRef.id)
         }
       } finally {
         setIsInitializingChat(false)
       }
     }
-    findOrCreateChat()
-  }, [currentUser?.uid, startWithId, db])
+    findOrCreate()
+  }, [currentUser?.uid, startWithId, rtdb, db])
 
   const handleSendMessage = async (text: string) => {
-    if (!text.trim() || !chatId || !currentUser?.uid) return
+    if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile) return
     
-    if (currentUserProfile?.gender === 'male' && !currentUserProfile.isAdmin) {
-      const messageCost = 15
-      if (userBalances.coins < messageCost) {
-        toast({ variant: "destructive", title: "Insufficient Coins", description: "Recharge to continue chatting." })
+    if (currentUserProfile?.gender === 'male' && !currentUserProfile?.isAdmin) {
+      if (userBalances.coins < 15) {
+        toast({ variant: "destructive", title: "Insufficient Coins" })
         return
       }
-      
-      setUserBalances(prev => ({ ...prev, coins: prev.coins - messageCost }))
-      
-      const timestamp = Date.now()
-      await update(ref(rtdb, `balances/${currentUser.uid}`), {
-        coins: rtdbIncrement(-messageCost),
-        updatedAt: timestamp
-      })
-
+      await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-15) })
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
-        amount: -messageCost,
+        amount: -15,
         type: 'chat',
         description: `Chat message sent`,
-        timestamp
+        timestamp: Date.now()
       })
     }
 
-    const partnerId = startWithId || chatPartner?.uid
     const timestamp = Date.now()
-    try {
-      await set(push(ref(rtdb, `chat_messages/${chatId}`)), { text: text.trim(), senderId: currentUser.uid, timestamp })
-      if (partnerId) update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
-      await updateDoc(doc(db, "chats", chatId), { lastMessage: text.trim(), lastMessageAt: serverTimestamp() })
-      setNewMessage("")
-    } catch (err: any) { 
-      toast({ variant: "destructive", title: "Error", description: err.message }) 
+    const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
+    
+    // 1. Post message
+    await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
+
+    // 2. Update Summaries (Atomic updates for cost reduction)
+    const updates: any = {}
+    updates[`user_chats/${currentUser.uid}/${chatId}`] = {
+      partnerId: partnerProfile.uid,
+      partnerName: partnerProfile.name,
+      partnerPhoto: partnerProfile.photoURL,
+      lastMessage: text.trim(),
+      lastMessageAt: timestamp,
+      unreadCount: 0
     }
+    updates[`user_chats/${partnerProfile.uid}/${chatId}`] = {
+      partnerId: currentUser.uid,
+      partnerName: currentUserProfile?.name || "MatchFlow User",
+      partnerPhoto: currentUserProfile?.photoURL || "",
+      lastMessage: text.trim(),
+      lastMessageAt: timestamp,
+      unreadCount: rtdbIncrement(1)
+    }
+
+    await update(ref(rtdb), updates)
+    setNewMessage("")
   }
 
-  useEffect(() => {
-    if (initialMsg && chatId && currentUserProfile && !hasSentInitial.current) {
-      handleSendMessage(initialMsg)
-      hasSentInitial.current = true
-    }
-  }, [initialMsg, chatId, currentUserProfile])
-
-  useEffect(() => {
-    if (!chatId) return
-    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
-    return onValue(messagesRef, (snapshot) => {
-      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []
-      setMessages(msgs)
-    })
-  }, [chatId, rtdb])
-
-  const handleSendGift = async (gift: typeof GIFTS[0]) => {
-    if (!currentUser?.uid || !chatPartner || !chatId) return
+  const handleSendGift = async (gift: any) => {
+    if (!currentUser?.uid || !partnerProfile || !chatId) return
     if (userBalances.coins < gift.price) { toast({ variant: "destructive", title: "Insufficient Coins" }); return }
     const timestamp = Date.now()
     try {
-      await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price), updatedAt: timestamp })
-      
-      setUserBalances(prev => ({ ...prev, coins: prev.coins - gift.price }))
-
-      await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
-        amount: -gift.price,
-        type: 'gift',
-        description: `Sent a gift`,
-        timestamp
-      })
-
+      await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price) })
       const reward = Math.floor(gift.price * 0.5)
-      await update(ref(rtdb, `balances/${chatPartner.uid}`), { diamonds: rtdbIncrement(reward), updatedAt: timestamp })
-      
-      await set(push(ref(rtdb, `diamond_history/${chatPartner.uid}`)), { 
-        amount: reward, 
-        type: 'gift', 
-        description: `Received a gift`, 
-        timestamp 
-      })
+      await update(ref(rtdb, `balances/${partnerProfile.uid}`), { diamonds: rtdbIncrement(reward) })
       
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
-      await push(ref(rtdb, `chat_messages/${chatId}`), { text, senderId: currentUser.uid, timestamp, isGift: true })
-      await updateDoc(doc(db, "chats", chatId), { lastMessage: text, lastMessageAt: serverTimestamp() })
+      await handleSendMessage(text)
       setIsGiftDrawerOpen(false)
-    } catch (err: any) { toast({ variant: "destructive", title: "Gift Error" }) }
+    } catch (err) { toast({ variant: "destructive", title: "Gift Error" }) }
   }
 
   if (!currentUser) return null
 
+  // LIST VIEW
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
@@ -394,20 +273,15 @@ function ChatsContent() {
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
         <main className="flex-1">
-          {listLoading && userChats.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20"><Circle className="w-8 h-8 animate-spin" /></div>
-          ) : userChats.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 opacity-40"><ShoppingBag className="w-16 h-16 mb-4" /><p className="font-semibold text-xl text-black">No chats yet...</p></div>
-          ) : userChats.map(chat => (
-            <ChatListItem 
-              key={chat.id} 
-              chat={chat} 
-              currentUserUid={currentUser.uid} 
-              blocking={currentUserProfile?.blocking || []} 
-              blockedBy={currentUserProfile?.blockedBy || []} 
-              onDelete={setChatToDelete}
-              unreadCount={unreadsMap[chat.id] || 0}
-            />
+          {summariesLoading ? (
+            <div className="flex items-center justify-center py-20 opacity-20"><Loader2 className="animate-spin" /></div>
+          ) : chatSummaries.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32 px-12 text-center opacity-40">
+              <ShoppingBag className="w-16 h-16 mb-4" />
+              <p className="font-semibold text-black">No chats yet...</p>
+            </div>
+          ) : chatSummaries.map(summary => (
+            <ChatListItem key={summary.id} summary={summary} onClick={() => router.push(`/chats?startWith=${summary.partnerId}`)} />
           ))}
         </main>
         <BottomNav />
@@ -415,25 +289,21 @@ function ChatsContent() {
     )
   }
 
-  const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
-  const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
-  const partnerPresence = useUserPresence(chatPartner?.uid)
+  // CHAT VIEW
+  const partnerPresence = useUserPresence(startWithId)
 
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <Button variant="ghost" size="sm" onClick={() => router.push("/chats")} className="text-[#00A2FF]"><ChevronLeft className="w-6 h-6" /></Button>
         <div className="flex flex-col items-center flex-1 mx-2">
-          <h3 className="font-semibold text-sm text-black truncate max-w-[120px]">{chatPartner?.name || '...'}</h3>
+          <h3 className="font-semibold text-sm text-black truncate max-w-[120px]">{partnerProfile?.name || '...'}</h3>
           {partnerPresence?.state === 'online' && <span className="text-[9px] font-bold text-green-500 uppercase">Online</span>}
         </div>
-        
-        <div className="flex items-center gap-1">
-          <Avatar className="w-8 h-8 cursor-pointer ml-1" onClick={() => router.push(`/users/${chatPartner?.uid}`)}>
-            <AvatarImage src={chatPartner?.photoURL} />
-            <AvatarFallback>{chatPartner?.name?.[0]}</AvatarFallback>
-          </Avatar>
-        </div>
+        <Avatar className="w-8 h-8 cursor-pointer" onClick={() => router.push(`/users/${startWithId}`)}>
+          <AvatarImage src={partnerProfile?.photoURL} />
+          <AvatarFallback>{partnerProfile?.name?.[0]}</AvatarFallback>
+        </Avatar>
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar flex flex-col-reverse p-4">
@@ -457,7 +327,21 @@ function ChatsContent() {
         <Button variant="ghost" onClick={() => handleSendMessage(newMessage)}><Send className="w-6 h-6 text-[#00A2FF]" /></Button>
       </footer>
 
-      <GiftDrawer open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen} userBalance={userBalances.coins} onSend={handleSendGift} />
+      <Dialog open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen}>
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6">
+          <div className="grid grid-cols-4 gap-4">
+            {GIFTS.map(gift => (
+              <div key={gift.id} onClick={() => handleSendGift(gift)} className="flex flex-col items-center gap-2 cursor-pointer active:scale-95">
+                <span className="text-3xl">{gift.icon}</span>
+                <div className="flex items-center gap-1">
+                  <Coins className="w-2 h-2 text-yellow-500" />
+                  <span className="text-[10px] font-bold">{gift.price}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
