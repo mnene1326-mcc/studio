@@ -37,21 +37,16 @@
     scroll-behavior: smooth;
     -webkit-user-select: none;
     user-select: none;
-    height: 100%;
   }
 
   body {
     @apply bg-background text-foreground;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
     overscroll-behavior-y: none;
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Allow text selection only where absolutely necessary */
   input, textarea {
     -webkit-user-select: auto;
     user-select: auto;

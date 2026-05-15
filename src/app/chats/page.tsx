@@ -31,7 +31,8 @@ import {
   ShoppingBag, 
   Gift as GiftIcon,
   Coins,
-  Loader2
+  Loader2,
+  Ban
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -137,7 +138,6 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // Presence hook must be at top level
   const partnerPresence = useUserPresence(startWithId || undefined)
   
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
@@ -157,7 +157,14 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
-  // Sync Summaries & Load Initial deletedAt
+  // Blocking logic: Check both ways
+  const isBlocked = useMemo(() => {
+    if (!startWithId || !currentUserProfile || !partnerProfile) return false
+    const blockedByMe = currentUserProfile.blocking?.includes(startWithId)
+    const blockedByThem = currentUserProfile.blockedBy?.includes(startWithId) || partnerProfile.blocking?.includes(currentUser?.uid || "")
+    return blockedByMe || blockedByThem
+  }, [currentUserProfile, partnerProfile, startWithId, currentUser?.uid])
+
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -170,13 +177,9 @@ function ChatsContent() {
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
         
         setChatSummaries(list)
-        
-        // If we are currently in a room, update the deletion marker instantly
         if (chatId) {
           const current = list.find(s => s.id === chatId)
-          if (current) {
-            setActiveDeletedAt(current.deletedAt || 0)
-          }
+          if (current) setActiveDeletedAt(current.deletedAt || 0)
         }
       } else {
         setChatSummaries([])
@@ -186,7 +189,6 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
-  // Clear Unreads & Ensure activeDeletedAt is fresh
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
@@ -198,14 +200,13 @@ function ChatsContent() {
     }
   }, [chatId, currentUser?.uid, rtdb])
 
-  // Listen to Messages with Strict Deletion Filtering
   useEffect(() => {
     if (!chatId) {
       setMessages([])
       return
     }
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(100))
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
+    const unsubscribe = onSnapshot(messagesRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
         const msgs = Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val }))
@@ -220,7 +221,6 @@ function ChatsContent() {
     return () => off(messagesRef, 'value', unsubscribe)
   }, [chatId, rtdb, activeDeletedAt])
 
-  // Balances
   useEffect(() => {
     if (!currentUser?.uid) return
     const balRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -233,7 +233,6 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Find or Create Room
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
     const findOrCreate = async () => {
@@ -258,9 +257,8 @@ function ChatsContent() {
   }, [currentUser?.uid, startWithId, rtdb, db])
 
   const handleSendMessage = async (text: string) => {
-    if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile) return
+    if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile || isBlocked) return
     
-    // Cost Check
     if (currentUserProfile?.gender === 'male' && !currentUserProfile?.isAdmin) {
       if (userBalances.coins < 15) {
         toast({ variant: "destructive", title: "Insufficient Coins" })
@@ -269,19 +267,18 @@ function ChatsContent() {
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-15) })
     }
 
-    // Clear UI instantly
     setNewMessage("")
 
     const timestamp = Date.now()
-    const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
+    const msgData = { 
+      text: text.trim(), 
+      senderId: currentUser.uid, 
+      timestamp 
+    }
     
-    // 1. Send Message
     await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
 
-    // 2. Update Summaries (Sanitize all RTDB values to avoid 'undefined')
     const updates: any = {}
-    
-    // My Summary
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid || ""
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name || "Unknown"
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL || ""
@@ -289,7 +286,6 @@ function ChatsContent() {
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
 
-    // Partner Summary
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid || ""
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "User"
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerPhoto`] = currentUserProfile?.photoURL || ""
@@ -301,7 +297,7 @@ function ChatsContent() {
   }
 
   const handleSendGift = async (gift: any) => {
-    if (!currentUser?.uid || !partnerProfile || !chatId) return
+    if (!currentUser?.uid || !partnerProfile || !chatId || isBlocked) return
     if (userBalances.coins < gift.price) { toast({ variant: "destructive", title: "Insufficient Coins" }); return }
     try {
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price) })
@@ -319,18 +315,12 @@ function ChatsContent() {
     if (!currentUser?.uid || !chatToDelete) return
     try {
       const now = Date.now()
-      // Soft delete for current user only
       await update(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`), {
         lastMessage: "",
         unreadCount: 0,
         deletedAt: now
       })
-      
-      // If we are currently in this chat room, update activeDeletedAt to reflect blank state immediately
-      if (chatId === chatToDelete.id) {
-        setActiveDeletedAt(now)
-      }
-      
+      if (chatId === chatToDelete.id) setActiveDeletedAt(now)
       toast({ title: "Conversation removed" })
     } catch (err) {
       toast({ variant: "destructive", title: "Delete Error" })
@@ -341,7 +331,6 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
-  // LIST VIEW
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 select-none overflow-y-auto no-scrollbar">
@@ -384,7 +373,6 @@ function ChatsContent() {
     )
   }
 
-  // ROOM VIEW
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative select-none">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
@@ -413,17 +401,26 @@ function ChatsContent() {
       </main>
 
       <footer className="bg-white border-t p-4 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => setIsGiftDrawerOpen(true)} className="text-[#00A2FF]"><GiftIcon className="w-6 h-6" /></Button>
-        <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
-          <input 
-            placeholder="Type..." 
-            className="bg-transparent flex-1 outline-none text-sm" 
-            value={newMessage} 
-            onChange={(e) => setNewMessage(e.target.value)} 
-            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)} 
-          />
-        </div>
-        <Button variant="ghost" onClick={() => handleSendMessage(newMessage)}><Send className="w-6 h-6 text-[#00A2FF]" /></Button>
+        {isBlocked ? (
+          <div className="flex-1 py-3 px-6 bg-red-50 text-red-500 rounded-full text-center flex items-center justify-center gap-2">
+            <Ban className="w-4 h-4" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">User Unavailable</span>
+          </div>
+        ) : (
+          <>
+            <Button variant="ghost" size="icon" onClick={() => setIsGiftDrawerOpen(true)} className="text-[#00A2FF]"><GiftIcon className="w-6 h-6" /></Button>
+            <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
+              <input 
+                placeholder="Type..." 
+                className="bg-transparent flex-1 outline-none text-sm" 
+                value={newMessage} 
+                onChange={(e) => setNewMessage(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)} 
+              />
+            </div>
+            <Button variant="ghost" onClick={() => handleSendMessage(newMessage)}><Send className="w-6 h-6 text-[#00A2FF]" /></Button>
+          </>
+        )}
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
