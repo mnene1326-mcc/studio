@@ -162,7 +162,7 @@ export default function AgencyMemberPage() {
           <ChevronLeft className="w-6 h-6 text-black" />
         </Button>
         <h1 className="text-sm font-bold text-black uppercase tracking-widest">Agency Wallet</h1>
-        <Button variant="ghost" size="icon" onClick={() => router.push("/income/history")} className="rounded-full">
+        <Button variant="ghost" size="icon" onClick={() => router.push("/agency/history")} className="rounded-full">
           <History className="w-5 h-5 text-black" />
         </Button>
       </header>
