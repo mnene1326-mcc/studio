@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -139,6 +138,7 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
+  // ALL HOOKS MUST BE AT TOP LEVEL
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -164,6 +164,7 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
+  // Sync summaries and handle soft-deletion state sync
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -178,6 +179,7 @@ function ChatsContent() {
         setChatSummaries(list)
         localStorage.setItem(`chats_cache_${currentUser.uid}`, JSON.stringify(list))
         
+        // If we are in a chat, ensure we have the latest deletedAt timestamp for filtering
         if (chatId) {
           const current = list.find(s => s.id === chatId)
           if (current) setActiveDeletedAt(current.deletedAt || 0)
@@ -191,10 +193,11 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
+  // Clear unreads when room is active
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
-      // Specific fetch for deletedAt to ensure no race condition on room opening
+      // Fetch initial deletedAt immediately for blink-free blank room
       get(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}/deletedAt`)).then((snap) => {
         if (snap.exists()) setActiveDeletedAt(snap.val())
         else setActiveDeletedAt(0)
@@ -202,6 +205,7 @@ function ChatsContent() {
     }
   }, [chatId, currentUser?.uid, rtdb])
 
+  // Sync balances
   useEffect(() => {
     if (!currentUser?.uid) return
     const balRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -214,12 +218,14 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
+  // Sync messages with 20-message limit and soft-delete filtering
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
-      // Use the dedicated activeDeletedAt state for filtering
+      
+      // Strict filter: only show messages after activeDeletedAt
       const filtered = msgs
         .filter(m => !activeDeletedAt || m.timestamp > activeDeletedAt)
         .sort((a, b) => b.timestamp - a.timestamp)
@@ -229,6 +235,7 @@ function ChatsContent() {
     return () => off(messagesRef, 'value', unsubscribe)
   }, [chatId, rtdb, activeDeletedAt])
 
+  // Initialize or find chat
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
     setIsInitializingChat(true)
@@ -260,6 +267,7 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile) return
     
+    // Check costs for males
     if (currentUserProfile?.gender === 'male' && !currentUserProfile?.isAdmin) {
       if (userBalances.coins < 15) {
         toast({ variant: "destructive", title: "Insufficient Coins" })
@@ -279,6 +287,7 @@ function ChatsContent() {
     
     await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
 
+    // Global updates
     const updates: any = {}
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name
@@ -317,6 +326,7 @@ function ChatsContent() {
     if (!currentUser?.uid || !chatToDelete) return
     try {
       const now = Date.now()
+      // Record deletedAt so we filter old messages later
       await update(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`), {
         lastMessage: "",
         unreadCount: 0,
@@ -332,9 +342,10 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
+  // LIST VIEW
   if (!startWithId) {
     return (
-      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 overflow-y-auto no-scrollbar">
+      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
@@ -374,6 +385,7 @@ function ChatsContent() {
     )
   }
 
+  // ROOM VIEW
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
