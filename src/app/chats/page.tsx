@@ -219,7 +219,6 @@ function ChatsContent() {
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
-  // Fetch balances once on mount (Optimization)
   useEffect(() => {
     if (!currentUser?.uid) return
     const fetchBalance = async () => {
@@ -232,9 +231,15 @@ function ChatsContent() {
     fetchBalance()
   }, [rtdb, currentUser?.uid])
 
+  // Economical Query: Only fetch the 20 most recently active chats
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
-    return query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid), orderBy("lastMessageAt", "desc"), limit(20))
+    return query(
+      collection(db, "chats"), 
+      where("participants", "array-contains", currentUser.uid), 
+      orderBy("lastMessageAt", "desc"), 
+      limit(20)
+    )
   }, [db, currentUser?.uid])
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
@@ -301,7 +306,6 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid) return
     
-    // Message cost logic for males (Deducts directly in RTDB - cost efficient)
     if (currentUserProfile?.gender === 'male' && !currentUserProfile.isAdmin) {
       const messageCost = 5
       if (userBalances.coins < messageCost) {
@@ -309,10 +313,8 @@ function ChatsContent() {
         return
       }
       
-      // Update local balance state first for instant feel
       setUserBalances(prev => ({ ...prev, coins: prev.coins - messageCost }))
       
-      // Actually deduct in background
       await update(ref(rtdb, `balances/${currentUser.uid}`), {
         coins: rtdbIncrement(-messageCost),
         updatedAt: Date.now()
@@ -336,10 +338,8 @@ function ChatsContent() {
     if (userBalances.coins < gift.price) { toast({ variant: "destructive", title: "Insufficient Coins" }); return }
     const timestamp = Date.now()
     try {
-      // Deduct gift price
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price), updatedAt: timestamp })
       
-      // Update local balance state
       setUserBalances(prev => ({ ...prev, coins: prev.coins - gift.price }))
 
       const reward = Math.floor(gift.price * 0.5)

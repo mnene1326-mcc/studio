@@ -27,6 +27,7 @@ export default function CoinHistoryPage() {
 
   useEffect(() => {
     if (!user?.uid) return
+    // Economical Limit: Only load the last 50 coin events
     const historyRef = query(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
     return onValue(historyRef, (snapshot) => {
       const data = snapshot.val()
@@ -66,6 +67,11 @@ export default function CoinHistoryPage() {
           </div>
         )}
       </main>
+      <footer className="p-8 text-center bg-gray-50/50">
+        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] leading-relaxed">
+          Coin history is kept for the last 50 transactions.
+        </p>
+      </footer>
     </div>
   )
 }

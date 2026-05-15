@@ -70,6 +70,7 @@ export default function HomePage() {
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
+  // Economical Query: Limit the total pool to 60 users, then paginate locally
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
@@ -81,6 +82,7 @@ export default function HomePage() {
   const handleRefresh = () => {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
+    setDisplayLimit(10)
     sessionStorage.removeItem('home_scroll_pos')
     setTimeout(() => {
       setIsRefreshing(false)
@@ -115,6 +117,7 @@ export default function HomePage() {
     return sorted
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
+  // Pagination Logic
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(0, displayLimit);
   }, [filteredUsers, displayLimit]);
@@ -185,7 +188,14 @@ export default function HomePage() {
               <div className="grid grid-cols-2 gap-3">
                 {paginatedUsers.map((user) => (
                   <Card key={user.uid} className="relative overflow-hidden border-none aspect-[1/1.2] rounded-2xl group cursor-pointer shadow-xl bg-white" onClick={() => router.push(`/users/${user.uid}`)}>
-                    <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
+                    <Image 
+                      src={user.photoURL} 
+                      alt={user.name} 
+                      fill 
+                      className="object-cover" 
+                      data-ai-hint="person profile"
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                    />
                     <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-bold text-[12px] uppercase shadow-md active:scale-95 transition-all" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
                     
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
@@ -202,9 +212,14 @@ export default function HomePage() {
                   </Card>
                 ))}
               </div>
+              
               {hasMore && (
-                <div className="flex justify-center pb-8">
-                  <Button variant="ghost" className="text-gray-400 font-bold text-[9px] uppercase tracking-widest gap-2" onClick={() => setDisplayLimit(prev => prev + 10)}>
+                <div className="flex justify-center pb-8 pt-4">
+                  <Button 
+                    variant="ghost" 
+                    className="text-gray-400 font-bold text-[9px] uppercase tracking-widest gap-2 hover:bg-transparent"
+                    onClick={() => setDisplayLimit(prev => prev + 10)}
+                  >
                     <ChevronDown className="w-3.5 h-3.5" />
                     Show more
                   </Button>

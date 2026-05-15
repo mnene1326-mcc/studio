@@ -28,6 +28,7 @@ export default function DiamondHistoryPage() {
   useEffect(() => {
     if (!user?.uid) return
 
+    // Economical Limit: Only load the last 50 diamond events
     const historyRef = query(ref(rtdb, `diamond_history/${user.uid}`), limitToLast(50))
     const unsubscribe = onValue(historyRef, (snapshot) => {
       const data = snapshot.val()
