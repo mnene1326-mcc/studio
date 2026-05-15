@@ -206,9 +206,6 @@ function ChatsContent() {
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
 
-  const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
-  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
-
   useEffect(() => {
     if (!currentUser?.uid) return
     const fetchBalance = async () => {
@@ -220,6 +217,9 @@ function ChatsContent() {
     }
     fetchBalance()
   }, [rtdb, currentUser?.uid])
+
+  const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
+  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
@@ -283,13 +283,50 @@ function ChatsContent() {
     findOrCreateChat()
   }, [currentUser?.uid, startWithId, db])
 
-  // Handle auto-send if initial message is provided
   useEffect(() => {
+    const handleSendMessage = async (text: string) => {
+      if (!text.trim() || !chatId || !currentUser?.uid) return
+      
+      if (currentUserProfile?.gender === 'male' && !currentUserProfile.isAdmin) {
+        const messageCost = 15
+        if (userBalances.coins < messageCost) {
+          toast({ variant: "destructive", title: "Insufficient Coins", description: "Recharge to continue chatting." })
+          return
+        }
+        
+        setUserBalances(prev => ({ ...prev, coins: prev.coins - messageCost }))
+        
+        const timestamp = Date.now()
+        await update(ref(rtdb, `balances/${currentUser.uid}`), {
+          coins: rtdbIncrement(-messageCost),
+          updatedAt: timestamp
+        })
+
+        await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
+          amount: -messageCost,
+          type: 'chat',
+          description: `Chat with ${chatPartner?.name || 'User'}`,
+          timestamp
+        })
+      }
+
+      const partnerId = chatPartner?.uid
+      const timestamp = Date.now()
+      try {
+        await set(push(ref(rtdb, `chat_messages/${chatId}`)), { text: text.trim(), senderId: currentUser.uid, timestamp })
+        if (partnerId) update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
+        await updateDoc(doc(db, "chats", chatId), { lastMessage: text.trim(), lastMessageAt: serverTimestamp() })
+        setNewMessage("")
+      } catch (err: any) { 
+        toast({ variant: "destructive", title: "Error", description: err.message }) 
+      }
+    }
+
     if (initialMsg && chatId && currentUserProfile && !hasSentInitial.current) {
       handleSendMessage(initialMsg)
       hasSentInitial.current = true
     }
-  }, [initialMsg, chatId, currentUserProfile])
+  }, [initialMsg, chatId, currentUserProfile, chatPartner, rtdb, userBalances.coins, toast])
 
   useEffect(() => {
     if (!chatId) return

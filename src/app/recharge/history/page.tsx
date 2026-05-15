@@ -95,21 +95,12 @@ export default function CoinHistoryPage() {
                   )}>
                     {tx.amount > 0 ? '+' : ''}{tx.amount}
                   </span>
-                  <div className="flex items-center justify-end gap-1 opacity-20">
-                    <Coins className="w-2.5 h-2.5" />
-                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
-
-      <footer className="p-8 text-center bg-gray-50/50">
-        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] leading-relaxed">
-          Showing last 50 wallet events.
-        </p>
-      </footer>
     </div>
   )
 }
