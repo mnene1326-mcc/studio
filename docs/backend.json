@@ -47,6 +47,20 @@
         "createdAt": { "type": "object" }
       }
     },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "A withdrawal request from an agency member.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "userName": { "type": "string" },
+        "agencyId": { "type": "string" },
+        "diamonds": { "type": "number" },
+        "amountKes": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid", "rejected"] },
+        "createdAt": { "type": "object" }
+      }
+    },
     "Chat": {
       "title": "Chat Room",
       "description": "A conversation between two users.",
@@ -83,6 +97,10 @@
     "/agencies/{agencyCode}": {
       "schema": "Agency",
       "description": "Agency data."
+    },
+    "/agencies/{agencyCode}/withdrawals/{withdrawalId}": {
+      "schema": "Withdrawal",
+      "description": "Withdrawal requests for an agency."
     },
     "/chats/{chatId}": {
       "schema": "Chat",

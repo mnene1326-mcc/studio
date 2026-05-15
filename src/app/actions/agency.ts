@@ -2,7 +2,7 @@
 'use server';
 
 import { initializeFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp, getDoc, addDoc, increment } from 'firebase/firestore';
 
 /**
  * Creates a new agency for an agent.
@@ -35,6 +35,7 @@ export async function createAgencyAction(agentUid: string, agencyName: string) {
 
     await updateDoc(agentRef, {
       agencyId: code,
+      agencyStatus: 'approved', // Agents are their own members
       updatedAt: serverTimestamp()
     });
 
@@ -88,6 +89,78 @@ export async function reviewRecruitmentAction(agentUid: string, targetUid: strin
 
     await updateDoc(doc(db, "users", targetUid), {
       agencyStatus: status,
+      updatedAt: serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Request a diamond-to-cash withdrawal.
+ */
+export async function requestWithdrawalAction(uid: string, diamonds: number, amountKes: number, agencyId: string) {
+  const { firestore: db } = initializeFirebase();
+
+  try {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists() || (userSnap.data().diamonds || 0) < diamonds) {
+      return { success: false, error: "Insufficient diamonds." };
+    }
+
+    // Deduct diamonds immediately
+    await updateDoc(userRef, {
+      diamonds: increment(-diamonds),
+      updatedAt: serverTimestamp()
+    });
+
+    // Create withdrawal request
+    await addDoc(collection(db, "agencies", agencyId, "withdrawals"), {
+      uid,
+      userName: userSnap.data().name || "Unknown",
+      agencyId,
+      diamonds,
+      amountKes,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Update withdrawal status (Agent action)
+ */
+export async function updateWithdrawalStatusAction(agentUid: string, agencyId: string, withdrawalId: string, status: 'paid' | 'rejected') {
+  const { firestore: db } = initializeFirebase();
+
+  try {
+    const agentSnap = await getDoc(doc(db, "users", agentUid));
+    if (!agentSnap.exists() || !agentSnap.data().isAgent || agentSnap.data().agencyId !== agencyId) {
+      return { success: false, error: "Unauthorized." };
+    }
+
+    const withdrawalRef = doc(db, "agencies", agencyId, "withdrawals", withdrawalId);
+    const withdrawalSnap = await getDoc(withdrawalRef);
+    if (!withdrawalSnap.exists()) return { success: false, error: "Request not found." };
+
+    if (status === 'rejected') {
+      // Refund diamonds if rejected
+      await updateDoc(doc(db, "users", withdrawalSnap.data().uid), {
+        diamonds: increment(withdrawalSnap.data().diamonds),
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    await updateDoc(withdrawalRef, {
+      status,
       updatedAt: serverTimestamp()
     });
 
