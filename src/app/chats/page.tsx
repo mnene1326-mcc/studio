@@ -11,15 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { 
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
@@ -28,16 +19,12 @@ import {
   ChevronLeft, 
   ShoppingBag, 
   Loader2, 
-  Lock,
-  Trash2,
   Circle,
   BadgeCheck,
   Gift as GiftIcon,
   Coins,
   ChevronRight,
   Phone,
-  Video,
-  VideoOff,
   Mic,
   MicOff,
   PhoneOff
@@ -102,23 +89,18 @@ function CallInterface({
   chatId, 
   currentUser, 
   partner, 
-  callType, 
   onClose 
 }: { 
   chatId: string, 
   currentUser: any, 
   partner: UserProfile, 
-  callType: 'voice' | 'video',
   onClose: () => void 
 }) {
   const rtdb = useDatabase()
   const { toast } = useToast()
   const [callState, setCallState] = useState<'initiating' | 'ringing' | 'connected' | 'ended'>('initiating')
   const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOff, setIsVideoOff] = useState(callType === 'voice')
   
-  const localVideoRef = useRef<HTMLVideoElement>(null)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null)
   const peerConnection = useRef<RTCPeerConnection | null>(null)
   const localStream = useRef<MediaStream | null>(null)
 
@@ -126,11 +108,10 @@ function CallInterface({
     const startCall = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: callType === 'video',
+          video: false,
           audio: true
         })
         localStream.current = stream
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream
 
         peerConnection.current = new RTCPeerConnection(RTC_CONFIG)
         
@@ -139,31 +120,31 @@ function CallInterface({
         })
 
         peerConnection.current.ontrack = (event) => {
-          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0]
           setCallState('connected')
+          // Standard audio handling: attach to a hidden audio element
+          const remoteAudio = new Audio()
+          remoteAudio.srcObject = event.streams[0]
+          remoteAudio.play()
         }
 
         const callRef = ref(rtdb, `calls/${chatId}`)
         
-        // Check for incoming call
         const snapshot = await get(callRef)
         const callData = snapshot.val()
 
         if (callData && callData.callerId !== currentUser.uid && callData.status === 'initiating') {
-          // Join Call
           setCallState('ringing')
           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(callData.offer))
           const answer = await peerConnection.current.createAnswer()
           await peerConnection.current.setLocalDescription(answer)
           await update(callRef, { answer, status: 'connected' })
         } else {
-          // Initiate Call
           const offer = await peerConnection.current.createOffer()
           await peerConnection.current.setLocalDescription(offer)
           await set(callRef, {
             offer,
             callerId: currentUser.uid,
-            type: callType,
+            type: 'voice',
             status: 'initiating',
             timestamp: serverTimestamp()
           })
@@ -177,7 +158,6 @@ function CallInterface({
           })
         }
 
-        // Handle ICE Candidates
         peerConnection.current.onicecandidate = (event) => {
           if (event.candidate) {
             const candidatesRef = ref(rtdb, `calls/${chatId}/candidates/${currentUser.uid}`)
@@ -195,7 +175,7 @@ function CallInterface({
         onDisconnect(callRef).update({ status: 'ended' })
 
       } catch (err) {
-        toast({ variant: "destructive", title: "Call Error", description: "Camera or Mic access denied." })
+        toast({ variant: "destructive", title: "Call Error", description: "Microphone access denied." })
         onClose()
       }
     }
@@ -222,52 +202,30 @@ function CallInterface({
     }
   }
 
-  const toggleVideo = () => {
-    if (localStream.current && callType === 'video') {
-      const videoTrack = localStream.current.getVideoTracks()[0]
-      videoTrack.enabled = !videoTrack.enabled
-      setIsVideoOff(!videoTrack.enabled)
-    }
-  }
-
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between p-8 text-white">
-      <div className="w-full flex flex-col items-center gap-4 mt-12">
-        <Avatar className="w-24 h-24 border-4 border-white/10">
-          <AvatarImage src={partner.photoURL} />
-          <AvatarFallback>{partner.name[0]}</AvatarFallback>
-        </Avatar>
+    <div className="fixed inset-0 z-[100] bg-[#00A2FF] flex flex-col items-center justify-between p-8 text-white">
+      <div className="w-full flex flex-col items-center gap-6 mt-20">
+        <div className="relative">
+          <Avatar className="w-32 h-32 border-4 border-white/20 shadow-2xl">
+            <AvatarImage src={partner.photoURL} className="object-cover" />
+            <AvatarFallback>{partner.name[0]}</AvatarFallback>
+          </Avatar>
+          <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-ping opacity-20" />
+        </div>
         <div className="text-center">
-          <h2 className="text-2xl font-bold">{partner.name}</h2>
-          <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">
-            {callState === 'initiating' ? 'Calling...' : (callState === 'ringing' ? 'Ringing...' : 'Connected')}
+          <h2 className="text-3xl font-bold tracking-tight">{partner.name}</h2>
+          <p className="text-xs font-black uppercase tracking-[0.3em] mt-2 opacity-60">
+            {callState === 'initiating' ? 'Connecting...' : (callState === 'ringing' ? 'Ringing...' : 'Voice Call')}
           </p>
         </div>
       </div>
 
-      <div className="relative w-full max-w-sm flex-1 flex items-center justify-center">
-        {callType === 'video' && (
-          <video 
-            ref={remoteVideoRef} 
-            autoPlay 
-            playsInline 
-            className="w-full h-full object-cover rounded-[3rem] bg-gray-900 shadow-2xl" 
-          />
-        )}
-        <div className={cn(
-          "absolute bottom-4 right-4 w-32 aspect-[3/4] bg-black border-2 border-white/20 rounded-2xl overflow-hidden shadow-xl transition-all",
-          callType === 'voice' && "hidden"
-        )}>
-          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-        </div>
-      </div>
-
-      <div className="w-full max-w-sm flex items-center justify-around pb-12">
+      <div className="w-full max-w-sm flex items-center justify-center pb-20 gap-8">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleMute}
-          className={cn("w-16 h-16 rounded-full", isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white")}
+          className={cn("w-16 h-16 rounded-full border border-white/10 transition-all", isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white")}
         >
           {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
         </Button>
@@ -276,21 +234,10 @@ function CallInterface({
           variant="ghost" 
           size="icon" 
           onClick={endCall}
-          className="w-20 h-20 rounded-full bg-red-600 text-white shadow-2xl"
+          className="w-20 h-20 rounded-full bg-red-600 text-white shadow-2xl active:scale-95 transition-all"
         >
           <PhoneOff className="w-8 h-8" />
         </Button>
-
-        {callType === 'video' && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleVideo}
-            className={cn("w-16 h-16 rounded-full", isVideoOff ? "bg-red-500 text-white" : "bg-white/10 text-white")}
-          >
-            {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-          </Button>
-        )}
       </div>
     </div>
   )
@@ -426,7 +373,7 @@ function ChatsContent() {
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
-  const [activeCall, setActiveCall] = useState<{ type: 'voice' | 'video' } | null>(null)
+  const [isCalling, setIsCalling] = useState(false)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
@@ -449,7 +396,7 @@ function ChatsContent() {
     return onValue(callRef, (snap) => {
       const data = snap.val()
       if (data && data.status === 'initiating' && data.callerId !== currentUser?.uid) {
-        setActiveCall({ type: data.type })
+        setIsCalling(true)
       }
     })
   }, [chatId, currentUser?.uid, rtdb])
@@ -602,11 +549,8 @@ function ChatsContent() {
         </div>
         
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setActiveCall({ type: 'voice' })} className="text-gray-400">
+          <Button variant="ghost" size="icon" onClick={() => setIsCalling(true)} className="text-[#00A2FF]">
             <Phone className="w-5 h-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setActiveCall({ type: 'video' })} className="text-gray-400">
-            <Video className="w-5 h-5" />
           </Button>
           <Avatar className="w-8 h-8 cursor-pointer ml-1" onClick={() => router.push(`/users/${chatPartner?.uid}`)}>
             <AvatarImage src={chatPartner?.photoURL} />
@@ -638,13 +582,12 @@ function ChatsContent() {
 
       <GiftDrawer open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen} userBalance={userBalances.coins} onSend={handleSendGift} />
       
-      {activeCall && chatPartner && chatId && (
+      {isCalling && chatPartner && chatId && (
         <CallInterface 
           chatId={chatId} 
           currentUser={currentUser} 
           partner={chatPartner} 
-          callType={activeCall.type} 
-          onClose={() => setActiveCall(null)} 
+          onClose={() => setIsCalling(false)} 
         />
       )}
     </div>
