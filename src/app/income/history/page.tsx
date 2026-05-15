@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -5,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { ref, onValue, query as rtdbQuery, limitToLast } from "firebase/database"
 import { useUser, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Gem, ArrowUpRight, ArrowDownLeft, Loader2, Sparkles, History } from "lucide-react"
+import { ChevronLeft, Gem, ArrowUp, ArrowDown, Loader2, History } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -74,7 +75,7 @@ export default function DiamondHistoryPage() {
                     "w-12 h-12 rounded-2xl flex items-center justify-center",
                     tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
                   )}>
-                    {tx.amount > 0 ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownLeft className="w-6 h-6" />}
+                    {tx.amount > 0 ? <ArrowUp className="w-6 h-6" /> : <ArrowDown className="w-6 h-6" />}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-[13px] text-black tracking-tight">{tx.description}</span>

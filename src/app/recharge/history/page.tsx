@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -5,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { ref, onValue, query as rtdbQuery, limitToLast } from "firebase/database"
 import { useUser, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Coins, ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react"
+import { ChevronLeft, Coins, ArrowUp, ArrowDown, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -74,7 +75,7 @@ export default function CoinHistoryPage() {
                     "w-10 h-10 rounded-full flex items-center justify-center shadow-sm", 
                     tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
                   )}>
-                    {tx.amount > 0 ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
+                    {tx.amount > 0 ? <ArrowUp className="w-5 h-5" /> : <ArrowDown className="w-5 h-5" />}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-sm text-black">{tx.description}</span>

@@ -137,7 +137,7 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // Hooks must be at the top
+  // Hooks at the top
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -165,12 +165,10 @@ function ChatsContent() {
       if (data) {
         const list = Object.entries(data)
           .map(([id, val]: [string, any]) => ({ id, ...val }))
-          .filter(summary => !!summary.lastMessage) // Only show chats with history
+          .filter(summary => !!summary.lastMessage)
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
         
         setChatSummaries(list)
-        
-        // Update active deletedAt marker if currently in a chat
         if (chatId) {
           const current = list.find(s => s.id === chatId)
           if (current) setActiveDeletedAt(current.deletedAt || 0)
@@ -196,7 +194,7 @@ function ChatsContent() {
   // 3. Listen to Messages
   useEffect(() => {
     if (!chatId) return
-    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(30))
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(40))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
@@ -259,20 +257,16 @@ function ChatsContent() {
         return
       }
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-15) })
-      await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
-        amount: -15,
-        type: 'chat',
-        description: `Chat with ${partnerProfile.name}`,
-        timestamp: Date.now()
-      })
     }
+
+    // Clear UI instantly
+    setNewMessage("")
 
     const timestamp = Date.now()
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
     await set(push(ref(rtdb, `chat_messages/${chatId}`), msgData))
 
     const updates: any = {}
-    // Reset deletedAt for both users when a new message is sent (Revive chat)
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL
@@ -288,7 +282,6 @@ function ChatsContent() {
     updates[`user_chats/${partnerProfile.uid}/${chatId}/unreadCount`] = rtdbIncrement(1)
 
     await update(ref(rtdb), updates)
-    setNewMessage("")
   }
 
   const handleSendGift = async (gift: any) => {
@@ -411,7 +404,7 @@ function ChatsContent() {
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
-        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-8 border-none [&>button]:hidden select-none">
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-8 pb-10 border-none [&>button]:hidden select-none">
           <DialogTitle className="sr-only">Send a Gift</DialogTitle>
           <div className="flex justify-between items-center mb-6 px-2">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
