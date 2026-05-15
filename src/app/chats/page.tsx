@@ -1,11 +1,10 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { doc, getDocs, collection, query, where, addDoc } from "firebase/firestore"
+import { doc, collection, addDoc } from "firebase/firestore"
 import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off } from "firebase/database"
-import { useFirestore, useUser, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
+import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -18,11 +17,8 @@ import {
   Send, 
   ChevronLeft, 
   ShoppingBag, 
-  Circle,
-  BadgeCheck,
   Gift as GiftIcon,
   Coins,
-  ChevronRight,
   Loader2
 } from "lucide-react"
 import { format } from "date-fns"
@@ -67,7 +63,6 @@ const GIFTS = [
 
 function ChatListItem({ summary, onClick }: { summary: ChatSummary, onClick: () => void }) {
   const presence = useUserPresence(summary.partnerId)
-  
   const lastAt = new Date(summary.lastMessageAt || Date.now())
 
   return (
@@ -159,10 +154,10 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Listen to Messages (Limited to 50)
+  // Listen to Messages (Strictly Limited to 20 for cost optimization)
   useEffect(() => {
     if (!chatId) return
-    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []
       setMessages(msgs)
@@ -188,7 +183,6 @@ function ChatsContent() {
 
         if (foundId) setChatId(foundId)
         else {
-          // New chat initialization
           const newChatRef = await addDoc(collection(db, "chats"), {
             participants: [currentUser.uid, startWithId],
             createdAt: new Date().toISOString()
@@ -214,7 +208,7 @@ function ChatsContent() {
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
         amount: -15,
         type: 'chat',
-        description: `Chat message sent`,
+        description: `Chat message to ${partnerProfile.name}`,
         timestamp: Date.now()
       })
     }
@@ -222,10 +216,8 @@ function ChatsContent() {
     const timestamp = Date.now()
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
     
-    // 1. Post message
     await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
 
-    // 2. Update Summaries (Atomic updates for cost reduction)
     const updates: any = {}
     updates[`user_chats/${currentUser.uid}/${chatId}`] = {
       partnerId: partnerProfile.uid,
@@ -265,7 +257,6 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
-  // LIST VIEW
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
@@ -289,7 +280,6 @@ function ChatsContent() {
     )
   }
 
-  // CHAT VIEW
   const partnerPresence = useUserPresence(startWithId)
 
   return (
@@ -322,7 +312,13 @@ function ChatsContent() {
       <footer className="bg-white border-t p-4 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => setIsGiftDrawerOpen(true)} className="text-[#00A2FF]"><GiftIcon className="w-6 h-6" /></Button>
         <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
-          <input placeholder="Type..." className="bg-transparent flex-1 outline-none text-sm" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)} />
+          <input 
+            placeholder="Type..." 
+            className="bg-transparent flex-1 outline-none text-sm" 
+            value={newMessage} 
+            onChange={(e) => setNewMessage(e.target.value)} 
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(newMessage)} 
+          />
         </div>
         <Button variant="ghost" onClick={() => handleSendMessage(newMessage)}><Send className="w-6 h-6 text-[#00A2FF]" /></Button>
       </footer>
