@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
 import { collection, query, where, limit, doc, getDoc } from "firebase/firestore"
-import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
+import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -10,6 +11,7 @@ import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-reac
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ref, onValue } from "firebase/database"
 
 interface UserProfile {
   id: string
@@ -40,13 +42,31 @@ export default function HomePage() {
   const router = useRouter()
   const { user: currentUser, loading: authLoading } = useUser()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshSeed, setRefreshSeed] = useState(0)
   const [displayLimit, setDisplayLimit] = useState(10)
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({})
 
   useEffect(() => { setIsMounted(true) }, [])
+
+  // Listen to presence for all users to enable "Online First" sorting
+  useEffect(() => {
+    if (!rtdb) return
+    const statusRef = ref(rtdb, 'status')
+    return onValue(statusRef, (snapshot) => {
+      const data = snapshot.val() || {}
+      const onlineMap: Record<string, boolean> = {}
+      Object.keys(data).forEach(uid => {
+        if (data[uid]?.state === 'online') {
+          onlineMap[uid] = true
+        }
+      })
+      setOnlineUsers(onlineMap)
+    })
+  }, [rtdb])
 
   // Check authentication and onboarding status
   useEffect(() => {
@@ -72,7 +92,7 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(50) // Fetch enough for filtering
+    limit(100) // Increased limit to ensure we have enough users to reshuffle and sort
   ), [db])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
@@ -101,6 +121,7 @@ export default function HomePage() {
 
   const handleRefresh = () => {
     setIsRefreshing(true)
+    // Update seed to trigger a complete reshuffle
     setRefreshSeed(prev => prev + 1)
     sessionStorage.removeItem('home_scroll_pos')
     setTimeout(() => {
@@ -111,6 +132,8 @@ export default function HomePage() {
   const filteredUsers = useMemo(() => {
     if (!users || !currentUserProfile) return []
     const blockedList = [...(currentUserProfile.blocking || []), ...(currentUserProfile.blockedBy || [])]
+    
+    // 1. Initial Filtering
     const baseList = users.filter(u => {
       if (u.uid === currentUser?.uid) return false
       if (blockedList.includes(u.uid)) return false
@@ -120,10 +143,25 @@ export default function HomePage() {
       return true;
     })
     
-    const seed = refreshSeed || 0;
-    const sorted = [...baseList].sort((a, b) => (Math.sin(a.uid.length + seed) - Math.sin(b.uid.length + seed)));
-    return sorted;
-  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
+    // 2. Sorting Logic: Online First, then Reshuffle
+    const sorted = [...baseList].sort((a, b) => {
+      // Prioritize online users
+      const aOnline = onlineUsers[a.uid] ? 1 : 0
+      const bOnline = onlineUsers[b.uid] ? 1 : 0
+      
+      if (aOnline !== bOnline) {
+        return bOnline - aOnline // Online (1) comes before Offline (0)
+      }
+      
+      // Reshuffle logic based on seed
+      // Using a more complex shuffle to ensure "first to middle" style movement
+      const aVal = Math.sin(a.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
+      const bVal = Math.sin(b.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
+      return aVal - bVal
+    })
+    
+    return sorted
+  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, onlineUsers])
 
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(0, displayLimit);
@@ -167,10 +205,10 @@ export default function HomePage() {
 
         <div className="sticky top-0 z-40 bg-[#F9FAFB]/90 backdrop-blur-md px-5 pt-3 pb-3 flex items-center justify-between border-b border-black/5 shadow-sm">
           <div className="flex items-center gap-6">
-            <button onClick={() => setActiveTab('Recommend')} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
-            <button onClick={() => setActiveTab('Nearby')} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
+            <button onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
+            <button onClick={() => { setActiveTab('Nearby'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
           </div>
-          <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF]", isRefreshing && "animate-spin opacity-50")}>
+          <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF] hover:bg-blue-50 rounded-full transition-colors", isRefreshing && "animate-spin opacity-50")}>
             <RotateCw className="w-5 h-5" />
           </button>
         </div>
@@ -180,17 +218,31 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((i) => <div key={i} className="aspect-[1/1.2] bg-muted animate-pulse rounded-3xl" />)}
             </div>
+          ) : paginatedUsers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <div className="bg-gray-100 p-6 rounded-full">
+                <Target className="w-10 h-10 text-gray-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-500">No users found in this category.</p>
+              <Button variant="outline" onClick={handleRefresh} className="rounded-full">Try Refreshing</Button>
+            </div>
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-2 gap-3">
                 {paginatedUsers.map((user) => (
                   <Card key={user.uid} className="relative overflow-hidden border-none aspect-[1/1.2] rounded-2xl group cursor-pointer shadow-xl bg-white" onClick={() => router.push(`/users/${user.uid}`)}>
                     <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
-                    <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-bold text-[12px] uppercase shadow-md" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
+                    <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-bold text-[12px] uppercase shadow-md active:scale-95 transition-all" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
+                    
+                    {/* Live Online Indicator on Card */}
+                    {onlineUsers[user.uid] && (
+                      <div className="absolute top-2.5 left-2.5 bg-green-500 w-3 h-3 rounded-full border-2 border-white z-30 shadow-sm" />
+                    )}
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
                       <div className="flex items-center gap-1.5">
-                        <h4 className="text-white font-bold text-[15px] truncate tracking-tight">{user.name}</h4>
+                        <h4 className="text-white font-bold text-sm truncate tracking-tight">{user.name}</h4>
                         {user.isVerified && <BadgeCheck className="w-4 h-4 text-[#00A2FF] fill-white shrink-0" />}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
