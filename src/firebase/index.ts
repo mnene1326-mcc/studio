@@ -4,8 +4,13 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getDatabase, Database } from 'firebase/database';
 import { firebaseConfig } from './config';
 
+// Global singletons to prevent multiple initializations and persistence errors
+let firestoreInstance: Firestore | null = null;
+let persistenceStarted = false;
+
 /**
- * Initializes Firebase services with aggressive offline persistence.
+ * Initializes Firebase services with robust offline persistence.
+ * Ensures persistence is enabled before any other Firestore operations.
  */
 export function initializeFirebase(): {
   app: FirebaseApp;
@@ -15,30 +20,31 @@ export function initializeFirebase(): {
 } {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   
-  let firestore: Firestore;
-  
   if (typeof window !== 'undefined') {
-    firestore = initializeFirestore(app, {
-      cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-      experimentalForceLongPolling: true,
-    });
+    if (!firestoreInstance) {
+      firestoreInstance = initializeFirestore(app, {
+        cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+      });
 
-    // Enable Offline Persistence for zero-latency local data access
-    enableIndexedDbPersistence(firestore).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.warn('Persistence failed: Multiple tabs open');
-      } else if (err.code === 'unimplemented') {
-        console.warn('Persistence failed: Browser not supported');
+      if (!persistenceStarted) {
+        persistenceStarted = true;
+        enableIndexedDbPersistence(firestoreInstance).catch((err) => {
+          if (err.code === 'failed-precondition') {
+            console.warn('Persistence failed: Multiple tabs open');
+          } else if (err.code === 'unimplemented') {
+            console.warn('Persistence failed: Browser not supported');
+          }
+        });
       }
-    });
+    }
   } else {
-    firestore = getFirestore(app);
+    firestoreInstance = getFirestore(app);
   }
 
   const auth = getAuth(app);
   const database = getDatabase(app, "https://studio-7077369434-1f94a-default-rtdb.europe-west1.firebasedatabase.app/");
 
-  return { app, firestore, auth, database };
+  return { app, firestore: firestoreInstance!, auth, database };
 }
 
 export * from './provider';

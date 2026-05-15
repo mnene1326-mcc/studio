@@ -1,9 +1,9 @@
 const CACHE_NAME = 'matchflow-v1';
 const ASSETS_TO_CACHE = [
   '/',
+  '/offline',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {
@@ -34,11 +34,6 @@ self.addEventListener('fetch', (event) => {
   // Only cache GET requests
   if (event.request.method !== 'GET') return;
 
-  // Don't cache Firestore or Realtime Database calls (they have their own persistence)
-  if (event.request.url.includes('firestore.googleapis.com') || event.request.url.includes('firebasedatabase.app')) {
-    return;
-  }
-
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -46,8 +41,8 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(event.request).then((response) => {
-        // Check if we received a valid response
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        // Don't cache non-successful responses or dynamic API routes
+        if (!response || response.status !== 200 || response.type !== 'basic' || event.request.url.includes('/api/')) {
           return response;
         }
 
@@ -58,7 +53,7 @@ self.addEventListener('fetch', (event) => {
 
         return response;
       }).catch(() => {
-        // Offline fallback for navigation requests
+        // Fallback for offline mode when not in cache
         if (event.request.mode === 'navigate') {
           return caches.match('/');
         }
