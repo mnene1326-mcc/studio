@@ -138,7 +138,7 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // ALL HOOKS MUST BE AT TOP LEVEL
+  // ALL HOOKS CALLED AT TOP LEVEL
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -179,7 +179,7 @@ function ChatsContent() {
         setChatSummaries(list)
         localStorage.setItem(`chats_cache_${currentUser.uid}`, JSON.stringify(list))
         
-        // If we are in a chat, ensure we have the latest deletedAt timestamp for filtering
+        // Update activeDeletedAt if in a chat room
         if (chatId) {
           const current = list.find(s => s.id === chatId)
           if (current) setActiveDeletedAt(current.deletedAt || 0)
@@ -193,11 +193,10 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
-  // Clear unreads when room is active
+  // Clear unreads when room is active and fetch deletedAt marker instantly
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
-      // Fetch initial deletedAt immediately for blink-free blank room
       get(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}/deletedAt`)).then((snap) => {
         if (snap.exists()) setActiveDeletedAt(snap.val())
         else setActiveDeletedAt(0)
@@ -218,18 +217,15 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Sync messages with 20-message limit and soft-delete filtering
+  // Sync messages with 20-message limit and strict soft-delete filtering
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
-      
-      // Strict filter: only show messages after activeDeletedAt
       const filtered = msgs
         .filter(m => !activeDeletedAt || m.timestamp > activeDeletedAt)
         .sort((a, b) => b.timestamp - a.timestamp)
-      
       setMessages(filtered)
     })
     return () => off(messagesRef, 'value', unsubscribe)
@@ -284,10 +280,8 @@ function ChatsContent() {
 
     const timestamp = Date.now()
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
-    
     await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
 
-    // Global updates
     const updates: any = {}
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name
@@ -326,7 +320,6 @@ function ChatsContent() {
     if (!currentUser?.uid || !chatToDelete) return
     try {
       const now = Date.now()
-      // Record deletedAt so we filter old messages later
       await update(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`), {
         lastMessage: "",
         unreadCount: 0,
@@ -345,7 +338,7 @@ function ChatsContent() {
   // LIST VIEW
   if (!startWithId) {
     return (
-      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20">
+      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 select-none">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
@@ -368,12 +361,12 @@ function ChatsContent() {
         </main>
         
         <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
-          <AlertDialogContent className="rounded-3xl max-w-[85vw]">
-            <AlertDialogHeader>
+          <AlertDialogContent className="rounded-3xl max-w-[85vw] p-8 border-none">
+            <AlertDialogHeader className="items-center text-center">
               <AlertDialogTitle className="text-xl font-bold">Delete Chat?</AlertDialogTitle>
               <AlertDialogDescription className="sr-only">Confirm deletion.</AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="flex-row gap-2 mt-4">
+            <AlertDialogFooter className="flex-row gap-2 mt-6">
               <AlertDialogCancel className="flex-1 h-12 rounded-full border-none bg-gray-100 font-bold uppercase tracking-widest text-[10px]">Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteChat} className="flex-1 h-12 rounded-full bg-red-500 hover:bg-red-600 font-bold uppercase tracking-widest text-[10px]">Delete</AlertDialogAction>
             </AlertDialogFooter>
@@ -387,7 +380,7 @@ function ChatsContent() {
 
   // ROOM VIEW
   return (
-    <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
+    <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative select-none">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <Button variant="ghost" size="sm" onClick={() => router.push("/chats")} className="text-[#00A2FF]"><ChevronLeft className="w-6 h-6" /></Button>
         <div className="flex flex-col items-center flex-1 mx-2">

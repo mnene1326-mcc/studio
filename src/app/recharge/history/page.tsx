@@ -26,10 +26,7 @@ export default function CoinHistoryPage() {
 
   useEffect(() => {
     if (!user?.uid) return
-
-    // Optimized: Only fetch last 50 entries using a scoped and limited RTDB query
     const historyRef = rtdbQuery(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
-    
     const unsubscribe = onValue(historyRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
@@ -43,12 +40,11 @@ export default function CoinHistoryPage() {
       }
       setLoading(false)
     })
-
     return () => unsubscribe()
   }, [user?.uid, rtdb])
 
   return (
-    <div className="flex-1 bg-white min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col select-none">
       <header className="px-4 h-16 flex items-center justify-between border-b sticky top-0 bg-white z-50">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
           <ChevronLeft className="w-6 h-6 text-black" />
@@ -57,7 +53,7 @@ export default function CoinHistoryPage() {
         <div className="w-10" />
       </header>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-[#00A2FF]" />
