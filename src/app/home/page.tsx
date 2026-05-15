@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -40,6 +41,7 @@ export default function HomePage() {
   const router = useRouter()
   const { user: currentUser, loading: authLoading } = useUser()
   const db = useFirestore()
+  
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -47,6 +49,20 @@ export default function HomePage() {
   const [displayLimit, setDisplayLimit] = useState(10)
 
   useEffect(() => { setIsMounted(true) }, [])
+
+  // Optimized Onboarding Check: Use Profile Cache
+  const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
+  const { data: currentUserProfile, loading: profileLoading } = useDoc<UserProfile>(currentUserProfileRef)
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!currentUser) {
+        router.replace("/welcome")
+      } else if (currentUserProfile && !profileLoading && !currentUserProfile.onboardingComplete) {
+        router.replace("/onboarding")
+      }
+    }
+  }, [currentUser, authLoading, currentUserProfile, profileLoading, router])
 
   // Scroll Restoration Logic
   useEffect(() => {
@@ -57,39 +73,16 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Restore scroll when data is ready
   useEffect(() => {
     if (isMounted && !authLoading) {
       const savedPos = sessionStorage.getItem('home_scroll_pos')
       if (savedPos) {
-        // We delay slightly to ensure DOM has rendered
         setTimeout(() => {
           window.scrollTo(0, parseInt(savedPos))
-        }, 100)
+        }, 150)
       }
     }
   }, [isMounted, authLoading])
-
-  // Check authentication and onboarding status
-  useEffect(() => {
-    if (!authLoading) {
-      if (!currentUser) {
-        router.replace("/welcome")
-      } else {
-        const checkStatus = async () => {
-          const userRef = doc(db, "users", currentUser.uid)
-          const snap = await getDoc(userRef)
-          if (!snap.exists() || !snap.data().onboardingComplete) {
-            router.replace("/onboarding")
-          }
-        }
-        checkStatus()
-      }
-    }
-  }, [currentUser, authLoading, router, db])
-
-  const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
-  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 

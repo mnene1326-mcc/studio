@@ -158,12 +158,32 @@ export default function MePage() {
   const db = useFirestore()
   const rtdb = useDatabase()
   const { toast } = useToast()
+  
   const [copied, setCopied] = useState(false)
-  const [balances, setBalances] = useState({ coins: 0, diamonds: 0 })
+  
+  // Economy: Load balances from localStorage first
+  const [balances, setBalances] = useState(() => {
+    if (typeof window !== 'undefined' && user?.uid) {
+      const cached = localStorage.getItem(`balance_cache_${user.uid}`)
+      if (cached) return JSON.parse(cached)
+    }
+    return { coins: 0, diamonds: 0 }
+  })
   const [balanceLoading, setBalanceLoading] = useState(true)
 
   const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
+
+  // Redirect logic optimized to use profile cache
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.replace("/welcome")
+      } else if (profile && !profileLoading && !profile.onboardingComplete) {
+        router.replace("/onboarding")
+      }
+    }
+  }, [user, authLoading, profile, profileLoading, router])
 
   // Fetch balances only once when the page is opened (Economy optimization)
   useEffect(() => {
@@ -174,10 +194,12 @@ export default function MePage() {
         const balanceSnap = await get(ref(rtdb, `balances/${user.uid}`))
         const data = balanceSnap.val()
         if (data) {
-          setBalances({ 
+          const newBal = { 
             coins: data.coins || 0, 
             diamonds: data.diamonds || 0 
-          })
+          }
+          setBalances(newBal)
+          localStorage.setItem(`balance_cache_${user.uid}`, JSON.stringify(newBal))
         }
       } catch (err) {
         console.error("Failed to fetch balances", err)
@@ -189,18 +211,6 @@ export default function MePage() {
     fetchBalances()
   }, [rtdb, user?.uid])
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      const checkOnboarding = async () => {
-        const snap = await getDoc(doc(db, "users", user.uid))
-        if (!snap.exists() || !snap.data().onboardingComplete) router.replace("/onboarding")
-      }
-      checkOnboarding()
-    } else if (!authLoading && !user) {
-      router.replace("/welcome")
-    }
-  }, [user, authLoading, router, db])
-
   const handleCopyId = () => {
     if (profile?.matchFlowId) {
       navigator.clipboard.writeText(profile.matchFlowId)
@@ -209,7 +219,7 @@ export default function MePage() {
     }
   }
 
-  if (authLoading || profileLoading || !user || !profile) {
+  if (authLoading || (profileLoading && !profile) || !user || !profile) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen bg-[#F8F9FA]">
         <Loader2 className="w-8 h-8 animate-spin text-[#00A2FF]" />
@@ -252,14 +262,14 @@ export default function MePage() {
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#00A2FF]" onClick={() => router.push("/recharge")}>
               <div className="flex items-center gap-1.5">
                 <CircleDollarSign className="w-5 h-5" />
-                <span className="text-sm font-bold">{balanceLoading ? "..." : balances.coins}</span>
+                <span className="text-sm font-bold">{balances.coins}</span>
               </div>
               <span className="text-[8px] font-bold uppercase opacity-60">Recharge Coins</span>
             </Button>
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black" onClick={() => router.push("/income")}>
               <div className="flex items-center gap-1.5">
                 <Gem className="w-5 h-5 text-[#4285F4]" />
-                <span className="text-sm font-bold">{balanceLoading ? "..." : balances.diamonds.toFixed(0)}</span>
+                <span className="text-sm font-bold">{balances.diamonds.toFixed(0)}</span>
               </div>
               <span className="text-[8px] font-bold uppercase opacity-60">Diamond Income</span>
             </Button>

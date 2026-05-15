@@ -42,22 +42,37 @@ function RechargeContent() {
   const db = useFirestore()
   const rtdb = useDatabase()
   const { toast } = useToast()
+  
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
-  const [currentCoins, setCurrentCoins] = useState(0)
+  
+  // Economy: Load from localStorage immediately to avoid flickering
+  const [currentCoins, setCurrentCoins] = useState(() => {
+    if (typeof window !== 'undefined' && user?.uid) {
+      const cached = localStorage.getItem(`balance_cache_${user.uid}`)
+      if (cached) return JSON.parse(cached).coins || 0
+    }
+    return 0
+  })
   const [balanceLoading, setBalanceLoading] = useState(true)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  // Fetch coins only once when the page is opened (Economy optimization)
   useEffect(() => {
     if (!user?.uid) return
     const fetchBalance = async () => {
       try {
         const snap = await get(ref(rtdb, `balances/${user.uid}`))
         if (snap.exists()) {
-          setCurrentCoins(snap.val().coins || 0)
+          const data = snap.val()
+          const coins = data.coins || 0
+          setCurrentCoins(coins)
+          
+          // Update persistent cache
+          const cached = localStorage.getItem(`balance_cache_${user.uid}`)
+          const balanceData = cached ? JSON.parse(cached) : { diamonds: 0 }
+          localStorage.setItem(`balance_cache_${user.uid}`, JSON.stringify({ ...balanceData, coins }))
         }
       } finally {
         setBalanceLoading(false)
@@ -106,7 +121,7 @@ function RechargeContent() {
              <div className="flex items-center gap-4 py-4">
                 <CoinIcon className="w-14 h-14" />
                 <span className="text-5xl font-bold text-black tracking-tight">
-                  {balanceLoading ? "..." : currentCoins}
+                  {currentCoins}
                 </span>
              </div>
           </div>
