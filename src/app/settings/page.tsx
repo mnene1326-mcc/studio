@@ -8,7 +8,7 @@ import { deleteUser, signOut } from "firebase/auth"
 import { doc, deleteDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, ShieldAlert, Link as LinkIcon } from "lucide-react"
+import { ChevronLeft, ChevronRight, ShieldAlert, Link as LinkIcon, Info } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import {
@@ -110,6 +110,7 @@ export default function SettingsPage() {
   const settingsList = [
     { label: "Charge settings", href: "/recharge" },
     { label: "Blocked List", href: "/blocked-list" },
+    { label: "About MatchFlow", href: "/about", icon: <Info className="w-4 h-4 text-blue-500" /> },
     { label: "Clear Cache", onClick: () => toast({ title: "Cache Cleared", description: "Temporary files have been removed." }) },
   ]
 
@@ -142,9 +143,9 @@ export default function SettingsPage() {
 
       <footer className="pb-10 pt-20">
         <div className="flex items-center justify-center gap-2 text-[11px] text-gray-400 font-medium">
-          <Link href="#" className="hover:text-black">Privacy Policy</Link>
+          <Link href="/privacy" className="hover:text-black">Privacy Policy</Link>
           <span className="opacity-30">|</span>
-          <Link href="#" className="hover:text-black">Terms of Service</Link>
+          <Link href="/terms" className="hover:text-black">Terms of Service</Link>
           {!profile?.isAdmin && (
             <>
               <span className="opacity-30">|</span>

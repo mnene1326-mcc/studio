@@ -181,7 +181,7 @@ export default function UnifiedAuthPage() {
         </form>
 
         <p className="text-[10px] text-center text-muted-foreground font-body px-8 leading-relaxed">
-          By continuing, you agree to MatchFlow's <span className="underline">Terms of Service</span> and <span className="underline">Privacy Policy</span>.
+          By continuing, you agree to MatchFlow's <Link href="/terms" className="underline">Terms of Service</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>.
         </p>
       </div>
     </div>

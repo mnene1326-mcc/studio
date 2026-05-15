@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -8,6 +9,7 @@ import { signInAnonymously } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import Image from "next/image"
+import Link from "next/link"
 
 export default function WelcomePage() {
   const [mounted, setMounted] = useState(false)
@@ -111,7 +113,7 @@ export default function WelcomePage() {
 
           <div className="pt-8">
             <p className="text-[10px] text-white/40 font-semibold px-6 leading-relaxed">
-              By entering, you confirm you are 18+ and agree to our <span className="underline text-white/60">Terms</span> and <span className="underline text-white/60">Privacy Policy</span>.
+              By entering, you confirm you are 18+ and agree to our <Link href="/terms" className="underline text-white/60">Terms</Link> and <Link href="/privacy" className="underline text-white/60">Privacy Policy</Link>.
             </p>
           </div>
         </div>
