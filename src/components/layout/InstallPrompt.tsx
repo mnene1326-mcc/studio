@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -69,7 +70,7 @@ export function InstallPrompt() {
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-700">
       <div className="relative z-10 w-full max-w-xs flex flex-col items-center space-y-20">
         <div className="space-y-4">
-          <h1 className="text-2xl font-logo text-white tracking-tight">MatchFlow</h1>
+          <h1 className="text-xl font-logo text-white tracking-tight">MatchFlow</h1>
           <div className="h-1 w-12 bg-[#00A2FF] mx-auto rounded-full opacity-50" />
         </div>
 

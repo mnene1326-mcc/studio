@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -105,17 +106,25 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
+  // HOOKS MUST BE TOP LEVEL
+  const partnerPresence = useUserPresence(startWithId || undefined)
+  const { data: currentUserProfile } = useDoc<UserProfile>(currentUser?.uid ? doc(db, "users", currentUser.uid) : null)
+  const { data: partnerProfile } = useDoc<UserProfile>(startWithId ? doc(db, "users", startWithId) : null)
+
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
-  const [chatSummaries, setChatSummaries] = useState<ChatSummary[]>([])
-  const [summariesLoading, setSummariesLoading] = useState(true)
+  const [chatSummaries, setChatSummaries] = useState<ChatSummary[]>(() => {
+    if (typeof window !== 'undefined' && currentUser?.uid) {
+      const cached = localStorage.getItem(`chats_cache_${currentUser.uid}`)
+      if (cached) return JSON.parse(cached)
+    }
+    return []
+  })
+  const [summariesLoading, setSummariesLoading] = useState(!chatSummaries.length)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
-
-  // Call hooks at the top level to avoid "Rendered more hooks" error
-  const partnerPresence = useUserPresence(startWithId || undefined)
 
   // Listen to RTDB Chat Summaries (Optimized List)
   useEffect(() => {
@@ -124,13 +133,17 @@ function ChatsContent() {
     const unsubscribe = onValue(summariesRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
-        const list = Object.entries(data).map(([id, val]: [string, any]) => ({
-          id,
-          ...val
-        })).sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+        // Filter: only show chats that actually have a last message (sent or received)
+        const list = Object.entries(data)
+          .map(([id, val]: [string, any]) => ({ id, ...val }))
+          .filter(summary => !!summary.lastMessage)
+          .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
+        
         setChatSummaries(list)
+        localStorage.setItem(`chats_cache_${currentUser.uid}`, JSON.stringify(list))
       } else {
         setChatSummaries([])
+        localStorage.removeItem(`chats_cache_${currentUser.uid}`)
       }
       setSummariesLoading(false)
     })
@@ -167,9 +180,6 @@ function ChatsContent() {
     })
     return () => off(messagesRef, 'value', unsubscribe)
   }, [chatId, rtdb])
-
-  const { data: currentUserProfile } = useDoc<UserProfile>(currentUser?.uid ? doc(db, "users", currentUser.uid) : null)
-  const { data: partnerProfile } = useDoc<UserProfile>(startWithId ? doc(db, "users", startWithId) : null)
 
   // Find or Create Chat ID
   useEffect(() => {
@@ -211,7 +221,7 @@ function ChatsContent() {
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
         amount: -15,
         type: 'chat',
-        description: `Chat message to ${partnerProfile.name}`,
+        description: `Chat with ${partnerProfile.name}`,
         timestamp: Date.now()
       })
     }
@@ -267,7 +277,7 @@ function ChatsContent() {
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
         <main className="flex-1">
-          {summariesLoading ? (
+          {summariesLoading && !chatSummaries.length ? (
             <div className="flex items-center justify-center py-20 opacity-20"><Loader2 className="animate-spin" /></div>
           ) : chatSummaries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 px-12 text-center opacity-40">
