@@ -1,31 +1,30 @@
 {
   "rules": {
-    /* Hali ya hewa (Online/Offline status) */
+    /* Presence system: Anyone logged in can see who is online */
     "status": {
       ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid == $uid"
       }
     },
-    /* Salio la Coins na Diamonds - Ni mmiliki pekee anayeweza kusoma na kuandika */
+    /* Currency Balances: Only the owner can read or write their own balance */
     "balances": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
         ".write": "auth != null && auth.uid == $uid"
       }
     },
-    /* Jumbe za Chat - Zinaruhusu watumiaji walioingia kusoma na kuandika */
+    /* Chat Messages: Authenticated users can read/write to chat rooms */
     "chat_messages": {
       "$chatId": {
         ".read": "auth != null",
         ".write": "auth != null"
       }
     },
-    /* Idadi ya jumbe ambazo hazijasomwa (Unread counters) */
+    /* Unread Counters: Owner reads their count; anyone can increment it when sending a message */
     "unreads": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
-        // Mtu yeyote anaweza kuongeza kaunta ya unread anapotuma ujumbe
         ".write": "auth != null"
       }
     }
