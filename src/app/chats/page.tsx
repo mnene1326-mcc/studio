@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { 
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -68,9 +69,13 @@ interface UserProfile {
 
 const GIFTS = [
   { id: 'heart', name: 'Heart', price: 150, icon: '❤️' },
+  { id: 'rose', name: 'Rose', price: 250, icon: '🌹' },
   { id: 'butterfly', name: 'Butterfly', price: 500, icon: '🦋' },
-  { id: 'flower', name: 'Diamond', price: 25000, icon: '💎' },
+  { id: 'perfume', name: 'Perfume', price: 1000, icon: '🧴' },
+  { id: 'teddy', name: 'Teddy', price: 2000, icon: '🧸' },
   { id: 'motor', name: 'Harley', price: 3000, icon: '🏍️' },
+  { id: 'car', name: 'Sports Car', price: 5000, icon: '🏎️' },
+  { id: 'diamond', name: 'Diamond', price: 25000, icon: '💎' },
 ]
 
 function ChatListItem({ summary, onClick, onDelete }: { summary: ChatSummary, onClick: () => void, onDelete: () => void }) {
@@ -134,7 +139,6 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // Hooks must always be at the top level
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -159,7 +163,6 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeChatSummary, setActiveChatSummary] = useState<ChatSummary | null>(null)
 
-  // Listen to RTDB Chat Summaries
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -168,7 +171,7 @@ function ChatsContent() {
       if (data) {
         const list = Object.entries(data)
           .map(([id, val]: [string, any]) => ({ id, ...val }))
-          .filter(summary => !!summary.lastMessage) // Only show chats with content
+          .filter(summary => !!summary.lastMessage) 
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
         
         setChatSummaries(list)
@@ -187,14 +190,12 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
-  // Mark Read when entering chat
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
     }
   }, [chatId, currentUser?.uid, rtdb])
 
-  // Fetch balances
   useEffect(() => {
     if (!currentUser?.uid) return
     const balRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -207,14 +208,11 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Listen to Messages (Limited to 20, filtered by deletedAt)
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
-      
-      // Filter by user's individual soft-delete timestamp
       const filtered = msgs
         .filter(m => !activeChatSummary?.deletedAt || m.timestamp > activeChatSummary.deletedAt)
         .sort((a, b) => b.timestamp - a.timestamp)
@@ -224,7 +222,6 @@ function ChatsContent() {
     return () => off(messagesRef, 'value', unsubscribe)
   }, [chatId, rtdb, activeChatSummary?.deletedAt])
 
-  // Find or Create Chat ID
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
     setIsInitializingChat(true)
@@ -275,24 +272,20 @@ function ChatsContent() {
     await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
 
     const updates: any = {}
-    updates[`user_chats/${currentUser.uid}/${chatId}`] = {
-      partnerId: partnerProfile.uid,
-      partnerName: partnerProfile.name,
-      partnerPhoto: partnerProfile.photoURL,
-      lastMessage: text.trim(),
-      lastMessageAt: timestamp,
-      unreadCount: 0,
-      deletedAt: 0 // Reset deletedAt when a new message is sent/received
-    }
-    updates[`user_chats/${partnerProfile.uid}/${chatId}`] = {
-      partnerId: currentUser.uid,
-      partnerName: currentUserProfile?.name || "MatchFlow User",
-      partnerPhoto: currentUserProfile?.photoURL || "",
-      lastMessage: text.trim(),
-      lastMessageAt: timestamp,
-      unreadCount: rtdbIncrement(1),
-      deletedAt: 0 
-    }
+    updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
+    updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name
+    updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL
+    updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = text.trim()
+    updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
+    updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
+
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "MatchFlow User"
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerPhoto`] = currentUserProfile?.photoURL || ""
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = text.trim()
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessageAt`] = timestamp
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/unreadCount`] = rtdbIncrement(1)
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/deletedAt`] = 0 
 
     await update(ref(rtdb), updates)
     setNewMessage("")
@@ -417,8 +410,9 @@ function ChatsContent() {
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen}>
-        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6">
-          <div className="grid grid-cols-4 gap-4">
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none">
+          <DialogTitle className="sr-only">Send a Gift</DialogTitle>
+          <div className="grid grid-cols-4 gap-y-8 gap-x-4">
             {GIFTS.map(gift => (
               <div key={gift.id} onClick={() => handleSendGift(gift)} className="flex flex-col items-center gap-2 cursor-pointer active:scale-95">
                 <span className="text-3xl">{gift.icon}</span>
