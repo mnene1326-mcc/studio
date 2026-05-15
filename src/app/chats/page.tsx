@@ -73,30 +73,31 @@ const GIFTS = [
   { id: 'phone', name: 'Antique Telephone', price: 400, icon: '☎️' },
 ]
 
-function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: { chat: Chat, currentUserUid: string, blocking: string[], blockedBy: string[], onDelete: (chat: Chat) => void }) {
+function ChatListItem({ 
+  chat, 
+  currentUserUid, 
+  blocking, 
+  blockedBy, 
+  onDelete, 
+  unreadCount 
+}: { 
+  chat: Chat, 
+  currentUserUid: string, 
+  blocking: string[], 
+  blockedBy: string[], 
+  onDelete: (chat: Chat) => void,
+  unreadCount: number
+}) {
   const router = useRouter()
   const db = useFirestore()
-  const rtdb = useDatabase()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
   
   const partnerId = useMemo(() => chat.participants.find(id => id !== currentUserUid), [chat.participants, currentUserUid])
   const partnerRef = useMemo(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   
-  // useDoc uses the localStorage cache, ensuring names/photos appear instantly
   const { data: partner } = useDoc<UserProfile>(partnerRef)
-  
-  const [unreadCount, setUnreadCount] = useState(0)
   const presence = useUserPresence(partner?.uid)
-
-  useEffect(() => {
-    if (!currentUserUid || !chat.id) return
-    const unreadRef = ref(rtdb, `unreads/${currentUserUid}/${chat.id}`)
-    const unsubscribe = onValue(unreadRef, (snapshot) => {
-      setUnreadCount(snapshot.val() || 0)
-    })
-    return () => unsubscribe()
-  }, [rtdb, currentUserUid, chat.id])
 
   const handleTouchStart = () => {
     isLongPress.current = false
@@ -109,14 +110,14 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   const handleTouchEnd = () => { if (timerRef.current) clearTimeout(timerRef.current) }
   const handleClick = () => { if (isLongPress.current) return; router.push(`/chats?startWith=${partnerId}`) }
 
-  if (!partner || blocking.includes(partner.uid) || blockedBy.includes(partner.uid)) return null
+  if (!partnerId || blocking.includes(partnerId) || blockedBy.includes(partnerId)) return null
   
   const lastAtRaw = chat.lastMessageAt;
   const lastAt = lastAtRaw?.toDate ? lastAtRaw.toDate() : (lastAtRaw?.seconds ? new Date(lastAtRaw.seconds * 1000) : new Date(lastAtRaw || Date.now()))
 
   return (
     <div 
-      className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50 select-none"
+      className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50 select-none min-h-[80px]"
       onClick={handleClick}
       onMouseDown={handleTouchStart}
       onMouseUp={handleTouchEnd}
@@ -126,17 +127,17 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
     >
       <div className="relative">
         <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
-          <AvatarImage src={partner.photoURL} className="object-cover" />
-          <AvatarFallback className="bg-[#00A2FF] text-white font-semibold text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
+          <AvatarImage src={partner?.photoURL} className="object-cover" />
+          <AvatarFallback className="bg-[#00A2FF] text-white font-semibold text-sm">{partner?.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
         {presence?.state === 'online' && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
           <div className="flex items-center gap-1 max-w-[70%]">
-            <h4 className="font-semibold text-sm text-black truncate">{partner.name}</h4>
-            {partner.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
-            {partner.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF] shrink-0" />}
+            <h4 className="font-semibold text-sm text-black truncate">{partner?.name || '...'}</h4>
+            {partner?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
+            {partner?.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF] shrink-0" />}
           </div>
           <span className="text-[10px] text-gray-400 font-medium">{format(lastAt, "HH:mm")}</span>
         </div>
@@ -208,7 +209,9 @@ function ChatsContent() {
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
+  const [unreadsMap, setUnreadsMap] = useState<Record<string, number>>({})
 
+  // Fetch balances and initialize cache
   useEffect(() => {
     if (!currentUser?.uid) return
     const fetchBalance = async () => {
@@ -219,6 +222,16 @@ function ChatsContent() {
       }
     }
     fetchBalance()
+  }, [rtdb, currentUser?.uid])
+
+  // Single listener for all unread counts to prevent per-item flickering and lower cost
+  useEffect(() => {
+    if (!currentUser?.uid) return
+    const unreadRef = ref(rtdb, `unreads/${currentUser.uid}`)
+    const unsubscribe = onValue(unreadRef, (snapshot) => {
+      setUnreadsMap(snapshot.val() || {})
+    })
+    return () => unsubscribe()
   }, [rtdb, currentUser?.uid])
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
@@ -236,10 +249,13 @@ function ChatsContent() {
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
   
+  // Stable filtered list that doesn't "blink" when profile is loading
   const userChats = useMemo(() => {
-    if (!currentUser?.uid || !currentUserProfile) return []
-    const blocking = currentUserProfile.blocking || []
-    const blockedBy = currentUserProfile.blockedBy || []
+    if (!currentUser?.uid) return []
+    // Use empty arrays as fallback if profile is still loading to avoid hiding everything
+    const blocking = currentUserProfile?.blocking || []
+    const blockedBy = currentUserProfile?.blockedBy || []
+    
     return [...userChatsRaw].filter(chat => {
       if (!chat.lastMessage) return false
       const partnerId = chat.participants.find(p => p !== currentUser.uid)
@@ -247,10 +263,6 @@ function ChatsContent() {
       return true
     })
   }, [userChatsRaw, currentUser?.uid, currentUserProfile])
-
-  const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
-  const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
-  const partnerPresence = useUserPresence(chatPartner?.uid)
 
   useEffect(() => {
     if (chatId && currentUser?.uid) {
@@ -308,12 +320,12 @@ function ChatsContent() {
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
         amount: -messageCost,
         type: 'chat',
-        description: `Chat with ${chatPartner?.name || 'User'}`,
+        description: `Chat message sent`,
         timestamp
       })
     }
 
-    const partnerId = chatPartner?.uid
+    const partnerId = startWithId || chatPartner?.uid
     const timestamp = Date.now()
     try {
       await set(push(ref(rtdb, `chat_messages/${chatId}`)), { text: text.trim(), senderId: currentUser.uid, timestamp })
@@ -353,7 +365,7 @@ function ChatsContent() {
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
         amount: -gift.price,
         type: 'gift',
-        description: `Gift to ${chatPartner.name}`,
+        description: `Sent a gift`,
         timestamp
       })
 
@@ -363,7 +375,7 @@ function ChatsContent() {
       await set(push(ref(rtdb, `diamond_history/${chatPartner.uid}`)), { 
         amount: reward, 
         type: 'gift', 
-        description: `Gift from ${currentUserProfile?.name || 'User'}`, 
+        description: `Received a gift`, 
         timestamp 
       })
       
@@ -375,6 +387,7 @@ function ChatsContent() {
   }
 
   if (!currentUser) return null
+
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
@@ -386,12 +399,26 @@ function ChatsContent() {
             <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20"><Circle className="w-8 h-8 animate-spin" /></div>
           ) : userChats.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 opacity-40"><ShoppingBag className="w-16 h-16 mb-4" /><p className="font-semibold text-xl text-black">No chats yet...</p></div>
-          ) : userChats.map(chat => <ChatListItem key={chat.id} chat={chat} currentUserUid={currentUser.uid} blocking={currentUserProfile?.blocking || []} blockedBy={currentUserProfile?.blockedBy || []} onDelete={setChatToDelete} />)}
+          ) : userChats.map(chat => (
+            <ChatListItem 
+              key={chat.id} 
+              chat={chat} 
+              currentUserUid={currentUser.uid} 
+              blocking={currentUserProfile?.blocking || []} 
+              blockedBy={currentUserProfile?.blockedBy || []} 
+              onDelete={setChatToDelete}
+              unreadCount={unreadsMap[chat.id] || 0}
+            />
+          ))}
         </main>
         <BottomNav />
       </div>
     )
   }
+
+  const partnerRef = useMemoFirebase(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
+  const { data: chatPartner } = useDoc<UserProfile>(partnerRef)
+  const partnerPresence = useUserPresence(chatPartner?.uid)
 
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
