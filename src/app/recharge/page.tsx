@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, Suspense, useEffect } from "react"
@@ -5,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { doc } from "firebase/firestore"
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Menu, Check, CreditCard, Loader2, PartyPopper } from "lucide-react"
+import { ChevronLeft, Menu, Check, CreditCard, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { initiatePesaPalPayment } from "@/app/actions/pesapal"
@@ -26,7 +27,6 @@ function CoinIcon({ className }: { className?: string }) {
 }
 
 const PACKAGES = [
-  { amount: 10, price: 1.0 },
   { amount: 500, price: 50.0 },
   { amount: 1000, price: 100.0 },
   { amount: 2000, price: 200.0 },
@@ -48,7 +48,6 @@ function RechargeContent() {
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  // Handle successful return from PesaPal
   useEffect(() => {
     const orderTrackingId = searchParams.get('OrderTrackingId');
     if (orderTrackingId) {
@@ -56,7 +55,6 @@ function RechargeContent() {
         title: "Payment Received!",
         description: "Your transaction is being processed. Your coins will reflect in a few moments.",
       });
-      // Clear URL params to prevent re-toasting and clean up history
       router.replace('/recharge');
     }
   }, [searchParams, router, toast]);
@@ -83,7 +81,6 @@ function RechargeContent() {
       })
 
       if (result.success && result.redirect_url) {
-        // Redirect to PesaPal
         window.location.href = result.redirect_url
       } else {
         toast({
