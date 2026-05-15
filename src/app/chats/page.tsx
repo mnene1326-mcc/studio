@@ -449,8 +449,11 @@ function ChatsContent() {
         if (lastMsg.senderId === chatPartner.uid) {
           const diffSeconds = (timestamp - lastMsg.timestamp) / 1000
           const partnerBalRef = ref(rtdb, `balances/${chatPartner.uid}`)
+          const historyRef = push(ref(rtdb, `diamond_history/${chatPartner.uid}`))
+          
           if (diffSeconds < 60) {
             await update(partnerBalRef, { diamonds: rtdbIncrement(5), updatedAt: timestamp })
+            await set(historyRef, { amount: 5, type: 'reply', description: `Fast reply reward from ${currentUserProfile.name}`, timestamp })
           } else {
             await update(partnerBalRef, { coins: rtdbIncrement(2), updatedAt: timestamp })
           }
@@ -486,9 +489,20 @@ function ChatsContent() {
 
       const share = chatPartner.gender === 'female' ? 0.5 : 0.4
       const diamondReward = Math.floor(gift.price * share)
-      await update(ref(rtdb, `balances/${chatPartner.uid}`), { 
+      
+      const partnerBalRef = ref(rtdb, `balances/${chatPartner.uid}`)
+      await update(partnerBalRef, { 
         diamonds: rtdbIncrement(diamondReward),
         updatedAt: timestamp
+      })
+
+      // Log to history in RTDB
+      const historyRef = push(ref(rtdb, `diamond_history/${chatPartner.uid}`))
+      await set(historyRef, {
+        amount: diamondReward,
+        type: 'gift',
+        description: `Gift: ${gift.icon} ${gift.name} from ${currentUserProfile.name}`,
+        timestamp
       })
 
       const text = `Sent a gift: ${gift.icon} ${gift.name}`

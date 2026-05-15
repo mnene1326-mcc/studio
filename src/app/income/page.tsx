@@ -4,12 +4,12 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
-import { ref, onValue, update, increment as rtdbIncrement } from "firebase/database"
+import { ref, onValue, update, increment as rtdbIncrement, push, set } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, Gem, Coins, Banknote, AlertCircle } from "lucide-react"
+import { ChevronLeft, Gem, Coins, Banknote, AlertCircle, History } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { requestWithdrawalAction } from "@/app/actions/agency"
 import { cn } from "@/lib/utils"
@@ -36,7 +36,6 @@ export default function IncomePage() {
   const userRef = user?.uid ? doc(db, "users", user.uid) : null
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  // Listen to RTDB for high-frequency balance data (Optimization)
   useEffect(() => {
     if (!user?.uid) return
     const balanceRef = ref(rtdb, `balances/${user.uid}`)
@@ -48,7 +47,6 @@ export default function IncomePage() {
 
   const diamondBalance = balances.diamonds
   
-  // Rates
   const coinRate = 0.09 
   const cashRate = 0.08 
   const minCashWithdrawalKes = 1000
@@ -70,13 +68,24 @@ export default function IncomePage() {
 
     setIsProcessing(true)
     try {
-      // Update RTDB Balance (Optimization)
+      const timestamp = Date.now()
       const balRef = ref(rtdb, `balances/${user?.uid}`)
+      
       await update(balRef, {
         diamonds: rtdbIncrement(-amount),
         coins: rtdbIncrement(expectedCoins),
-        updatedAt: Date.now()
+        updatedAt: timestamp
       })
+
+      // Log to history in RTDB
+      const historyRef = push(ref(rtdb, `diamond_history/${user?.uid}`))
+      await set(historyRef, {
+        amount: -amount,
+        type: 'conversion',
+        description: `Converted to ${expectedCoins} coins`,
+        timestamp
+      })
+
       toast({ title: "Success!", description: `Converted to ${expectedCoins} coins.` })
       setDiamondsToConvert("")
     } catch (err) {
@@ -104,6 +113,16 @@ export default function IncomePage() {
     setIsProcessing(true)
     const res = await requestWithdrawalAction(profile.uid, amount, Number(expectedKes), profile.agencyId)
     if (res.success) {
+      // Log to history in RTDB
+      const timestamp = Date.now()
+      const historyRef = push(ref(rtdb, `diamond_history/${user?.uid}`))
+      await set(historyRef, {
+        amount: -amount,
+        type: 'withdrawal',
+        description: `Withdrawal request for Ksh ${expectedKes}`,
+        timestamp
+      })
+
       toast({ title: "Request Sent", description: "Your agency agent will review your payment." })
       setDiamondsToConvert("")
     } else {
@@ -121,7 +140,9 @@ export default function IncomePage() {
           <ChevronLeft className="w-7 h-7" />
         </Button>
         <h1 className="text-lg font-bold text-white tracking-tight">My Income</h1>
-        <div className="w-10" />
+        <Button variant="ghost" size="icon" onClick={() => router.push("/income/history")} className="text-white rounded-full">
+          <History className="w-6 h-6" />
+        </Button>
       </header>
 
       <main className="relative z-10 flex-1 flex flex-col">
