@@ -139,7 +139,6 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // All hooks must be at the top level
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -215,6 +214,7 @@ function ChatsContent() {
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
+      // Use the local summary's deletedAt for filtering history
       const filtered = msgs
         .filter(m => !activeChatSummary?.deletedAt || m.timestamp > activeChatSummary.deletedAt)
         .sort((a, b) => b.timestamp - a.timestamp)
@@ -236,8 +236,9 @@ function ChatsContent() {
           if (val.partnerId === startWithId) foundId = id
         })
 
-        if (foundId) setChatId(foundId)
-        else {
+        if (foundId) {
+          setChatId(foundId)
+        } else {
           const newChatRef = await addDoc(collection(db, "chats"), {
             participants: [currentUser.uid, startWithId],
             createdAt: new Date().toISOString()
@@ -280,7 +281,7 @@ function ChatsContent() {
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
-    updates[`user_chats/${currentUser.uid}/${chatId}/deletedAt`] = 0
+    // We do NOT reset deletedAt to 0 here to keep the history hidden for User A
 
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "MatchFlow User"
@@ -288,7 +289,7 @@ function ChatsContent() {
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${partnerProfile.uid}/${chatId}/unreadCount`] = rtdbIncrement(1)
-    updates[`user_chats/${partnerProfile.uid}/${chatId}/deletedAt`] = 0 
+    // Partner's deletedAt is also left as is
 
     await update(ref(rtdb), updates)
     setNewMessage("")
@@ -356,8 +357,8 @@ function ChatsContent() {
           <AlertDialogContent className="rounded-3xl max-w-[85vw]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-xl font-bold">Delete Chat?</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs font-medium">
-                This will hide the conversation. It will reappear empty if you message them again.
+              <AlertDialogDescription className="text-xs font-medium sr-only">
+                Confirm deletion.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-2 mt-4">
@@ -414,7 +415,7 @@ function ChatsContent() {
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
-        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none">
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none [&>button]:hidden">
           <DialogTitle className="sr-only">Send a Gift</DialogTitle>
           <div className="flex justify-between items-center mb-6 px-2">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">

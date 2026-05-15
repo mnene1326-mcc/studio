@@ -33,7 +33,7 @@
     @apply border-border;
   }
   html, body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground select-none;
     -webkit-overflow-scrolling: touch;
     min-height: 100%;
     overflow-x: hidden;
