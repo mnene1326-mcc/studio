@@ -28,40 +28,63 @@ export default function CoinHistoryPage() {
   useEffect(() => {
     if (!user?.uid) return
     // Economical Limit: Only load the last 50 coin events
-    const historyRef = query(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
-    return onValue(historyRef, (snapshot) => {
+    const historyRef = rtdbQuery(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
+    const rtdbQuery = (await import('firebase/database')).query; // Fallback for hook scope if needed
+
+    const unsubscribe = onValue(query(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50)), (snapshot) => {
       const data = snapshot.val()
       if (data) {
         setTransactions(Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp))
       } else { setTransactions([]) }
       setLoading(false)
     })
+    return () => unsubscribe()
   }, [user?.uid, rtdb])
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
-      <header className="px-4 h-16 flex items-center justify-between border-b">
+      <header className="px-4 h-16 flex items-center justify-between border-b sticky top-0 bg-white z-50">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full"><ChevronLeft className="w-6 h-6 text-black" /></Button>
-        <h1 className="text-base font-black text-black">Coin History</h1>
+        <h1 className="text-base font-black text-black">Wallet History</h1>
         <div className="w-10" />
       </header>
       <main className="flex-1">
         {loading ? <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[#00A2FF]" /></div> : transactions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 opacity-40"><Coins className="w-16 h-16 mb-4" /><p className="font-bold text-sm uppercase">No history found</p></div>
+          <div className="flex flex-col items-center justify-center py-32 opacity-40">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+              <Coins className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="font-bold text-sm uppercase tracking-widest text-gray-400">No transactions yet</p>
+          </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-gray-50">
             {transactions.map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between p-5">
+              <div key={tx.id} className="flex items-center justify-between p-5 hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600")}>
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center shadow-sm", 
+                    tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+                  )}>
                     {tx.amount > 0 ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold text-sm">{tx.description}</span>
-                    <span className="text-[10px] text-gray-400 uppercase">{format(tx.timestamp, "MMM d, HH:mm")}</span>
+                    <span className="font-bold text-sm text-black">{tx.description}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      {format(tx.timestamp, "MMM d, HH:mm")}
+                    </span>
                   </div>
                 </div>
-                <span className={cn("text-sm font-black", tx.amount > 0 ? "text-green-600" : "text-red-600")}>{tx.amount > 0 ? '+' : ''}{tx.amount}</span>
+                <div className="text-right">
+                  <span className={cn(
+                    "text-sm font-black tracking-tight", 
+                    tx.amount > 0 ? "text-green-600" : "text-red-600"
+                  )}>
+                    {tx.amount > 0 ? '+' : ''}{tx.amount}
+                  </span>
+                  <div className="flex items-center justify-end gap-1 opacity-20">
+                    <Coins className="w-2.5 h-2.5" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -69,7 +92,7 @@ export default function CoinHistoryPage() {
       </main>
       <footer className="p-8 text-center bg-gray-50/50">
         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] leading-relaxed">
-          Coin history is kept for the last 50 transactions.
+          Showing last 50 wallet events.
         </p>
       </footer>
     </div>

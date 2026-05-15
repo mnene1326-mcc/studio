@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -293,7 +294,7 @@ function ChatsContent() {
     if (!text.trim() || !chatId || !currentUser?.uid) return
     
     if (currentUserProfile?.gender === 'male' && !currentUserProfile.isAdmin) {
-      const messageCost = 5
+      const messageCost = 15
       if (userBalances.coins < messageCost) {
         toast({ variant: "destructive", title: "Insufficient Coins", description: "Recharge to continue chatting." })
         return
@@ -301,9 +302,18 @@ function ChatsContent() {
       
       setUserBalances(prev => ({ ...prev, coins: prev.coins - messageCost }))
       
+      const timestamp = Date.now()
       await update(ref(rtdb, `balances/${currentUser.uid}`), {
         coins: rtdbIncrement(-messageCost),
-        updatedAt: Date.now()
+        updatedAt: timestamp
+      })
+
+      // Log to history
+      await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
+        amount: -messageCost,
+        type: 'chat',
+        description: `Chat with ${chatPartner?.name || 'User'}`,
+        timestamp
       })
     }
 
@@ -327,6 +337,14 @@ function ChatsContent() {
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price), updatedAt: timestamp })
       
       setUserBalances(prev => ({ ...prev, coins: prev.coins - gift.price }))
+
+      // Log history for sender
+      await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
+        amount: -gift.price,
+        type: 'gift',
+        description: `Gift to ${chatPartner.name}`,
+        timestamp
+      })
 
       const reward = Math.floor(gift.price * 0.5)
       await update(ref(rtdb, `balances/${chatPartner.uid}`), { diamonds: rtdbIncrement(reward), updatedAt: timestamp })

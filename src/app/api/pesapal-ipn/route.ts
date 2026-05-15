@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, update, increment as rtdbIncrement } from 'firebase/database';
+import { ref, update, increment as rtdbIncrement, push, set } from 'firebase/database';
 import { getTransactionStatus } from '@/app/actions/pesapal';
 
 /**
@@ -34,14 +34,23 @@ export async function GET(request: Request) {
 
         if (userSnap.exists()) {
           const coinsToAward = Math.floor(amountPaid * 10);
+          const timestamp = Date.now();
           
           // 1. Award coins in RTDB (Optimization)
           await update(ref(rtdb, `balances/${uid}`), {
             coins: rtdbIncrement(coinsToAward),
-            updatedAt: Date.now()
+            updatedAt: timestamp
           });
 
-          // 2. Log payment metadata in Firestore
+          // 2. Log payment metadata in Coin History
+          await set(push(ref(rtdb, `coin_history/${uid}`)), {
+            amount: coinsToAward,
+            type: 'recharge',
+            description: `Package Recharge (KES ${amountPaid})`,
+            timestamp: timestamp
+          });
+
+          // 3. Log payment metadata in Firestore
           await updateDoc(userRef, {
             lastPaymentAt: serverTimestamp(),
             lastOrderTrackingId: orderTrackingId
