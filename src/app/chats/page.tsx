@@ -137,6 +137,7 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
+  // Hooks must be at the top
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -146,22 +147,16 @@ function ChatsContent() {
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
-  const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
-  const [chatSummaries, setChatSummaries] = useState<ChatSummary[]>(() => {
-    if (typeof window !== 'undefined' && currentUser?.uid) {
-      const cached = localStorage.getItem(`chats_cache_${currentUser.uid}`)
-      if (cached) return JSON.parse(cached)
-    }
-    return []
-  })
-  const [summariesLoading, setSummariesLoading] = useState(!chatSummaries.length)
+  const [chatSummaries, setChatSummaries] = useState<ChatSummary[]>([])
+  const [summariesLoading, setSummariesLoading] = useState(true)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [selectedGift, setSelectedGift] = useState<any>(null)
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
+  // 1. Sync Summaries
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -170,35 +165,54 @@ function ChatsContent() {
       if (data) {
         const list = Object.entries(data)
           .map(([id, val]: [string, any]) => ({ id, ...val }))
-          .filter(summary => !!summary.lastMessage) 
+          .filter(summary => !!summary.lastMessage) // Only show chats with history
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
         
         setChatSummaries(list)
-        localStorage.setItem(`chats_cache_${currentUser.uid}`, JSON.stringify(list))
         
+        // Update active deletedAt marker if currently in a chat
         if (chatId) {
           const current = list.find(s => s.id === chatId)
           if (current) setActiveDeletedAt(current.deletedAt || 0)
         }
       } else {
         setChatSummaries([])
-        localStorage.removeItem(`chats_cache_${currentUser.uid}`)
       }
       setSummariesLoading(false)
     })
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
+  // 2. Clear Unreads & Get Deleted Marker
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
       get(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}/deletedAt`)).then((snap) => {
-        if (snap.exists()) setActiveDeletedAt(snap.val())
-        else setActiveDeletedAt(0)
+        setActiveDeletedAt(snap.val() || 0)
       })
     }
   }, [chatId, currentUser?.uid, rtdb])
 
+  // 3. Listen to Messages
+  useEffect(() => {
+    if (!chatId) return
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(30))
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const msgs = Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val }))
+        const filtered = msgs
+          .filter(m => !activeDeletedAt || m.timestamp > activeDeletedAt)
+          .sort((a, b) => b.timestamp - a.timestamp)
+        setMessages(filtered)
+      } else {
+        setMessages([])
+      }
+    })
+    return () => off(messagesRef, 'value', unsubscribe)
+  }, [chatId, rtdb, activeDeletedAt])
+
+  // 4. Balances
   useEffect(() => {
     if (!currentUser?.uid) return
     const balRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -211,42 +225,25 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  useEffect(() => {
-    if (!chatId) return
-    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
-    const unsubscribe = onValue(messagesRef, (snapshot) => {
-      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
-      const filtered = msgs
-        .filter(m => !activeDeletedAt || m.timestamp > activeDeletedAt)
-        .sort((a, b) => b.timestamp - a.timestamp)
-      setMessages(filtered)
-    })
-    return () => off(messagesRef, 'value', unsubscribe)
-  }, [chatId, rtdb, activeDeletedAt])
-
+  // 5. Initialize Chat ID
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
-    setIsInitializingChat(true)
     const findOrCreate = async () => {
-      try {
-        const summariesSnap = await get(ref(rtdb, `user_chats/${currentUser.uid}`))
-        const summaries = summariesSnap.val() || {}
-        let foundId = null
-        Object.entries(summaries).forEach(([id, val]: [string, any]) => {
-          if (val.partnerId === startWithId) foundId = id
-        })
+      const summariesSnap = await get(ref(rtdb, `user_chats/${currentUser.uid}`))
+      const summaries = summariesSnap.val() || {}
+      let foundId = null
+      Object.entries(summaries).forEach(([id, val]: [string, any]) => {
+        if (val.partnerId === startWithId) foundId = id
+      })
 
-        if (foundId) {
-          setChatId(foundId)
-        } else {
-          const newChatRef = await addDoc(collection(db, "chats"), {
-            participants: [currentUser.uid, startWithId],
-            createdAt: new Date().toISOString()
-          })
-          setChatId(newChatRef.id)
-        }
-      } finally {
-        setIsInitializingChat(false)
+      if (foundId) {
+        setChatId(foundId)
+      } else {
+        const newChatRef = await addDoc(collection(db, "chats"), {
+          participants: [currentUser.uid, startWithId],
+          createdAt: new Date().toISOString()
+        })
+        setChatId(newChatRef.id)
       }
     }
     findOrCreate()
@@ -255,6 +252,7 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile) return
     
+    // Cost Check
     if (currentUserProfile?.gender === 'male' && !currentUserProfile?.isAdmin) {
       if (userBalances.coins < 15) {
         toast({ variant: "destructive", title: "Insufficient Coins" })
@@ -274,6 +272,7 @@ function ChatsContent() {
     await set(push(ref(rtdb, `chat_messages/${chatId}`), msgData))
 
     const updates: any = {}
+    // Reset deletedAt for both users when a new message is sent (Revive chat)
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL
@@ -282,7 +281,7 @@ function ChatsContent() {
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
 
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid
-    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "MatchFlow User"
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "User"
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerPhoto`] = currentUserProfile?.photoURL || ""
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessageAt`] = timestamp
@@ -326,6 +325,7 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
+  // LIST VIEW
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 select-none">
@@ -333,7 +333,7 @@ function ChatsContent() {
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
         <main className="flex-1 overflow-y-auto no-scrollbar">
-          {summariesLoading && !chatSummaries.length ? (
+          {summariesLoading ? (
             <div className="flex items-center justify-center py-20 opacity-20"><Loader2 className="animate-spin" /></div>
           ) : chatSummaries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 px-12 text-center opacity-40">
@@ -368,6 +368,7 @@ function ChatsContent() {
     )
   }
 
+  // ROOM VIEW
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative select-none">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
@@ -410,7 +411,7 @@ function ChatsContent() {
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
-        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none [&>button]:hidden select-none">
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-8 border-none [&>button]:hidden select-none">
           <DialogTitle className="sr-only">Send a Gift</DialogTitle>
           <div className="flex justify-between items-center mb-6 px-2">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
@@ -442,7 +443,7 @@ function ChatsContent() {
           {selectedGift && (
             <Button 
               onClick={() => handleSendGift(selectedGift)}
-              className="w-full h-14 bg-[#00A2FF] hover:bg-[#0081CC] rounded-full font-bold uppercase tracking-widest text-sm animate-in slide-in-from-bottom-4"
+              className="w-full h-16 bg-[#00A2FF] hover:bg-[#0081CC] rounded-full font-bold uppercase tracking-widest text-sm shadow-xl animate-in slide-in-from-bottom-4"
             >
               Send {selectedGift.name}
             </Button>
