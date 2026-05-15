@@ -1,9 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Toaster } from "@/components/ui/toaster";
 import { usePresence } from '@/hooks/use-presence';
+import { InstallPrompt } from '@/components/layout/InstallPrompt';
 
 function PresenceManager({ children }: { children: React.ReactNode }) {
   usePresence();
@@ -18,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           {children}
         </div>
         <Toaster />
+        <InstallPrompt />
       </PresenceManager>
     </FirebaseClientProvider>
   );

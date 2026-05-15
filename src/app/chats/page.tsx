@@ -348,7 +348,14 @@ function ChatsContent() {
 
       const reward = Math.floor(gift.price * 0.5)
       await update(ref(rtdb, `balances/${chatPartner.uid}`), { diamonds: rtdbIncrement(reward), updatedAt: timestamp })
-      await set(push(ref(rtdb, `diamond_history/${chatPartner.uid}`)), { amount: reward, type: 'gift', description: `Gift from ${currentUserProfile?.name}`, timestamp })
+      
+      // Log diamond history for receiver
+      await set(push(ref(rtdb, `diamond_history/${chatPartner.uid}`)), { 
+        amount: reward, 
+        type: 'gift', 
+        description: `Gift from ${currentUserProfile?.name || 'User'}`, 
+        timestamp 
+      })
       
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
       await push(ref(rtdb, `chat_messages/${chatId}`), { text, senderId: currentUser.uid, timestamp, isGift: true })
