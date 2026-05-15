@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -84,7 +83,7 @@ function JoinAgencyDialog({ userUid }: { userUid: string }) {
           <span className="text-[10px] font-bold uppercase tracking-widest">Join Agency</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="rounded-3xl p-8 max-w-[90vw]">
+      <DialogContent className="rounded-3xl p-8 max-w-[90vw] select-none">
         <DialogHeader className="items-center text-center">
           <DialogTitle className="text-xl font-bold">Enter Agency Code</DialogTitle>
           <DialogDescription className="text-xs font-medium">Ask your agent for their 5-digit code.</DialogDescription>
@@ -124,7 +123,7 @@ function AgencyDashboardDialog({ user }: { user: UserProfile }) {
           <span className="text-[10px] font-bold uppercase tracking-widest">Agency Center</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="rounded-3xl p-8 max-w-[90vw]">
+      <DialogContent className="rounded-3xl p-8 max-w-[90vw] select-none">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Agency Management</DialogTitle>
         </DialogHeader>
@@ -226,7 +225,7 @@ export default function MePage() {
   }
 
   return (
-    <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
+    <div className="flex-1 pb-24 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden select-none">
       <div className="absolute top-0 left-0 w-full h-[280px] bg-[#00A2FF] z-0" />
       <div className="relative z-10">
         <header className="relative pt-12 pb-10 px-6 flex flex-col items-center text-center">
@@ -299,11 +298,17 @@ export default function MePage() {
             {profile.agencyStatus === 'approved' && (
               <Button 
                 onClick={() => router.push("/agency/member")}
-                className="h-20 bg-blue-600 hover:bg-blue-700 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-white active:scale-95 transition-all col-span-2 mt-4"
+                className="h-24 bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 hover:opacity-90 rounded-[2rem] border-none shadow-2xl flex flex-col items-center justify-center gap-1.5 text-white active:scale-95 transition-all col-span-2 mt-4 relative overflow-hidden group"
               >
-                <div className="flex items-center gap-2">
-                  <Wallet className="w-6 h-6" />
-                  <span className="text-sm font-bold uppercase tracking-widest">Agency Wallet (Withdraw/Convert)</span>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-110 transition-transform" />
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
+                    <Wallet className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-black uppercase tracking-widest">Agency Wallet</span>
+                    <span className="text-[9px] font-bold text-blue-100 uppercase tracking-[0.2em] opacity-80">Withdraw • Convert</span>
+                  </div>
                 </div>
               </Button>
             )}

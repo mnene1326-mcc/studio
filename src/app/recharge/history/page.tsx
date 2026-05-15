@@ -53,7 +53,7 @@ export default function CoinHistoryPage() {
         <div className="w-10" />
       </header>
 
-      <main className="flex-1">
+      <main className="flex-1 overflow-y-auto no-scrollbar">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-[#00A2FF]" />

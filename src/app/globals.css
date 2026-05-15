@@ -31,7 +31,11 @@
   * {
     @apply border-border;
   }
-  html, body {
+  html {
+    height: -webkit-fill-available;
+    scroll-behavior: smooth;
+  }
+  body {
     @apply bg-background text-foreground;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -41,6 +45,8 @@
     overscroll-behavior-y: none;
     min-height: 100vh;
     width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   /* Hide scrollbar but allow scrolling */

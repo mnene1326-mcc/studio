@@ -138,7 +138,6 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // ALL HOOKS CALLED AT TOP LEVEL
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -164,7 +163,7 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
-  // Sync summaries and handle soft-deletion state sync
+  // Listen to unreads at a high level
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -179,7 +178,6 @@ function ChatsContent() {
         setChatSummaries(list)
         localStorage.setItem(`chats_cache_${currentUser.uid}`, JSON.stringify(list))
         
-        // Update activeDeletedAt if in a chat room
         if (chatId) {
           const current = list.find(s => s.id === chatId)
           if (current) setActiveDeletedAt(current.deletedAt || 0)
@@ -193,7 +191,6 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
-  // Clear unreads when room is active and fetch deletedAt marker instantly
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
@@ -204,7 +201,6 @@ function ChatsContent() {
     }
   }, [chatId, currentUser?.uid, rtdb])
 
-  // Sync balances
   useEffect(() => {
     if (!currentUser?.uid) return
     const balRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -217,7 +213,6 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Sync messages with 20-message limit and strict soft-delete filtering
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
@@ -231,7 +226,6 @@ function ChatsContent() {
     return () => off(messagesRef, 'value', unsubscribe)
   }, [chatId, rtdb, activeDeletedAt])
 
-  // Initialize or find chat
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
     setIsInitializingChat(true)
@@ -263,7 +257,6 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile) return
     
-    // Check costs for males
     if (currentUserProfile?.gender === 'male' && !currentUserProfile?.isAdmin) {
       if (userBalances.coins < 15) {
         toast({ variant: "destructive", title: "Insufficient Coins" })
@@ -335,14 +328,13 @@ function ChatsContent() {
 
   if (!currentUser) return null
 
-  // LIST VIEW
   if (!startWithId) {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 select-none">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
-        <main className="flex-1">
+        <main className="flex-1 overflow-y-auto no-scrollbar">
           {summariesLoading && !chatSummaries.length ? (
             <div className="flex items-center justify-center py-20 opacity-20"><Loader2 className="animate-spin" /></div>
           ) : chatSummaries.length === 0 ? (
@@ -361,7 +353,7 @@ function ChatsContent() {
         </main>
         
         <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
-          <AlertDialogContent className="rounded-3xl max-w-[85vw] p-8 border-none">
+          <AlertDialogContent className="rounded-3xl max-w-[85vw] p-8 border-none select-none">
             <AlertDialogHeader className="items-center text-center">
               <AlertDialogTitle className="text-xl font-bold">Delete Chat?</AlertDialogTitle>
               <AlertDialogDescription className="sr-only">Confirm deletion.</AlertDialogDescription>
@@ -378,7 +370,6 @@ function ChatsContent() {
     )
   }
 
-  // ROOM VIEW
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative select-none">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
@@ -421,7 +412,7 @@ function ChatsContent() {
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
-        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none [&>button]:hidden">
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none [&>button]:hidden select-none">
           <DialogTitle className="sr-only">Send a Gift</DialogTitle>
           <div className="flex justify-between items-center mb-6 px-2">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
