@@ -27,12 +27,12 @@ function CoinIcon({ className }: { className?: string }) {
 }
 
 const PACKAGES = [
-  { amount: 500, price: 50.0 },
-  { amount: 1000, price: 100.0 },
-  { amount: 2000, price: 200.0 },
-  { amount: 5000, price: 500.0 },
+  { amount: 500, price: 80.0 },
+  { amount: 1000, price: 120.0 },
+  { amount: 2000, price: 230.0 },
+  { amount: 5000, price: 550.0 },
   { amount: 10000, price: 1000.0 },
-  { amount: 20000, price: 2000.0 },
+  { amount: 20000, price: 1800.0 },
 ]
 
 function RechargeContent() {
