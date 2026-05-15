@@ -4,7 +4,8 @@
 import { useState, Suspense, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { doc } from "firebase/firestore"
-import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
+import { ref, get } from "firebase/database"
+import { useFirestore, useUser, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, CreditCard, Loader2, History } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -15,7 +16,6 @@ interface UserProfile {
   uid: string
   name: string
   email: string
-  coins?: number
 }
 
 function CoinIcon({ className }: { className?: string }) {
@@ -40,12 +40,31 @@ function RechargeContent() {
   const searchParams = useSearchParams()
   const { user } = useUser()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const { toast } = useToast()
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
+  const [currentCoins, setCurrentCoins] = useState(0)
+  const [balanceLoading, setBalanceLoading] = useState(true)
 
   const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
   const { data: profile } = useDoc<UserProfile>(userRef)
+
+  // Fetch coins only once when the page is opened (Economy optimization)
+  useEffect(() => {
+    if (!user?.uid) return
+    const fetchBalance = async () => {
+      try {
+        const snap = await get(ref(rtdb, `balances/${user.uid}`))
+        if (snap.exists()) {
+          setCurrentCoins(snap.val().coins || 0)
+        }
+      } finally {
+        setBalanceLoading(false)
+      }
+    }
+    fetchBalance()
+  }, [user?.uid, rtdb])
 
   useEffect(() => {
     const orderTrackingId = searchParams.get('OrderTrackingId');
@@ -86,7 +105,9 @@ function RechargeContent() {
              <h2 className="text-sm font-semibold text-black">My Balance</h2>
              <div className="flex items-center gap-4 py-4">
                 <CoinIcon className="w-14 h-14" />
-                <span className="text-5xl font-bold text-black tracking-tight">{profile?.coins || 0}</span>
+                <span className="text-5xl font-bold text-black tracking-tight">
+                  {balanceLoading ? "..." : currentCoins}
+                </span>
              </div>
           </div>
           <div className="grid grid-cols-3 gap-3">

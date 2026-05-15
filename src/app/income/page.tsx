@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
-import { ref, onValue, update, increment as rtdbIncrement, push, set } from "firebase/database"
+import { ref, update, increment as rtdbIncrement, push, set, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,17 +32,26 @@ export default function IncomePage() {
   const [diamondsToConvert, setDiamondsToConvert] = useState<string>("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [balances, setBalances] = useState({ coins: 0, diamonds: 0 })
+  const [balanceLoading, setBalanceLoading] = useState(true)
 
   const userRef = user?.uid ? doc(db, "users", user.uid) : null
   const { data: profile } = useDoc<UserProfile>(userRef)
 
+  // Pull balances once on mount (Optimization)
   useEffect(() => {
     if (!user?.uid) return
-    const balanceRef = ref(rtdb, `balances/${user.uid}`)
-    return onValue(balanceRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) setBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
-    })
+    const fetchBalances = async () => {
+      try {
+        const snap = await get(ref(rtdb, `balances/${user.uid}`))
+        if (snap.exists()) {
+          const data = snap.val()
+          setBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
+        }
+      } finally {
+        setBalanceLoading(false)
+      }
+    }
+    fetchBalances()
   }, [rtdb, user?.uid])
 
   const diamondBalance = balances.diamonds
@@ -76,6 +85,13 @@ export default function IncomePage() {
         coins: rtdbIncrement(expectedCoins),
         updatedAt: timestamp
       })
+
+      // Update local state
+      setBalances(prev => ({
+        ...prev,
+        diamonds: prev.diamonds - amount,
+        coins: prev.coins + expectedCoins
+      }))
 
       // Log to history in RTDB
       const historyRef = push(ref(rtdb, `diamond_history/${user?.uid}`))
@@ -123,6 +139,12 @@ export default function IncomePage() {
         timestamp
       })
 
+      // Update local state
+      setBalances(prev => ({
+        ...prev,
+        diamonds: prev.diamonds - amount
+      }))
+
       toast({ title: "Request Sent", description: "Your agency agent will review your payment." })
       setDiamondsToConvert("")
     } else {
@@ -150,7 +172,9 @@ export default function IncomePage() {
           <h2 className="text-sm font-bold text-white/70 uppercase tracking-widest mb-4">Total Diamonds</h2>
           <div className="flex items-center gap-4">
             <Gem className="w-10 h-10 text-white fill-blue-400/30" />
-            <span className="text-6xl font-bold text-white tracking-tighter">{diamondBalance.toFixed(0)}</span>
+            <span className="text-6xl font-bold text-white tracking-tighter">
+              {balanceLoading ? "..." : diamondBalance.toFixed(0)}
+            </span>
           </div>
         </div>
 

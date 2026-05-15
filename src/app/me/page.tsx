@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
 import { doc, getDoc } from "firebase/firestore"
-import { ref, onValue, update, increment as rtdbIncrement } from "firebase/database"
+import { ref, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -159,17 +160,33 @@ export default function MePage() {
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
   const [balances, setBalances] = useState({ coins: 0, diamonds: 0 })
+  const [balanceLoading, setBalanceLoading] = useState(true)
 
   const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
 
+  // Fetch balances only once when the page is opened (Economy optimization)
   useEffect(() => {
     if (!user?.uid) return
-    const balanceRef = ref(rtdb, `balances/${user.uid}`)
-    return onValue(balanceRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) setBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
-    })
+    
+    const fetchBalances = async () => {
+      try {
+        const balanceSnap = await get(ref(rtdb, `balances/${user.uid}`))
+        const data = balanceSnap.val()
+        if (data) {
+          setBalances({ 
+            coins: data.coins || 0, 
+            diamonds: data.diamonds || 0 
+          })
+        }
+      } catch (err) {
+        console.error("Failed to fetch balances", err)
+      } finally {
+        setBalanceLoading(false)
+      }
+    }
+    
+    fetchBalances()
   }, [rtdb, user?.uid])
 
   useEffect(() => {
@@ -233,11 +250,17 @@ export default function MePage() {
         <main className="px-6 space-y-6">
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-6">
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#00A2FF]" onClick={() => router.push("/recharge")}>
-              <div className="flex items-center gap-1.5"><CircleDollarSign className="w-5 h-5" /><span className="text-sm font-bold">{balances.coins}</span></div>
+              <div className="flex items-center gap-1.5">
+                <CircleDollarSign className="w-5 h-5" />
+                <span className="text-sm font-bold">{balanceLoading ? "..." : balances.coins}</span>
+              </div>
               <span className="text-[8px] font-bold uppercase opacity-60">Recharge Coins</span>
             </Button>
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black" onClick={() => router.push("/income")}>
-              <div className="flex items-center gap-1.5"><Gem className="w-5 h-5 text-[#4285F4]" /><span className="text-sm font-bold">{balances.diamonds}</span></div>
+              <div className="flex items-center gap-1.5">
+                <Gem className="w-5 h-5 text-[#4285F4]" />
+                <span className="text-sm font-bold">{balanceLoading ? "..." : balances.diamonds.toFixed(0)}</span>
+              </div>
               <span className="text-[8px] font-bold uppercase opacity-60">Diamond Income</span>
             </Button>
 

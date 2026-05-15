@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, getDocs, collection, query, where, updateDoc, getDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery } from "firebase/database"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -166,8 +166,8 @@ function GiftDrawer({ onSend, userBalance, open, onOpenChange }: { onSend: (gift
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 border-none bg-[#1A1C21] text-white rounded-t-[2.5rem] max-w-md mx-auto fixed bottom-0 top-auto translate-y-0">
         <div className="p-4 space-y-4">
-          <div className="flex items-center gap-6 px-2 overflow-x-auto no-scrollbar py-2 border-b border-white/5">
-            <span className="text-xs font-bold uppercase tracking-widest text-white border-b-2 border-[#D4FF00] pb-1">Gift</span>
+          <div className="flex items-center gap-6 px-4 overflow-x-auto no-scrollbar py-2 border-b border-white/5">
+            <span className="text-xs font-bold uppercase tracking-widest text-white border-b-2 border-[#D4FF00] pb-1">Gifts</span>
           </div>
           <div className="grid grid-cols-4 gap-2 max-h-[40vh] overflow-y-auto no-scrollbar px-2">
             {GIFTS.map(gift => (
@@ -207,28 +207,29 @@ function ChatsContent() {
   const db = useFirestore()
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
+  
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
-  const [messagesLoading, setMessagesLoading] = useState(false)
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
+  // Fetch balances once on mount (Optimization)
   useEffect(() => {
     if (!currentUser?.uid) return
-    const balanceRef = ref(rtdb, `balances/${currentUser.uid}`)
-    const unsubscribe = onValue(balanceRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) setUserBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
-    })
-    return () => unsubscribe()
+    const fetchBalance = async () => {
+      const snap = await get(ref(rtdb, `balances/${currentUser.uid}`))
+      if (snap.exists()) {
+        const data = snap.val()
+        setUserBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
+      }
+    }
+    fetchBalance()
   }, [rtdb, currentUser?.uid])
 
   const chatListQuery = useMemoFirebase(() => {
@@ -299,6 +300,25 @@ function ChatsContent() {
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid) return
+    
+    // Message cost logic for males (Deducts directly in RTDB - cost efficient)
+    if (currentUserProfile?.gender === 'male' && !currentUserProfile.isAdmin) {
+      const messageCost = 5
+      if (userBalances.coins < messageCost) {
+        toast({ variant: "destructive", title: "Insufficient Coins", description: "Recharge to continue chatting." })
+        return
+      }
+      
+      // Update local balance state first for instant feel
+      setUserBalances(prev => ({ ...prev, coins: prev.coins - messageCost }))
+      
+      // Actually deduct in background
+      await update(ref(rtdb, `balances/${currentUser.uid}`), {
+        coins: rtdbIncrement(-messageCost),
+        updatedAt: Date.now()
+      })
+    }
+
     const partnerId = chatPartner?.uid
     const timestamp = Date.now()
     try {
@@ -306,7 +326,9 @@ function ChatsContent() {
       if (partnerId) update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
       await updateDoc(doc(db, "chats", chatId), { lastMessage: text.trim(), lastMessageAt: serverTimestamp() })
       setNewMessage("")
-    } catch (err: any) { toast({ variant: "destructive", title: "Error", description: err.message }) }
+    } catch (err: any) { 
+      toast({ variant: "destructive", title: "Error", description: err.message }) 
+    }
   }
 
   const handleSendGift = async (gift: typeof GIFTS[0]) => {
@@ -314,10 +336,16 @@ function ChatsContent() {
     if (userBalances.coins < gift.price) { toast({ variant: "destructive", title: "Insufficient Coins" }); return }
     const timestamp = Date.now()
     try {
+      // Deduct gift price
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price), updatedAt: timestamp })
+      
+      // Update local balance state
+      setUserBalances(prev => ({ ...prev, coins: prev.coins - gift.price }))
+
       const reward = Math.floor(gift.price * 0.5)
       await update(ref(rtdb, `balances/${chatPartner.uid}`), { diamonds: rtdbIncrement(reward), updatedAt: timestamp })
       await set(push(ref(rtdb, `diamond_history/${chatPartner.uid}`)), { amount: reward, type: 'gift', description: `Gift from ${currentUserProfile?.name}`, timestamp })
+      
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
       await push(ref(rtdb, `chat_messages/${chatId}`), { text, senderId: currentUser.uid, timestamp, isGift: true })
       await updateDoc(doc(db, "chats", chatId), { lastMessage: text, lastMessageAt: serverTimestamp() })
