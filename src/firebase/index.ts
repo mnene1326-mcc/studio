@@ -5,9 +5,7 @@ import { getDatabase, Database } from 'firebase/database';
 import { firebaseConfig } from './config';
 
 /**
- * Initializes Firebase services with optimizations for connectivity and performance.
- * - Firestore is configured with offline persistence to reduce reads and support offline use.
- * - experimentalForceLongPolling is used for compatibility in restricted environments.
+ * Initializes Firebase services with aggressive offline persistence.
  */
 export function initializeFirebase(): {
   app: FirebaseApp;
@@ -20,23 +18,19 @@ export function initializeFirebase(): {
   let firestore: Firestore;
   
   if (typeof window !== 'undefined') {
-    const existingApps = getApps();
-    if (existingApps.length > 0) {
-      firestore = getFirestore(app);
-    } else {
-      firestore = initializeFirestore(app, {
-        experimentalForceLongPolling: true,
-      });
+    firestore = initializeFirestore(app, {
+      cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+      experimentalForceLongPolling: true,
+    });
 
-      // Enable Offline Persistence for Economy and Offline Mode
-      enableIndexedDbPersistence(firestore).catch((err) => {
-        if (err.code === 'failed-precondition') {
-          console.warn('Persistence failed: Multiple tabs open');
-        } else if (err.code === 'unimplemented') {
-          console.warn('Persistence failed: Browser not supported');
-        }
-      });
-    }
+    // Enable Offline Persistence for zero-latency local data access
+    enableIndexedDbPersistence(firestore).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Persistence failed: Multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Persistence failed: Browser not supported');
+      }
+    });
   } else {
     firestore = getFirestore(app);
   }

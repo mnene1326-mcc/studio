@@ -1,42 +1,34 @@
-
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Query, onSnapshot } from 'firebase/firestore';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
 
 const getCacheKey = (q: Query | null) => {
   if (!q) return null;
-  // Use the underlying query path segments for a unique key
   const path = (q as any)._query?.path?.segments?.join('_') || 'unknown';
-  return `firestore_cache_coll_${path}`;
+  return `fs_coll_${path}`;
 };
 
 /**
- * Optimized hook for collection fetching.
- * Uses Firestore persistence and local storage for instant offline availability.
+ * Optimized cache-first collection hook.
  */
 export function useCollection<T = any>(q: Query | null) {
-  const queryKey = getCacheKey(q);
-  const hasInitialLoad = useRef(false);
+  const queryKey = useMemo(() => getCacheKey(q), [q]);
+  const isInitialMount = useRef(true);
   
   const [data, setData] = useState<T[]>(() => {
     if (typeof window !== 'undefined' && queryKey) {
       const cached = localStorage.getItem(queryKey);
       if (cached) {
-        try {
-          return JSON.parse(cached);
-        } catch (e) {
-          return [];
-        }
+        try { return JSON.parse(cached); } catch (e) { return []; }
       }
     }
     return [];
   });
   
   const [loading, setLoading] = useState(q !== null && data.length === 0);
-  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!q) {
@@ -53,24 +45,27 @@ export function useCollection<T = any>(q: Query | null) {
           ...(doc.data() as T),
         }));
         
-        if (queryKey && items.length > 0) {
-          localStorage.setItem(queryKey, JSON.stringify(items));
+        if (queryKey) {
+          const currentStr = JSON.stringify(items);
+          const cachedStr = localStorage.getItem(queryKey);
+          
+          if (currentStr !== cachedStr || isInitialMount.current) {
+            localStorage.setItem(queryKey, currentStr);
+            setData(items);
+          }
         }
         
-        setData(items);
         setLoading(false);
-        hasInitialLoad.current = true;
+        isInitialMount.current = false;
       },
       (err) => {
         const path = (q as any)._query?.path?.segments?.join('/') || 'collection';
         if (err.code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError({
+          errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: path,
             operation: 'list',
-          });
-          errorEmitter.emit('permission-error', permissionError);
+          }));
         }
-        setError(err);
         setLoading(false);
       }
     );
@@ -78,5 +73,5 @@ export function useCollection<T = any>(q: Query | null) {
     return () => unsubscribe();
   }, [q, queryKey]);
 
-  return { data, loading, error };
+  return { data, loading };
 }
