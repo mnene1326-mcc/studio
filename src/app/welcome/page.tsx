@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Mail, Zap, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { signInAnonymously } from "firebase/auth"
+import { signInAnonymously, onAuthStateChanged } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
 import { useAuth, useUser, useFirestore } from "@/firebase"
 import Image from "next/image"
@@ -23,6 +23,7 @@ export default function WelcomePage() {
     setMounted(true)
   }, [])
 
+  // Optimized redirection for existing sessions (even anonymous ones)
   useEffect(() => {
     if (!authLoading && user) {
       const checkRedirect = async () => {
@@ -31,6 +32,8 @@ export default function WelcomePage() {
           const snap = await getDoc(userRef)
           if (snap.exists() && snap.data().onboardingComplete) {
             router.replace("/home")
+          } else if (snap.exists()) {
+            router.replace("/onboarding")
           }
         } catch (e) {
           // Stay on welcome
@@ -41,8 +44,15 @@ export default function WelcomePage() {
   }, [user, authLoading, router, db])
 
   const handleFastLogin = async () => {
+    // If user is already in session, don't re-auth, just take them back
+    if (auth.currentUser) {
+      router.push("/onboarding?fast=true")
+      return
+    }
+
     setLoading(true)
     try {
+      // Firebase automatically restores anonymous accounts if session exists
       await signInAnonymously(auth)
       router.push("/onboarding?fast=true")
     } catch (error) {

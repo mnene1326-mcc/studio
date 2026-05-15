@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, collection, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off, remove } from "firebase/database"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off, remove, serverTimestamp } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -53,6 +53,7 @@ interface ChatSummary {
   lastMessage: string
   lastMessageAt: number
   unreadCount: number
+  deletedAt?: number
 }
 
 interface UserProfile {
@@ -134,7 +135,6 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // Hooks at the top level
   const partnerPresence = useUserPresence(startWithId || undefined)
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUser?.uid ? doc(db, "users", currentUser.uid) : null)
   const { data: partnerProfile } = useDoc<UserProfile>(startWithId ? doc(db, "users", startWithId) : null)
@@ -154,6 +154,7 @@ function ChatsContent() {
   const [summariesLoading, setSummariesLoading] = useState(!chatSummaries.length)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
+  const [activeChatSummary, setActiveChatSummary] = useState<ChatSummary | null>(null)
 
   // Listen to RTDB Chat Summaries
   useEffect(() => {
@@ -169,6 +170,11 @@ function ChatsContent() {
         
         setChatSummaries(list)
         localStorage.setItem(`chats_cache_${currentUser.uid}`, JSON.stringify(list))
+        
+        if (chatId) {
+          const current = list.find(s => s.id === chatId)
+          if (current) setActiveChatSummary(current)
+        }
       } else {
         setChatSummaries([])
         localStorage.removeItem(`chats_cache_${currentUser.uid}`)
@@ -176,7 +182,7 @@ function ChatsContent() {
       setSummariesLoading(false)
     })
     return () => off(summariesRef, 'value', unsubscribe)
-  }, [rtdb, currentUser?.uid])
+  }, [rtdb, currentUser?.uid, chatId])
 
   // Mark Read when entering chat
   useEffect(() => {
@@ -198,16 +204,22 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Listen to Messages (Limited to 20)
+  // Listen to Messages (Limited to 20, filtered by deletedAt)
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
-      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []
-      setMessages(msgs)
+      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
+      
+      // Filter by user's individual soft-delete timestamp
+      const filtered = msgs
+        .filter(m => !activeChatSummary?.deletedAt || m.timestamp > activeChatSummary.deletedAt)
+        .sort((a, b) => b.timestamp - a.timestamp)
+      
+      setMessages(filtered)
     })
     return () => off(messagesRef, 'value', unsubscribe)
-  }, [chatId, rtdb])
+  }, [chatId, rtdb, activeChatSummary?.deletedAt])
 
   // Find or Create Chat ID
   useEffect(() => {
@@ -266,7 +278,8 @@ function ChatsContent() {
       partnerPhoto: partnerProfile.photoURL,
       lastMessage: text.trim(),
       lastMessageAt: timestamp,
-      unreadCount: 0
+      unreadCount: 0,
+      deletedAt: 0 // Reset deletedAt when a new message is sent/received
     }
     updates[`user_chats/${partnerProfile.uid}/${chatId}`] = {
       partnerId: currentUser.uid,
@@ -274,7 +287,8 @@ function ChatsContent() {
       partnerPhoto: currentUserProfile?.photoURL || "",
       lastMessage: text.trim(),
       lastMessageAt: timestamp,
-      unreadCount: rtdbIncrement(1)
+      unreadCount: rtdbIncrement(1),
+      deletedAt: 0 // Ensure other person sees it if they also soft deleted
     }
 
     await update(ref(rtdb), updates)
@@ -299,7 +313,14 @@ function ChatsContent() {
   const handleDeleteChat = async () => {
     if (!currentUser?.uid || !chatToDelete) return
     try {
-      await remove(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`))
+      // Soft Delete: Remove from user_chats and set deletedAt to current time
+      // This makes the chat "blank" for this user until a new message arrives.
+      const now = Date.now()
+      await update(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`), {
+        lastMessage: "",
+        unreadCount: 0,
+        deletedAt: now
+      })
       toast({ title: "Conversation removed" })
     } catch (err) {
       toast({ variant: "destructive", title: "Delete Error" })
@@ -339,7 +360,7 @@ function ChatsContent() {
             <AlertDialogHeader>
               <AlertDialogTitle className="text-xl font-bold">Delete Chat?</AlertDialogTitle>
               <AlertDialogDescription className="text-xs font-medium">
-                This will remove the conversation with {chatToDelete?.partnerName} from your list.
+                This will hide the conversation. It will reappear empty if you message them again.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-2 mt-4">
