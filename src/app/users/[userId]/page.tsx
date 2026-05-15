@@ -16,7 +16,9 @@ import {
   GraduationCap,
   Heart,
   Globe,
-  Calendar
+  Calendar,
+  Copy,
+  Check
 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -53,6 +55,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
   const presence = useUserPresence(userId)
 
   const [isPhotoOpen, setIsPhotoOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const userRef = useMemo(() => doc(db, "users", userId), [db, userId])
   const { data: profile, loading } = useDoc<UserProfile>(userRef)
@@ -65,6 +68,16 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
     const m = today.getMonth() - birthDate.getMonth()
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--
     return age
+  }
+
+  const handleCopyId = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (profile?.matchFlowId) {
+      navigator.clipboard.writeText(profile.matchFlowId)
+      setCopied(true)
+      toast({ title: "ID Copied" })
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   const handleBlock = async () => {
@@ -170,9 +183,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
             <span className="bg-[#006400] text-white px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-sm">
               {profile.gender === 'female' ? '♀' : '♂'} {age}
             </span>
-            <span className="bg-blue-50 text-[#00A2FF] px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest border border-blue-100">
+            <button 
+              onClick={handleCopyId}
+              className="bg-blue-50 text-[#00A2FF] px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest border border-blue-100 flex items-center gap-2 active:scale-95 transition-all"
+            >
               ID: {profile.matchFlowId || "---"}
-            </span>
+              {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+            </button>
           </div>
         </div>
 
@@ -267,5 +284,4 @@ function DetailItem({ icon: Icon, label, value }: { icon: any, label: string, va
         <p className="text-sm font-semibold text-black">{value}</p>
       </div>
     </div>
-  )
 }

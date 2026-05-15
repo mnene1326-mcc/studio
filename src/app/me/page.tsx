@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
@@ -39,7 +38,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { awardCoinsAction, toggleUserRoleAction } from "@/app/actions/admin"
 import { createAgencyAction, joinAgencyAction } from "@/app/actions/agency"
 
 interface UserProfile {
@@ -55,63 +53,6 @@ interface UserProfile {
   gender?: string
   agencyId?: string
   agencyStatus?: 'none' | 'pending' | 'approved' | 'rejected'
-}
-
-function ManageRolesDialog({ callerUid }: { callerUid: string }) {
-  const [targetId, setTargetId] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
-  const { toast } = useToast()
-
-  const handleRoleUpdate = async (role: 'isCoinSeller' | 'isAgent', value: boolean) => {
-    if (!targetId) return
-    setLoading(true)
-    try {
-      const result = await toggleUserRoleAction(callerUid, targetId, role, value)
-      if (result.success) {
-        toast({ title: "Role Updated", description: result.message })
-        setOpen(false)
-        setTargetId("")
-      } else {
-        toast({ variant: "destructive", title: "Error", description: result.error })
-      }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-purple-600 active:scale-95 transition-all col-span-2 mt-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-6 h-6" />
-            <span className="text-sm font-bold uppercase tracking-widest">Manage Roles</span>
-          </div>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="rounded-3xl border-none p-8 max-w-[90vw] sm:max-w-md">
-        <DialogHeader className="items-center text-center space-y-2">
-          <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mb-2"><Users className="w-8 h-8 text-purple-600" /></div>
-          <DialogTitle className="text-xl font-bold text-black">Manage User Roles</DialogTitle>
-          <DialogDescription className="text-xs font-medium text-gray-400">Appoint or remove Sellers and Agents.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6 py-6">
-          <Input placeholder="Numeric MatchFlow ID" value={targetId} onChange={(e) => setTargetId(e.target.value)} className="rounded-2xl h-14 border-gray-100 bg-gray-50 font-semibold text-center text-lg" />
-        </div>
-        <DialogFooter className="flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => handleRoleUpdate('isCoinSeller', true)} disabled={loading} className="bg-blue-600 h-12 rounded-full text-[10px] font-bold uppercase">Make Seller</Button>
-            <Button onClick={() => handleRoleUpdate('isCoinSeller', false)} disabled={loading} variant="outline" className="h-12 rounded-full text-[10px] font-bold uppercase">Revoke Seller</Button>
-            <Button onClick={() => handleRoleUpdate('isAgent', true)} disabled={loading} className="bg-purple-600 h-12 rounded-full text-[10px] font-bold uppercase">Make Agent</Button>
-            <Button onClick={() => handleRoleUpdate('isAgent', false)} disabled={loading} variant="outline" className="h-12 rounded-full text-[10px] font-bold uppercase">Revoke Agent</Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
 }
 
 function JoinAgencyDialog({ userUid }: { userUid: string }) {
@@ -210,57 +151,6 @@ function AgencyDashboardDialog({ user }: { user: UserProfile }) {
   )
 }
 
-function AwardCoinsDialog({ callerUid }: { callerUid: string }) {
-  const [targetId, setTargetId] = useState("")
-  const [amount, setAmount] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
-  const { toast } = useToast()
-
-  const handleAward = async () => {
-    if (!targetId || !amount || isNaN(Number(amount))) return
-    setLoading(true)
-    try {
-      const result = await awardCoinsAction(callerUid, targetId, Number(amount))
-      if (result.success) {
-        toast({ title: "Coins Awarded", description: result.message })
-        setTargetId(""); setAmount(""); setOpen(false)
-      } else {
-        toast({ variant: "destructive", title: "Error", description: result.error })
-      }
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Error", description: err.message })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="h-20 bg-gradient-to-br from-yellow-400 to-orange-500 hover:opacity-90 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-white active:scale-95 transition-all col-span-2 mt-4">
-          <div className="flex items-center gap-2"><Trophy className="w-6 h-6" /><span className="text-sm font-bold uppercase tracking-widest">Award Coins Tool</span></div>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="rounded-3xl border-none p-8 max-w-[90vw] sm:max-w-md">
-        <DialogHeader className="items-center text-center space-y-2">
-          <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-2"><Coins className="w-8 h-8 text-yellow-500" /></div>
-          <DialogTitle className="text-xl font-bold text-black">Award MatchFlow Coins</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6 py-6">
-          <Input placeholder="Numeric MatchFlow ID" value={targetId} onChange={(e) => setTargetId(e.target.value)} className="rounded-2xl h-14 border-gray-100 bg-gray-50 font-semibold text-center text-lg" />
-          <Input type="number" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="rounded-2xl h-14 border-gray-100 bg-gray-50 font-semibold text-center text-lg" />
-        </div>
-        <DialogFooter>
-          <Button onClick={handleAward} disabled={loading || !targetId || !amount} className="w-full h-16 rounded-full bg-black text-white font-bold uppercase tracking-widest text-sm">
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Award"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 export default function MePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useUser()
@@ -273,7 +163,6 @@ export default function MePage() {
   const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
 
-  // Listen to RTDB for high-frequency balance data (Optimization)
   useEffect(() => {
     if (!user?.uid) return
     const balanceRef = ref(rtdb, `balances/${user.uid}`)
@@ -352,8 +241,27 @@ export default function MePage() {
               <span className="text-[8px] font-bold uppercase opacity-60">Diamond Income</span>
             </Button>
 
-            {profile.isAdmin || profile.isCoinSeller ? <AwardCoinsDialog callerUid={user.uid} /> : null}
-            {profile.isAdmin && <ManageRolesDialog callerUid={user.uid} />}
+            {profile.isAdmin || profile.isCoinSeller ? (
+              <Button 
+                onClick={() => router.push("/admin/award-coins")}
+                className="h-20 bg-gradient-to-br from-yellow-400 to-orange-500 hover:opacity-90 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-white active:scale-95 transition-all col-span-2 mt-4"
+              >
+                <div className="flex items-center gap-2"><Trophy className="w-6 h-6" /><span className="text-sm font-bold uppercase tracking-widest">Award Coins Tool</span></div>
+              </Button>
+            ) : null}
+
+            {profile.isAdmin && (
+              <Button 
+                onClick={() => router.push("/admin/manage-roles")}
+                className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-purple-600 active:scale-95 transition-all col-span-2 mt-4"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-6 h-6" />
+                  <span className="text-sm font-bold uppercase tracking-widest">Manage Roles</span>
+                </div>
+              </Button>
+            )}
+
             {profile.isAgent && <AgencyDashboardDialog user={profile} />}
             {profile.gender === 'female' && profile.agencyStatus !== 'approved' && !profile.isAgent && !profile.isAdmin && <JoinAgencyDialog userUid={user.uid} />}
             
