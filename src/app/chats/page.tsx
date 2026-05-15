@@ -104,7 +104,7 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
     timerRef.current = setTimeout(() => {
       isLongPress.current = true
       onDelete(chat)
-    }, 600)
+    }, 400) // Reduced from 600ms for snappier feel
   }
 
   const handleTouchEnd = () => {
