@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { EmailAuthProvider, linkWithCredential } from "firebase/auth"
 import { doc, updateDoc } from "firebase/firestore"
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { ChevronLeft, ShieldCheck, Loader2 } from "lucide-react"
+import { ChevronLeft, ShieldCheck, Loader2, ShieldAlert } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
 
 export default function BindAccountPage() {
   const [email, setEmail] = useState("")
@@ -21,10 +22,39 @@ export default function BindAccountPage() {
   const { user } = useUser()
   const db = useFirestore()
 
+  const passwordStrength = useMemo(() => {
+    if (!password) return 0
+    let strength = 0
+    if (password.length >= 8) strength += 1
+    if (/[a-z]/.test(password)) strength += 1
+    if (/[A-Z]/.test(password)) strength += 1
+    if (/[0-9]/.test(password)) strength += 1
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1
+    return (strength / 5) * 100
+  }, [password])
+
+  const strengthColor = useMemo(() => {
+    if (passwordStrength < 40) return "bg-red-500"
+    if (passwordStrength < 80) return "bg-yellow-500"
+    return "bg-green-500"
+  }, [passwordStrength])
+
+  const strengthText = useMemo(() => {
+    if (!password) return ""
+    if (passwordStrength < 40) return "Weak"
+    if (passwordStrength < 80) return "Fair"
+    return "Strong"
+  }, [passwordStrength, password])
+
   const handleBind = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !email || !password) return
     
+    if (passwordStrength < 60) {
+      toast({ variant: "destructive", title: "Weak Password", description: "Please use a stronger password with a mix of characters." })
+      return
+    }
+
     setLoading(true)
     try {
       const credential = EmailAuthProvider.credential(email, password)
@@ -92,12 +122,22 @@ export default function BindAccountPage() {
               <Label className="text-[10px] font-black uppercase text-gray-400 ml-1">Password</Label>
               <Input 
                 type="password" 
-                placeholder="Min 6 characters" 
+                placeholder="Min 8 characters" 
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
                 className="rounded-2xl h-14 border-gray-100 bg-gray-50 focus:bg-white"
               />
+              {password && (
+                <div className="px-1 space-y-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Strength: {strengthText}</span>
+                    {passwordStrength >= 80 ? <ShieldCheck className="w-3 h-3 text-green-500" /> : <ShieldAlert className="w-3 h-3 text-red-400" />}
+                  </div>
+                  <Progress value={passwordStrength} className="h-1" indicatorClassName={strengthColor} />
+                  <p className="text-[8px] text-gray-400 font-medium">Mix uppercase, lowercase, numbers & symbols</p>
+                </div>
+              )}
             </div>
           </div>
 

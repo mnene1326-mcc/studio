@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth"
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { ChevronLeft, Mail, UserPlus, Loader2 } from "lucide-react"
+import { ChevronLeft, Mail, UserPlus, Loader2, ShieldCheck, ShieldAlert } from "lucide-react"
 import Link from "next/link"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
+import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 export default function UnifiedAuthPage() {
   const [email, setEmail] = useState("")
@@ -24,9 +26,33 @@ export default function UnifiedAuthPage() {
   const auth = useAuth()
   const db = useFirestore()
 
+  const passwordStrength = useMemo(() => {
+    if (!password) return 0
+    let strength = 0
+    if (password.length >= 8) strength += 1
+    if (/[a-z]/.test(password)) strength += 1
+    if (/[A-Z]/.test(password)) strength += 1
+    if (/[0-9]/.test(password)) strength += 1
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1
+    return (strength / 5) * 100
+  }, [password])
+
+  const strengthColor = useMemo(() => {
+    if (passwordStrength < 40) return "bg-red-500"
+    if (passwordStrength < 80) return "bg-yellow-500"
+    return "bg-green-500"
+  }, [passwordStrength])
+
+  const strengthText = useMemo(() => {
+    if (!password) return ""
+    if (passwordStrength < 40) return "Weak"
+    if (passwordStrength < 80) return "Fair"
+    return "Strong"
+  }, [passwordStrength, password])
+
   const generateMatchFlowId = () => {
-    const min = 1000000; // 7 digits
-    const max = 999999999; // 9 digits
+    const min = 1000000;
+    const max = 999999999;
     return Math.floor(Math.random() * (max - min + 1) + min).toString();
   }
 
@@ -58,19 +84,11 @@ export default function UnifiedAuthPage() {
 
   const handleRegister = async () => {
     if (!email || !password) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please enter both email and password.",
-      })
+      toast({ variant: "destructive", title: "Error", description: "Please enter both email and password." })
       return
     }
-    if (password.length < 6) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Password must be at least 6 characters.",
-      })
+    if (passwordStrength < 60) {
+      toast({ variant: "destructive", title: "Weak Password", description: "Please use a stronger password with a mix of characters." })
       return
     }
 
@@ -89,16 +107,7 @@ export default function UnifiedAuthPage() {
 
       const userRef = doc(db, "users", user.uid)
       
-      setDoc(userRef, userData)
-        .catch(async () => {
-          const permissionError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'create',
-            requestResourceData: userData,
-          } satisfies SecurityRuleContext)
-          errorEmitter.emit('permission-error', permissionError)
-        })
-      
+      await setDoc(userRef, userData, { merge: true })
       router.push("/onboarding")
     } catch (error: any) {
       toast({
@@ -121,7 +130,7 @@ export default function UnifiedAuthPage() {
 
       <div className="flex-1 flex flex-col justify-center space-y-8 max-w-sm mx-auto w-full">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-headline text-primary">Welcome Back</h1>
+          <h1 className="text-4xl font-headline text-primary">Welcome</h1>
           <p className="text-xs text-muted-foreground font-body uppercase tracking-widest">Login or Join MatchFlow</p>
         </div>
 
@@ -140,7 +149,7 @@ export default function UnifiedAuthPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password" dangerouslySetInnerHTML={{ __html: 'Password' }} className="text-[10px] font-black uppercase tracking-tighter ml-1" />
+              <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-tighter ml-1">Password</Label>
               <Input 
                 id="password" 
                 type="password" 
@@ -150,6 +159,16 @@ export default function UnifiedAuthPage() {
                 required 
                 className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary"
               />
+              {password && (
+                <div className="px-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Strength: {strengthText}</span>
+                    {passwordStrength >= 80 ? <ShieldCheck className="w-3 h-3 text-green-500" /> : <ShieldAlert className="w-3 h-3 text-red-400" />}
+                  </div>
+                  <Progress value={passwordStrength} className="h-1" indicatorClassName={strengthColor} />
+                  <p className="text-[8px] text-gray-400 font-medium">Use 8+ characters with uppercase, lowercase, numbers & symbols</p>
+                </div>
+              )}
             </div>
           </div>
 
