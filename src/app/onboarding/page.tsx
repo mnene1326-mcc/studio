@@ -23,11 +23,6 @@ const LOOKING_FOR_OPTIONS = [
   "Serious partner", "Casual friendship", "Networking", "Dating", "Travel buddy"
 ]
 
-const RANDOM_NAMES = [
-  "Amani", "Zahara", "Kwame", "Jabari", "Malik", "Zendaya", "Tunde", "Folami", "Nala", "Simba", 
-  "Kofi", "Efua", "Mosi", "Zola", "Binti", "Sefu", "Alpha", "Echo", "Sierra", "Victor"
-];
-
 function OnboardingContent() {
   const searchParams = useSearchParams()
   const isFast = searchParams.get("fast") === "true"
@@ -72,13 +67,17 @@ function OnboardingContent() {
     if (!user) return
     setLoading(true)
 
-    const finalName = isFast ? RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)] : name;
-    const finalDob = isFast ? generateRandomDOB() : dob;
-    const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
-
     const userRef = doc(db, "users", user.uid)
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
+
+    // Generate or retrieve ID
+    const mId = existingData?.matchFlowId || generateMatchFlowId()
+    
+    // Fast login name logic: Guest + first 3 digits of ID
+    const finalName = isFast ? `Guest ${mId.substring(0, 3)}` : name;
+    const finalDob = isFast ? generateRandomDOB() : dob;
+    const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
 
     // Financial data moved to RTDB for optimization
     const initialCoins = gender === 'male' ? 150 : 0
@@ -96,7 +95,7 @@ function OnboardingContent() {
       photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
-      matchFlowId: existingData?.matchFlowId || generateMatchFlowId(),
+      matchFlowId: mId,
       isDeleted: false,
       isVerified: false,
       isAdmin: false,
