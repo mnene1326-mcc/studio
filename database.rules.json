@@ -9,7 +9,7 @@
     },
     /* Currency Balances:
        - Users can read their own balance.
-       - Users can write to balances to support Gifting and Speedy Reply rewards.
+       - Anyone can write to support Gifting and Speedy Reply rewards during this prototype phase.
     */
     "balances": {
       "$uid": {
