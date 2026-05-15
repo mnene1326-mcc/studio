@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, collection, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off } from "firebase/database"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off, remove } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,13 +14,24 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { 
   Send, 
   ChevronLeft, 
   ShoppingBag, 
   Gift as GiftIcon,
   Coins,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -62,14 +73,31 @@ const GIFTS = [
   { id: 'motor', name: 'Harley', price: 3000, icon: '🏍️' },
 ]
 
-function ChatListItem({ summary, onClick }: { summary: ChatSummary, onClick: () => void }) {
+function ChatListItem({ summary, onClick, onDelete }: { summary: ChatSummary, onClick: () => void, onDelete: () => void }) {
   const presence = useUserPresence(summary.partnerId)
   const lastAt = new Date(summary.lastMessageAt || Date.now())
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleTouchStart = () => {
+    timerRef.current = setTimeout(() => {
+      onDelete()
+    }, 800)
+  }
+
+  const handleTouchEnd = () => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }
 
   return (
     <div 
       className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer transition-all active:scale-[0.98] border-b border-gray-50 select-none min-h-[80px]"
       onClick={onClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        onDelete()
+      }}
     >
       <div className="relative">
         <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
@@ -106,7 +134,7 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // HOOKS MUST BE TOP LEVEL
+  // Hooks at the top level
   const partnerPresence = useUserPresence(startWithId || undefined)
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUser?.uid ? doc(db, "users", currentUser.uid) : null)
   const { data: partnerProfile } = useDoc<UserProfile>(startWithId ? doc(db, "users", startWithId) : null)
@@ -125,15 +153,15 @@ function ChatsContent() {
   })
   const [summariesLoading, setSummariesLoading] = useState(!chatSummaries.length)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
+  const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
 
-  // Listen to RTDB Chat Summaries (Optimized List)
+  // Listen to RTDB Chat Summaries
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
     const unsubscribe = onValue(summariesRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
-        // Filter: only show chats that actually have a last message (sent or received)
         const list = Object.entries(data)
           .map(([id, val]: [string, any]) => ({ id, ...val }))
           .filter(summary => !!summary.lastMessage)
@@ -150,7 +178,7 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Mark Read in Summary when entering chat
+  // Mark Read when entering chat
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
@@ -170,7 +198,7 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // Listen to Messages (Strictly Limited to 20 for cost optimization)
+  // Listen to Messages (Limited to 20)
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
@@ -268,6 +296,18 @@ function ChatsContent() {
     } catch (err) { toast({ variant: "destructive", title: "Gift Error" }) }
   }
 
+  const handleDeleteChat = async () => {
+    if (!currentUser?.uid || !chatToDelete) return
+    try {
+      await remove(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`))
+      toast({ title: "Conversation removed" })
+    } catch (err) {
+      toast({ variant: "destructive", title: "Delete Error" })
+    } finally {
+      setChatToDelete(null)
+    }
+  }
+
   if (!currentUser) return null
 
   if (!startWithId) {
@@ -285,9 +325,30 @@ function ChatsContent() {
               <p className="font-semibold text-black">No chats yet...</p>
             </div>
           ) : chatSummaries.map(summary => (
-            <ChatListItem key={summary.id} summary={summary} onClick={() => router.push(`/chats?startWith=${summary.partnerId}`)} />
+            <ChatListItem 
+              key={summary.id} 
+              summary={summary} 
+              onClick={() => router.push(`/chats?startWith=${summary.partnerId}`)}
+              onDelete={() => setChatToDelete(summary)}
+            />
           ))}
         </main>
+        
+        <AlertDialog open={!!chatToDelete} onOpenChange={(open) => !open && setChatToDelete(null)}>
+          <AlertDialogContent className="rounded-3xl max-w-[85vw]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold">Delete Chat?</AlertDialogTitle>
+              <AlertDialogDescription className="text-xs font-medium">
+                This will remove the conversation with {chatToDelete?.partnerName} from your list.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row gap-2 mt-4">
+              <AlertDialogCancel className="flex-1 h-12 rounded-full border-none bg-gray-100 font-bold uppercase tracking-widest text-[10px]">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteChat} className="flex-1 h-12 rounded-full bg-red-500 hover:bg-red-600 font-bold uppercase tracking-widest text-[10px]">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <BottomNav />
       </div>
     )
