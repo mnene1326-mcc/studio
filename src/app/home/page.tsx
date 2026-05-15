@@ -7,10 +7,12 @@ import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase, useDatab
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
+import { Target, RotateCw, FileText, ChevronDown, BadgeCheck, Circle } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { ref, onValue } from "firebase/database"
 
 interface UserProfile {
@@ -44,6 +46,7 @@ export default function HomePage() {
   const db = useFirestore()
   const rtdb = useDatabase()
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
+  const [showOnlineOnly, setShowOnlineOnly] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshSeed, setRefreshSeed] = useState(0)
@@ -52,7 +55,7 @@ export default function HomePage() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
-  // Listen to presence for all users to enable "Online First" sorting
+  // Listen to presence for all users to enable "Online First" sorting and filtering
   useEffect(() => {
     if (!rtdb) return
     const statusRef = ref(rtdb, 'status')
@@ -92,7 +95,7 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(100) // Increased limit to ensure we have enough users to reshuffle and sort
+    limit(100) 
   ), [db])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
@@ -121,7 +124,6 @@ export default function HomePage() {
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    // Update seed to trigger a complete reshuffle
     setRefreshSeed(prev => prev + 1)
     sessionStorage.removeItem('home_scroll_pos')
     setTimeout(() => {
@@ -137,31 +139,36 @@ export default function HomePage() {
     const baseList = users.filter(u => {
       if (u.uid === currentUser?.uid) return false
       if (blockedList.includes(u.uid)) return false
+      
       const genderMatch = currentUserProfile.gender === 'male' ? u.gender === 'female' : (currentUserProfile.gender === 'female' ? u.gender === 'male' : true);
       if (!genderMatch) return false;
-      if (activeTab === 'Nearby') return u.country === currentUserProfile.country;
+      
+      if (activeTab === 'Nearby') {
+        if (u.country !== currentUserProfile.country) return false;
+      }
+
+      // Online Only Filter
+      if (showOnlineOnly && !onlineUsers[u.uid]) return false;
+      
       return true;
     })
     
     // 2. Sorting Logic: Online First, then Reshuffle
     const sorted = [...baseList].sort((a, b) => {
-      // Prioritize online users
       const aOnline = onlineUsers[a.uid] ? 1 : 0
       const bOnline = onlineUsers[b.uid] ? 1 : 0
       
       if (aOnline !== bOnline) {
-        return bOnline - aOnline // Online (1) comes before Offline (0)
+        return bOnline - aOnline 
       }
       
-      // Reshuffle logic based on seed
-      // Using a more complex shuffle to ensure "first to middle" style movement
       const aVal = Math.sin(a.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       const bVal = Math.sin(b.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       return aVal - bVal
     })
     
     return sorted
-  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, onlineUsers])
+  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, onlineUsers, showOnlineOnly])
 
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(0, displayLimit);
@@ -203,14 +210,28 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="sticky top-0 z-40 bg-[#F9FAFB]/90 backdrop-blur-md px-5 pt-3 pb-3 flex items-center justify-between border-b border-black/5 shadow-sm">
-          <div className="flex items-center gap-6">
-            <button onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
-            <button onClick={() => { setActiveTab('Nearby'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
+        <div className="sticky top-0 z-40 bg-[#F9FAFB]/90 backdrop-blur-md px-5 pt-3 pb-3 border-b border-black/5 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-6">
+              <button onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
+              <button onClick={() => { setActiveTab('Nearby'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
+            </div>
+            <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF] hover:bg-blue-50 rounded-full transition-colors", isRefreshing && "animate-spin opacity-50")}>
+              <RotateCw className="w-5 h-5" />
+            </button>
           </div>
-          <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF] hover:bg-blue-50 rounded-full transition-colors", isRefreshing && "animate-spin opacity-50")}>
-            <RotateCw className="w-5 h-5" />
-          </button>
+          
+          <div className="flex items-center gap-2 pt-1">
+            <Switch 
+              id="online-filter" 
+              checked={showOnlineOnly} 
+              onCheckedChange={setShowOnlineOnly}
+              className="scale-75 data-[state=checked]:bg-green-500" 
+            />
+            <Label htmlFor="online-filter" className="text-[10px] font-black uppercase tracking-widest text-gray-500 cursor-pointer">
+              Online Only
+            </Label>
+          </div>
         </div>
 
         <main className="px-4 pt-3">
@@ -223,8 +244,8 @@ export default function HomePage() {
               <div className="bg-gray-100 p-6 rounded-full">
                 <Target className="w-10 h-10 text-gray-400" />
               </div>
-              <p className="text-sm font-medium text-gray-500">No users found in this category.</p>
-              <Button variant="outline" onClick={handleRefresh} className="rounded-full">Try Refreshing</Button>
+              <p className="text-sm font-medium text-gray-500">No users found{showOnlineOnly ? " online" : ""}.</p>
+              <Button variant="outline" onClick={() => { setShowOnlineOnly(false); handleRefresh(); }} className="rounded-full">View All</Button>
             </div>
           ) : (
             <div className="space-y-8">
@@ -234,7 +255,6 @@ export default function HomePage() {
                     <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
                     <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-bold text-[12px] uppercase shadow-md active:scale-95 transition-all" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
                     
-                    {/* Live Online Indicator on Card */}
                     {onlineUsers[user.uid] && (
                       <div className="absolute top-2.5 left-2.5 bg-green-500 w-3 h-3 rounded-full border-2 border-white z-30 shadow-sm" />
                     )}
