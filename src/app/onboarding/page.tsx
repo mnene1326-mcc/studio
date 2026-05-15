@@ -6,14 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
 import { ref, set as rtdbSet } from "firebase/database"
 import { useFirestore, useUser, useDatabase } from "@/firebase"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Heart, Loader2 } from "lucide-react"
+import { Heart, Loader2, ChevronRight, ChevronLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const AFRICAN_COUNTRIES = [
   "Kenya", "Tanzania", "Uganda", "Rwanda", "Burundi", "South Sudan", "Ethiopia", "Somalia", "Eritrea", "Djibouti", "South Africa", "Nigeria", "Ghana", "Egypt"
@@ -41,6 +40,8 @@ function OnboardingContent() {
   const router = useRouter()
   const { toast } = useToast()
 
+  const totalSteps = isFast ? 2 : 3
+
   const maxDate = useMemo(() => {
     const d = new Date()
     d.setFullYear(d.getFullYear() - 18)
@@ -67,48 +68,45 @@ function OnboardingContent() {
     if (!user) return
     setLoading(true)
 
-    const userRef = doc(db, "users", user.uid)
-    const userSnap = await getDoc(userRef)
-    const existingData = userSnap.data()
-
-    // Generate or retrieve ID
-    const mId = existingData?.matchFlowId || generateMatchFlowId()
-    
-    // Fast login name logic: Guest + first 3 digits of ID
-    const finalName = isFast ? `Guest ${mId.substring(0, 3)}` : name;
-    const finalDob = isFast ? generateRandomDOB() : dob;
-    const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
-
-    // Financial data moved to RTDB for optimization
-    const initialCoins = gender === 'male' ? 150 : 0
-    const initialDiamonds = gender === 'female' ? 150 : 0
-
-    const updateData: any = {
-      uid: user.uid,
-      email: user.email || `anon_${user.uid}@matchflow.app`,
-      name: finalName,
-      gender,
-      dob: finalDob,
-      country,
-      lookingFor: finalLookingFor,
-      onboardingComplete: true,
-      photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
-      updatedAt: serverTimestamp(),
-      createdAt: existingData?.createdAt || serverTimestamp(),
-      matchFlowId: mId,
-      isDeleted: false,
-      isVerified: false,
-      isAdmin: false,
-      isCoinSeller: false,
-      blocking: [],
-      blockedBy: []
-    }
-
     try {
-      // 1. Update Firestore Profile (The "Vault")
+      const userRef = doc(db, "users", user.uid)
+      const userSnap = await getDoc(userRef)
+      const existingData = userSnap.data()
+
+      const mId = existingData?.matchFlowId || generateMatchFlowId()
+      
+      const finalName = isFast ? `Guest ${mId.substring(0, 3)}` : name;
+      const finalDob = isFast ? generateRandomDOB() : dob;
+      const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
+
+      const initialCoins = gender === 'male' ? 150 : 0
+      const initialDiamonds = gender === 'female' ? 150 : 0
+
+      const updateData: any = {
+        uid: user.uid,
+        email: user.email || `anon_${user.uid}@matchflow.app`,
+        name: finalName,
+        gender,
+        dob: finalDob,
+        country,
+        lookingFor: finalLookingFor,
+        onboardingComplete: true,
+        photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
+        updatedAt: serverTimestamp(),
+        createdAt: existingData?.createdAt || serverTimestamp(),
+        matchFlowId: mId,
+        isDeleted: false,
+        isVerified: false,
+        isAdmin: false,
+        isCoinSeller: false,
+        blocking: [],
+        blockedBy: []
+      }
+
+      // 1. Update Firestore Profile
       await setDoc(userRef, updateData, { merge: true })
       
-      // 2. Initialize RTDB Balances (The "Cashier")
+      // 2. Initialize RTDB Balances
       const balanceRef = ref(rtdb, `balances/${user.uid}`)
       await rtdbSet(balanceRef, {
         coins: initialCoins,
@@ -117,146 +115,183 @@ function OnboardingContent() {
       })
 
       router.replace("/home")
-    } catch (serverError) {
-      const permissionError = new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'write',
-        requestResourceData: updateData,
-      } satisfies SecurityRuleContext)
-      errorEmitter.emit('permission-error', permissionError)
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Setup Failed", description: err.message })
       setLoading(false)
     }
   }
 
+  const canContinue = () => {
+    if (step === 1) return isFast ? !!gender : (!!name && !!gender)
+    if (step === 2) return isFast ? !!country : (!!dob && !!country)
+    if (step === 3) return !!lookingFor
+    return false
+  }
+
   return (
-    <div className="flex-1 flex flex-col p-6 max-w-md mx-auto space-y-8 min-h-screen bg-background">
-      <header className="text-center space-y-2 mt-8">
-        <Heart className="w-12 h-12 text-[#00A2FF] mx-auto fill-current" />
-        <h1 className="text-3xl font-bold text-black tracking-tight">
-          {isFast ? "Fast Login" : "Create Profile"}
+    <div className="flex-1 flex flex-col bg-white min-h-screen">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-blue-50 to-white -z-10" />
+      
+      <header className="px-6 pt-12 pb-4 flex flex-col items-center">
+        <div className="w-14 h-14 bg-white rounded-2xl shadow-xl flex items-center justify-center mb-6">
+          <Heart className="w-8 h-8 text-[#00A2FF] fill-current" />
+        </div>
+        
+        <div className="flex gap-1.5 mb-2">
+          {[1, 2, 3].slice(0, totalSteps).map((i) => (
+            <div 
+              key={i} 
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                step === i ? "w-8 bg-[#00A2FF]" : "w-1.5 bg-gray-200"
+              )} 
+            />
+          ))}
+        </div>
+        
+        <h1 className="text-2xl font-black text-black tracking-tight mt-4">
+          {step === 1 && (isFast ? "Quick Identity" : "Basic Info")}
+          {step === 2 && "Where are you?"}
+          {step === 3 && "Preferences"}
         </h1>
-        <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
-          {isFast ? `Step ${step} of 2` : `Step ${step} of 3`}
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+          Step {step} of {totalSteps}
         </p>
       </header>
 
-      <div className="flex-1">
+      <main className="flex-1 px-8 pt-8 pb-20 max-w-md mx-auto w-full space-y-8">
         {step === 1 && (
-          <div className="space-y-6 animate-in slide-in-from-right duration-300">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {!isFast && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-[10px] font-bold uppercase ml-1">What's your name?</Label>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-gray-400 ml-1">Full Name</Label>
                 <Input 
-                  id="name" 
-                  placeholder="Full Name" 
+                  placeholder="Enter your name" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
-                  className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary"
+                  className="rounded-2xl h-14 border-gray-100 bg-gray-50 focus:bg-white text-lg font-bold"
                 />
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label htmlFor="gender" className="text-[10px] font-bold uppercase ml-1">Gender</Label>
-              <Select onValueChange={setGender} value={gender}>
-                <SelectTrigger className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary">
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl">
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-gray-400 ml-1">Gender</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {['male', 'female'].map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(g)}
+                    className={cn(
+                      "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 transition-all",
+                      gender === g 
+                        ? "border-[#00A2FF] bg-blue-50 text-[#00A2FF] shadow-sm" 
+                        : "border-gray-50 bg-gray-50 text-gray-400"
+                    )}
+                  >
+                    <span className="text-2xl">{g === 'male' ? '♂️' : '♀️'}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{g}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-            <Button 
-              className="w-full rounded-full h-14 font-bold text-lg mt-4 shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
-              onClick={() => setStep(2)}
-              disabled={isFast ? !gender : (!name || !gender)}
-            >
-              Continue
-            </Button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-6 animate-in slide-in-from-right duration-300">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {!isFast && (
-              <div className="space-y-1.5">
-                <Label htmlFor="dob" className="text-[10px] font-bold uppercase ml-1">Date of Birth</Label>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-gray-400 ml-1">Date of Birth</Label>
                 <Input 
-                  id="dob" 
                   type="date" 
                   max={maxDate}
                   value={dob} 
                   onChange={(e) => setDob(e.target.value)} 
-                  className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary"
+                  className="rounded-2xl h-14 border-gray-100 bg-gray-50 focus:bg-white text-lg font-bold"
                 />
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label htmlFor="country" className="text-[10px] font-bold uppercase ml-1">Country</Label>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-gray-400 ml-1">Country</Label>
               <Select onValueChange={setCountry} value={country}>
-                <SelectTrigger className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary">
-                  <SelectValue placeholder="Select country" />
+                <SelectTrigger className="rounded-2xl h-14 border-gray-100 bg-gray-50 text-lg font-bold">
+                  <SelectValue placeholder="Select Country" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl h-64">
                   {AFRICAN_COUNTRIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                    <SelectItem key={c} value={c} className="font-bold">{c}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex flex-col gap-4">
-              <Button 
-                className="w-full rounded-full h-14 font-bold text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
-                onClick={isFast ? handleComplete : () => setStep(3)}
-                disabled={isFast ? (!country || loading) : (!dob || !country)}
-              >
-                {isFast ? (loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete") : "Continue"}
-              </Button>
-              <Button variant="ghost" className="text-muted-foreground font-bold text-xs" onClick={() => setStep(1)}>
-                Back
-              </Button>
             </div>
           </div>
         )}
 
         {step === 3 && !isFast && (
-          <div className="space-y-6 animate-in slide-in-from-right duration-300">
-            <div className="space-y-1.5">
-              <Label htmlFor="lookingFor" className="text-[10px] font-bold uppercase ml-1">What are you looking for?</Label>
-              <Select onValueChange={setLookingFor} value={lookingFor}>
-                <SelectTrigger className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary">
-                  <SelectValue placeholder="Preferences" />
-                </SelectTrigger>
-                <SelectContent className="rounded-2xl">
-                  {LOOKING_FOR_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-4">
-              <Button 
-                className="w-full rounded-full h-14 font-bold text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
-                onClick={handleComplete}
-                disabled={!lookingFor || loading}
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Setup"}
-              </Button>
-              <Button variant="ghost" className="text-muted-foreground font-bold text-xs" onClick={() => setStep(2)}>
-                Back
-              </Button>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-gray-400 ml-1">Looking For</Label>
+              <div className="grid grid-cols-1 gap-3">
+                {LOOKING_FOR_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setLookingFor(opt)}
+                    className={cn(
+                      "h-16 px-6 rounded-2xl border-2 flex items-center justify-between transition-all",
+                      lookingFor === opt 
+                        ? "border-[#00A2FF] bg-blue-50 text-[#00A2FF] shadow-sm" 
+                        : "border-gray-50 bg-gray-50 text-gray-600"
+                    )}
+                  >
+                    <span className="font-bold text-sm">{opt}</span>
+                    {lookingFor === opt && <Heart className="w-4 h-4 fill-current" />}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
-      </div>
+      </main>
+
+      <footer className="fixed bottom-0 inset-x-0 p-8 bg-white/80 backdrop-blur-xl border-t border-gray-50 flex gap-4 max-w-md mx-auto w-full">
+        {step > 1 && (
+          <Button 
+            variant="ghost" 
+            onClick={() => setStep(prev => prev - 1)}
+            className="w-16 h-16 rounded-2xl bg-gray-50 text-gray-400"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </Button>
+        )}
+        <Button 
+          disabled={!canContinue() || loading}
+          onClick={() => {
+            if (step < totalSteps) setStep(prev => prev + 1)
+            else handleComplete()
+          }}
+          className="flex-1 h-16 rounded-2xl bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black uppercase tracking-widest shadow-lg shadow-blue-100 active:scale-95 transition-all"
+        >
+          {loading ? (
+            <Loader2 className="w-6 h-6 animate-spin" />
+          ) : (
+            <div className="flex items-center gap-2">
+              {step === totalSteps ? "Get Started" : "Continue"}
+              {step !== totalSteps && <ChevronRight className="w-5 h-5" />}
+            </div>
+          )}
+        </Button>
+      </footer>
     </div>
   )
 }
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<div className="p-16 text-center font-bold text-xl text-[#00A2FF] animate-pulse">MatchFlow...</div>}>
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center bg-white min-h-screen">
+        <Loader2 className="w-10 h-10 animate-spin text-[#00A2FF]" />
+      </div>
+    }>
       <OnboardingContent />
     </Suspense>
   )
