@@ -34,14 +34,9 @@
   }
   html, body {
     @apply bg-background text-foreground select-none;
-    overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
-    height: 100%;
+    min-height: 100%;
     overflow-x: hidden;
-    touch-action: pan-x pan-y;
-    /* Hide scrollbar for IE, Edge and Firefox */
-    -ms-overflow-style: none;
-    scrollbar-width: none;
     /* Prevent selection for app-like feel */
     -webkit-user-select: none;
     -moz-user-select: none;

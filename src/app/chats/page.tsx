@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, collection, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off, remove, serverTimestamp } from "firebase/database"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, off } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -30,8 +30,7 @@ import {
   ShoppingBag, 
   Gift as GiftIcon,
   Coins,
-  Loader2,
-  Trash2
+  Loader2
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -135,9 +134,13 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
+  // Hooks must always be at the top level
   const partnerPresence = useUserPresence(startWithId || undefined)
-  const { data: currentUserProfile } = useDoc<UserProfile>(currentUser?.uid ? doc(db, "users", currentUser.uid) : null)
-  const { data: partnerProfile } = useDoc<UserProfile>(startWithId ? doc(db, "users", startWithId) : null)
+  const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
+  const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
+  
+  const { data: currentUserProfile } = useDoc<UserProfile>(currentUserDocRef)
+  const { data: partnerProfile } = useDoc<UserProfile>(partnerDocRef)
 
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
@@ -165,7 +168,7 @@ function ChatsContent() {
       if (data) {
         const list = Object.entries(data)
           .map(([id, val]: [string, any]) => ({ id, ...val }))
-          .filter(summary => !!summary.lastMessage)
+          .filter(summary => !!summary.lastMessage) // Only show chats with content
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
         
         setChatSummaries(list)
@@ -288,7 +291,7 @@ function ChatsContent() {
       lastMessage: text.trim(),
       lastMessageAt: timestamp,
       unreadCount: rtdbIncrement(1),
-      deletedAt: 0 // Ensure other person sees it if they also soft deleted
+      deletedAt: 0 
     }
 
     await update(ref(rtdb), updates)
@@ -298,7 +301,6 @@ function ChatsContent() {
   const handleSendGift = async (gift: any) => {
     if (!currentUser?.uid || !partnerProfile || !chatId) return
     if (userBalances.coins < gift.price) { toast({ variant: "destructive", title: "Insufficient Coins" }); return }
-    const timestamp = Date.now()
     try {
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-gift.price) })
       const reward = Math.floor(gift.price * 0.5)
@@ -313,8 +315,6 @@ function ChatsContent() {
   const handleDeleteChat = async () => {
     if (!currentUser?.uid || !chatToDelete) return
     try {
-      // Soft Delete: Remove from user_chats and set deletedAt to current time
-      // This makes the chat "blank" for this user until a new message arrives.
       const now = Date.now()
       await update(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`), {
         lastMessage: "",
@@ -333,7 +333,7 @@ function ChatsContent() {
 
   if (!startWithId) {
     return (
-      <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
+      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 overflow-y-auto">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
