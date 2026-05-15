@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Heart, Mail, Zap, Loader2 } from "lucide-react"
+import { Mail, Zap, Loader2, Heart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { signInAnonymously } from "firebase/auth"
 import { doc, getDoc } from "firebase/firestore"
@@ -44,7 +44,6 @@ export default function WelcomePage() {
     setLoading(true)
     try {
       await signInAnonymously(auth)
-      // We use push here so that onboarding gets the ?fast=true param
       router.push("/onboarding?fast=true")
     } catch (error) {
       setLoading(false)
@@ -57,37 +56,40 @@ export default function WelcomePage() {
 
   return (
     <div className="relative flex-1 flex flex-col min-h-screen bg-black overflow-hidden">
-      <div className="absolute inset-0 z-0">
+      {/* Cinematic Background */}
+      <div className="absolute inset-0 z-0 scale-105 animate-pulse-slow">
         <Image 
-          src="https://picsum.photos/seed/matchwelcome/1000/1500" 
+          src="https://picsum.photos/seed/matchlove/1000/1500" 
           alt="Welcome" 
           fill 
-          className="object-cover opacity-60 grayscale-[0.2]"
+          className="object-cover opacity-70"
           data-ai-hint="couple romance"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent" />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-20 justify-between items-center text-center">
-        <div className="flex flex-col items-center justify-center space-y-10 mt-6">
-          <div className="relative">
-            <Heart className="w-14 h-14 text-[#00A2FF] fill-current drop-shadow-[0_0_30px_rgba(0,162,255,0.6)] animate-pulse" />
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
+      <div className="relative z-10 flex-1 flex flex-col px-8 pt-24 pb-16 justify-between items-center text-center">
+        <div className="flex flex-col items-center space-y-6 animate-in slide-in-from-top-10 duration-1000">
+          <div className="space-y-3">
+            <h1 className="text-5xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
-            <p className="text-white/70 font-bold text-[9px] uppercase tracking-[0.6em] ml-2">
-              Connect with Heart
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-[1px] w-8 bg-white/20" />
+              <p className="text-white/60 font-black text-[10px] uppercase tracking-[0.4em]">
+                Connect with Heart
+              </p>
+              <div className="h-[1px] w-8 bg-white/20" />
+            </div>
           </div>
         </div>
 
-        <div className="w-full max-sm space-y-5 mb-6">
+        <div className="w-full max-w-sm space-y-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
           <Button 
             onClick={() => router.push("/login")}
-            className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-bold text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
+            className="w-full h-16 rounded-3xl bg-white text-black hover:bg-white/90 font-bold text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
           >
             <div className="flex items-center justify-center gap-3">
               <Mail className="w-5 h-5" />
@@ -98,22 +100,25 @@ export default function WelcomePage() {
           <Button 
             disabled={loading}
             onClick={handleFastLogin}
-            variant="outline"
-            className="w-full h-16 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-bold text-sm tracking-widest uppercase active:scale-95 transition-all"
+            variant="ghost"
+            className="w-full h-16 rounded-3xl border border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 font-bold text-sm tracking-widest uppercase active:scale-95 transition-all"
           >
             <div className="flex items-center justify-center gap-3">
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <Zap className="w-5 h-5 text-[#FFD600] fill-current" />
+                <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400" />
               )}
               Fast login
             </div>
           </Button>
 
           <div className="pt-8">
-            <p className="text-[10px] text-white/40 font-semibold px-6 leading-relaxed">
-              By entering, you confirm you are 18+ and agree to our <Link href="/terms" className="underline text-white/60">Terms</Link> and <Link href="/privacy" className="underline text-white/60">Privacy Policy</Link>.
+            <p className="text-[10px] text-white/30 font-medium px-8 leading-relaxed">
+              By entering, you confirm you are 18+ and agree to our{' '}
+              <Link href="/terms" className="text-white/50 underline underline-offset-4 decoration-white/20">Terms</Link>
+              {' '}and{' '}
+              <Link href="/privacy" className="text-white/50 underline underline-offset-4 decoration-white/20">Privacy Policy</Link>.
             </p>
           </div>
         </div>
