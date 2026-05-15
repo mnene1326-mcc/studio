@@ -7,10 +7,18 @@ import { ref, update, increment as rtdbIncrement, get } from 'firebase/database'
 
 /**
  * Awards coins to a user based on their numeric MatchFlow ID.
- * Balances are managed in RTDB for high-frequency optimization.
+ * Enforces business limits: Min 500, Max 50,000.
  */
 export async function awardCoinsAction(callerUid: string, targetMatchFlowId: string, amount: number) {
   const { firestore: db, database: rtdb } = initializeFirebase();
+
+  // Enforce Production Limits
+  if (amount < 500) {
+    return { success: false, error: "Minimum award amount is 500 coins." };
+  }
+  if (amount > 50000) {
+    return { success: false, error: "Maximum single award limit is 50,000 coins." };
+  }
 
   try {
     // 1. Get caller profile
@@ -50,9 +58,18 @@ export async function awardCoinsAction(callerUid: string, targetMatchFlowId: str
     const targetUid = targetDoc.id;
 
     // 5. Award coins to target in RTDB
+    const timestamp = Date.now();
     await update(ref(rtdb, `balances/${targetUid}`), {
       coins: rtdbIncrement(amount),
-      updatedAt: Date.now()
+      updatedAt: timestamp
+    });
+
+    // 6. Log to History for transparency
+    await update(ref(rtdb, `coin_history/${targetUid}/${timestamp}`), {
+      amount: amount,
+      type: 'award',
+      description: `Awarded by ${callerData.name || 'Official Seller'}`,
+      timestamp: timestamp
     });
 
     return { success: true, message: `Successfully awarded ${amount} coins to ${targetDoc.data().name}.` };

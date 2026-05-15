@@ -191,10 +191,12 @@ function ChatsContent() {
   const router = useRouter()
   const { toast } = useToast()
   const startWithId = searchParams.get("startWith")
+  const initialMsg = searchParams.get("msg")
   const { user: currentUser } = useUser()
   const db = useFirestore()
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const hasSentInitial = useRef(false)
   
   const [chatId, setChatId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
@@ -281,6 +283,14 @@ function ChatsContent() {
     findOrCreateChat()
   }, [currentUser?.uid, startWithId, db])
 
+  // Handle auto-send if initial message is provided
+  useEffect(() => {
+    if (initialMsg && chatId && currentUserProfile && !hasSentInitial.current) {
+      handleSendMessage(initialMsg)
+      hasSentInitial.current = true
+    }
+  }, [initialMsg, chatId, currentUserProfile])
+
   useEffect(() => {
     if (!chatId) return
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
@@ -308,7 +318,6 @@ function ChatsContent() {
         updatedAt: timestamp
       })
 
-      // Log to history
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
         amount: -messageCost,
         type: 'chat',
@@ -338,7 +347,6 @@ function ChatsContent() {
       
       setUserBalances(prev => ({ ...prev, coins: prev.coins - gift.price }))
 
-      // Log history for sender
       await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
         amount: -gift.price,
         type: 'gift',
@@ -349,7 +357,6 @@ function ChatsContent() {
       const reward = Math.floor(gift.price * 0.5)
       await update(ref(rtdb, `balances/${chatPartner.uid}`), { diamonds: rtdbIncrement(reward), updatedAt: timestamp })
       
-      // Log diamond history for receiver
       await set(push(ref(rtdb, `diamond_history/${chatPartner.uid}`)), { 
         amount: reward, 
         type: 'gift', 

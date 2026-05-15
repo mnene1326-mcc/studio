@@ -1,10 +1,11 @@
+
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ChevronLeft, Coins, Trophy, Loader2 } from "lucide-react"
+import { ChevronLeft, Coins, Trophy, Loader2, AlertCircle } from "lucide-react"
 import { useUser } from "@/firebase"
 import { useToast } from "@/hooks/use-toast"
 import { awardCoinsAction } from "@/app/actions/admin"
@@ -19,9 +20,16 @@ export default function AwardCoinsPage() {
 
   const handleAward = async () => {
     if (!user || !targetId || !amount || isNaN(Number(amount))) return
+    
+    const numAmount = Number(amount);
+    if (numAmount < 500) {
+      toast({ variant: "destructive", title: "Error", description: "Minimum award is 500 coins." });
+      return;
+    }
+
     setLoading(true)
     try {
-      const result = await awardCoinsAction(user.uid, targetId, Number(amount))
+      const result = await awardCoinsAction(user.uid, targetId, numAmount)
       if (result.success) {
         toast({ title: "Coins Awarded", description: result.message })
         router.back()
@@ -52,7 +60,7 @@ export default function AwardCoinsPage() {
           </div>
           <div className="space-y-1">
             <h2 className="text-2xl font-black text-black tracking-tight">Send MatchFlow Coins</h2>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Admin Coins Management</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Certified Seller Tools</p>
           </div>
         </div>
 
@@ -71,11 +79,15 @@ export default function AwardCoinsPage() {
             <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Coin Amount</label>
             <Input 
               type="number"
-              placeholder="0" 
+              placeholder="Min 500" 
               value={amount} 
               onChange={(e) => setAmount(e.target.value)} 
               className="rounded-2xl h-16 text-center text-xl font-bold border-gray-100 bg-gray-50"
             />
+            <div className="flex items-center gap-1.5 px-2 text-[9px] font-bold text-amber-600 uppercase">
+              <AlertCircle className="w-3 h-3" />
+              Limit: 500 - 50,000 Coins
+            </div>
           </div>
 
           <Button 
