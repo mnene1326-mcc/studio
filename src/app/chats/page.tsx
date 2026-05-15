@@ -114,6 +114,9 @@ function ChatsContent() {
   const [summariesLoading, setSummariesLoading] = useState(true)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
 
+  // Call hooks at the top level to avoid "Rendered more hooks" error
+  const partnerPresence = useUserPresence(startWithId || undefined)
+
   // Listen to RTDB Chat Summaries (Optimized List)
   useEffect(() => {
     if (!currentUser?.uid) return
@@ -279,8 +282,6 @@ function ChatsContent() {
       </div>
     )
   }
-
-  const partnerPresence = useUserPresence(startWithId)
 
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
