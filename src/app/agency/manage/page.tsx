@@ -78,6 +78,13 @@ export default function AgencyManagePage() {
     setIsProcessing(false)
   }
 
+  const formatTimestamp = (ts: any) => {
+    if (!ts) return "---";
+    // Handle both live Timestamps and serialized objects from cache
+    const date = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
+    return format(date, "MMM d, HH:mm");
+  };
+
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
       <header className="px-4 h-16 flex items-center justify-between border-b">
@@ -165,7 +172,7 @@ export default function AgencyManagePage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-bold text-sm">{req.userName}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">Requested on {req.createdAt ? format(req.createdAt.toDate(), "MMM d, HH:mm") : "---"}</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase">Requested on {formatTimestamp(req.createdAt)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600">Ksh {req.amountKes}</p>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo } from "react"
@@ -49,7 +50,19 @@ export default function TaskCenterPage() {
 
   const hasCheckedInToday = useMemo(() => {
     if (!profile?.lastCheckInDate) return false
-    const lastDate = profile.lastCheckInDate.toDate()
+    
+    // Safety check for Firestore Timestamp which might be serialized in cache
+    const rawDate = profile.lastCheckInDate;
+    let lastDate: Date;
+    
+    if (rawDate && typeof rawDate.toDate === 'function') {
+      lastDate = rawDate.toDate();
+    } else if (rawDate && typeof rawDate === 'object' && 'seconds' in rawDate) {
+      lastDate = new Date(rawDate.seconds * 1000);
+    } else {
+      lastDate = new Date(rawDate);
+    }
+
     const today = new Date()
     return (
       lastDate.getDate() === today.getDate() &&
@@ -119,7 +132,7 @@ export default function TaskCenterPage() {
           </div>
           
           <Button 
-            onClick={handleCheckIn}
+            onClick={handleCheckIn} 
             disabled={hasCheckedInToday}
             className={cn("w-full mt-6 h-14 rounded-full text-white font-bold uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all", hasCheckedInToday ? "bg-gray-300 shadow-none cursor-default" : "bg-[#00A2FF] shadow-blue-100")}
           >
