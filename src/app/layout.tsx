@@ -42,7 +42,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${pacifico.variable}`}>
+    <html 
+      lang="en" 
+      className={`${inter.variable} ${pacifico.variable}`}
+      data-scroll-behavior="smooth"
+    >
       <body className="font-body antialiased bg-background min-h-screen flex flex-col">
         <Providers>
           {children}

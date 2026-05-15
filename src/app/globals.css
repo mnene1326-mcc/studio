@@ -32,8 +32,9 @@
     @apply border-border;
   }
   html {
-    height: -webkit-fill-available;
     scroll-behavior: smooth;
+    height: 100%;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
@@ -43,7 +44,7 @@
     user-select: none;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
-    min-height: 100vh;
+    min-height: 100%;
     width: 100%;
     overflow-x: hidden;
     overflow-y: auto;
