@@ -190,7 +190,7 @@ export default function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
                       <div className="flex items-center gap-1.5">
-                        <h4 className="text-white font-black text-[15px] truncate tracking-tight">{user.name}</h4>
+                        <h4 className="text-white font-bold text-[15px] truncate tracking-tight">{user.name}</h4>
                         {user.isVerified && <BadgeCheck className="w-4 h-4 text-[#00A2FF] fill-white shrink-0" />}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
