@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, getDocs, collection, query, where, updateDoc, increment, getDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
 import { ref, onValue, push, set, serverTimestamp as rtdbTimestamp, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery } from "firebase/database"
-import { useFirestore, useUser, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
+import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -106,7 +106,6 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
       if (snap.exists()) setPartner({ uid: snap.id, ...snap.data() } as UserProfile)
     })
 
-    // Listen to RTDB for unreads (Optimization)
     const unreadRef = ref(rtdb, `unreads/${currentUserUid}/${chat.id}`)
     return onValue(unreadRef, (snapshot) => {
       setUnreadCount(snapshot.val() || 0)
@@ -273,7 +272,6 @@ function ChatsContent() {
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
 
-  // Load balances from RTDB (Optimization)
   useEffect(() => {
     if (!currentUser?.uid) return
     const balanceRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -327,7 +325,6 @@ function ChatsContent() {
     return blocking.includes(chatPartner.uid) || blockedBy.includes(chatPartner.uid)
   }, [chatPartner, currentUserProfile])
 
-  // Clear unreads on RTDB when entering chat (Optimization)
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       const unreadRef = ref(rtdb, `unreads/${currentUser.uid}/${chatId}`)
@@ -335,7 +332,6 @@ function ChatsContent() {
     }
   }, [chatId, currentUser?.uid, rtdb])
 
-  // Find or Create Chat Metadata in Firestore (Slow moving)
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) {
       setChatId(null)
@@ -376,7 +372,6 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db, toast])
 
-  // Listen to RTDB for high-frequency messages (Optimization)
   useEffect(() => {
     if (!chatId) {
       setMessages([])
@@ -406,22 +401,18 @@ function ChatsContent() {
     const isFree = currentUserProfile.isAdmin || currentUserProfile.isCoinSeller || chatPartner?.isAdmin || chatPartner?.isCoinSeller;
     const partnerId = currentChatData?.participants.find(p => p !== currentUser.uid);
 
-    // RTDB Updates for Live Data (Optimization)
     const msgRef = push(ref(rtdb, `chat_messages/${chatId}`))
     const timestamp = Date.now()
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
 
     try {
-      // 1. Send Message to RTDB
       await set(msgRef, msgData)
 
-      // 2. Increment Unread in RTDB
       if (partnerId) {
         const partnerUnreadRef = ref(rtdb, `unreads/${partnerId}/${chatId}`)
         update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
       }
 
-      // 3. Batch Coin Deduction in RTDB
       if (!isFree && currentUserProfile.gender === 'male') {
         const currentCount = currentChatData?.maleMessageCount || 0
         const nextCount = currentCount + 1
@@ -431,7 +422,6 @@ function ChatsContent() {
             toast({ variant: "destructive", title: "Insufficient Coins", description: "Batch of 10 messages costs 150 coins." })
             return
           }
-          // Deduct from RTDB Balance
           await update(ref(rtdb, `balances/${currentUser.uid}`), {
             coins: rtdbIncrement(-150),
             updatedAt: timestamp
@@ -442,7 +432,6 @@ function ChatsContent() {
         }
       }
 
-      // 4. Speedy Reply Rewards in RTDB
       if (currentUserProfile.gender === 'male' && chatPartner?.gender === 'female' && messages.length > 0) {
         const lastMsg = messages[0]
         if (lastMsg.senderId === chatPartner.uid) {
@@ -456,7 +445,6 @@ function ChatsContent() {
         }
       }
 
-      // 5. Update Metadata in Firestore (Slow moving)
       await updateDoc(doc(db, "chats", chatId), {
         lastMessage: text.trim(),
         lastMessageAt: serverTimestamp()
@@ -479,13 +467,11 @@ function ChatsContent() {
 
     const timestamp = Date.now()
     try {
-      // 1. Deduct from Sender in RTDB
       await update(ref(rtdb, `balances/${currentUser.uid}`), { 
         coins: rtdbIncrement(-gift.price),
         updatedAt: timestamp
       })
 
-      // 2. Award to Recipient in RTDB
       const share = chatPartner.gender === 'female' ? 0.5 : 0.4
       const diamondReward = Math.floor(gift.price * share)
       await update(ref(rtdb, `balances/${chatPartner.uid}`), { 
@@ -493,7 +479,6 @@ function ChatsContent() {
         updatedAt: timestamp
       })
 
-      // 3. Post Message to RTDB
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
       await push(ref(rtdb, `chat_messages/${chatId}`), {
         text,
@@ -502,7 +487,6 @@ function ChatsContent() {
         isGift: true
       })
       
-      // 4. Update Metadata
       await updateDoc(doc(db, "chats", chatId), {
         lastMessage: text,
         lastMessageAt: serverTimestamp()
