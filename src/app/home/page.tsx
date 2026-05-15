@@ -11,8 +11,6 @@ import { Target, RotateCw, FileText, ChevronDown, BadgeCheck, Circle } from "luc
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { ref, onValue } from "firebase/database"
 
 interface UserProfile {
@@ -46,7 +44,6 @@ export default function HomePage() {
   const db = useFirestore()
   const rtdb = useDatabase()
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
-  const [showOnlineOnly, setShowOnlineOnly] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshSeed, setRefreshSeed] = useState(0)
@@ -55,7 +52,7 @@ export default function HomePage() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
-  // Listen to presence for all users to enable "Online First" sorting and filtering
+  // Listen to presence for all users to enable "Online First" sorting
   useEffect(() => {
     if (!rtdb) return
     const statusRef = ref(rtdb, 'status')
@@ -146,14 +143,11 @@ export default function HomePage() {
       if (activeTab === 'Nearby') {
         if (u.country !== currentUserProfile.country) return false;
       }
-
-      // Online Only Filter
-      if (showOnlineOnly && !onlineUsers[u.uid]) return false;
       
       return true;
     })
     
-    // 2. Sorting Logic: Online First, then Reshuffle
+    // 2. Sorting Logic: Online First, then Randomized reshuffle for variety
     const sorted = [...baseList].sort((a, b) => {
       const aOnline = onlineUsers[a.uid] ? 1 : 0
       const bOnline = onlineUsers[b.uid] ? 1 : 0
@@ -162,13 +156,14 @@ export default function HomePage() {
         return bOnline - aOnline 
       }
       
+      // Secondary sort to randomize within the online/offline groups
       const aVal = Math.sin(a.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       const bVal = Math.sin(b.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       return aVal - bVal
     })
     
     return sorted
-  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, onlineUsers, showOnlineOnly])
+  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, onlineUsers])
 
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(0, displayLimit);
@@ -211,7 +206,7 @@ export default function HomePage() {
         </div>
 
         <div className="sticky top-0 z-40 bg-[#F9FAFB]/90 backdrop-blur-md px-5 pt-3 pb-3 border-b border-black/5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <button onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
               <button onClick={() => { setActiveTab('Nearby'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
@@ -219,18 +214,6 @@ export default function HomePage() {
             <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF] hover:bg-blue-50 rounded-full transition-colors", isRefreshing && "animate-spin opacity-50")}>
               <RotateCw className="w-5 h-5" />
             </button>
-          </div>
-          
-          <div className="flex items-center gap-2 pt-1">
-            <Switch 
-              id="online-filter" 
-              checked={showOnlineOnly} 
-              onCheckedChange={setShowOnlineOnly}
-              className="scale-75 data-[state=checked]:bg-green-500" 
-            />
-            <Label htmlFor="online-filter" className="text-[10px] font-black uppercase tracking-widest text-gray-500 cursor-pointer">
-              Online Only
-            </Label>
           </div>
         </div>
 
@@ -244,8 +227,8 @@ export default function HomePage() {
               <div className="bg-gray-100 p-6 rounded-full">
                 <Target className="w-10 h-10 text-gray-400" />
               </div>
-              <p className="text-sm font-medium text-gray-500">No users found{showOnlineOnly ? " online" : ""}.</p>
-              <Button variant="outline" onClick={() => { setShowOnlineOnly(false); handleRefresh(); }} className="rounded-full">View All</Button>
+              <p className="text-sm font-medium text-gray-500">No users found.</p>
+              <Button variant="outline" onClick={handleRefresh} className="rounded-full">Refresh List</Button>
             </div>
           ) : (
             <div className="space-y-8">
