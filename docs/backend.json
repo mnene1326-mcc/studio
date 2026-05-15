@@ -29,9 +29,23 @@
         "isVerified": { "type": "boolean" },
         "isDeleted": { "type": "boolean", "default": false },
         "isAdmin": { "type": "boolean", "default": false },
-        "isCoinSeller": { "type": "boolean", "default": false }
+        "isCoinSeller": { "type": "boolean", "default": false },
+        "isAgent": { "type": "boolean", "default": false },
+        "agencyId": { "type": "string", "description": "The 5-digit code of the agency they belong to." },
+        "agencyStatus": { "type": "string", "enum": ["none", "pending", "approved", "rejected"] }
       },
       "required": ["uid", "email", "onboardingComplete"]
+    },
+    "Agency": {
+      "title": "Agency",
+      "description": "An agency created by an agent.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "description": "Unique 5-digit code." },
+        "agentUid": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "object" }
+      }
     },
     "Chat": {
       "title": "Chat Room",
@@ -65,6 +79,10 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User profile data."
+    },
+    "/agencies/{agencyCode}": {
+      "schema": "Agency",
+      "description": "Agency data."
     },
     "/chats/{chatId}": {
       "schema": "Chat",

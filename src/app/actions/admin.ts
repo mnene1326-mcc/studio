@@ -13,96 +13,68 @@ export async function awardCoinsAction(callerUid: string, targetMatchFlowId: str
   const { firestore: db } = initializeFirebase();
 
   try {
-    // 1. Verify caller privileges
     const callerSnap = await getDocs(query(collection(db, "users"), where("uid", "==", callerUid)));
-    
-    if (callerSnap.empty) {
-      return { success: false, error: "Caller profile not found." };
-    }
+    if (callerSnap.empty) return { success: false, error: "Caller profile not found." };
     
     const callerDoc = callerSnap.docs[0];
     const callerData = callerDoc.data();
     
     if (!callerData.isAdmin && !callerData.isCoinSeller) {
-      return { success: false, error: "Unauthorized. Insufficient privileges." };
+      return { success: false, error: "Unauthorized." };
     }
 
-    // 2. Logic for CoinSellers (deduction)
     if (callerData.isCoinSeller && !callerData.isAdmin) {
       const currentBalance = callerData.coins || 0;
       if (currentBalance < amount) {
         return { success: false, error: `Insufficient balance. You have ${currentBalance} coins.` };
       }
-      
-      // Deduct from seller
       await updateDoc(doc(db, "users", callerDoc.id), {
         coins: increment(-amount),
         updatedAt: serverTimestamp()
       });
     }
 
-    // 3. Find target user by numeric ID
     const targetQuery = query(collection(db, "users"), where("matchFlowId", "==", targetMatchFlowId.trim()));
     const targetSnap = await getDocs(targetQuery);
-
-    if (targetSnap.empty) {
-      return { success: false, error: "User with this ID not found." };
-    }
+    if (targetSnap.empty) return { success: false, error: "User with this ID not found." };
 
     const targetDoc = targetSnap.docs[0];
-    const targetRef = doc(db, "users", targetDoc.id);
-    const targetData = targetDoc.data();
-
-    // 4. Award coins to target
-    await updateDoc(targetRef, {
+    await updateDoc(doc(db, "users", targetDoc.id), {
       coins: increment(amount),
       updatedAt: serverTimestamp()
     });
 
-    return { 
-      success: true, 
-      message: `Successfully awarded ${amount} coins to ${targetData.name || targetMatchFlowId}.`,
-      targetName: targetData.name
-    };
+    return { success: true, message: `Successfully awarded ${amount} coins.` };
   } catch (error: any) {
-    console.error("Award Coins Error:", error);
-    return { success: false, error: error.message || "Failed to award coins." };
+    return { success: false, error: error.message };
   }
 }
 
 /**
- * Allows an Admin to toggle the isCoinSeller status of a user.
+ * Allows an Admin to toggle roles for a user.
  */
-export async function toggleCoinSellerAction(callerUid: string, targetMatchFlowId: string, setAsSeller: boolean) {
+export async function toggleUserRoleAction(callerUid: string, targetMatchFlowId: string, role: 'isCoinSeller' | 'isAgent', value: boolean) {
   const { firestore: db } = initializeFirebase();
 
   try {
-    // 1. Verify caller is Admin
     const callerSnap = await getDocs(query(collection(db, "users"), where("uid", "==", callerUid)));
     if (callerSnap.empty || !callerSnap.docs[0].data().isAdmin) {
       return { success: false, error: "Unauthorized. Only Admins can manage roles." };
     }
 
-    // 2. Find target user
     const targetQuery = query(collection(db, "users"), where("matchFlowId", "==", targetMatchFlowId.trim()));
     const targetSnap = await getDocs(targetQuery);
-
-    if (targetSnap.empty) {
-      return { success: false, error: "User not found." };
-    }
+    if (targetSnap.empty) return { success: false, error: "User not found." };
 
     const targetDoc = targetSnap.docs[0];
-    const targetData = targetDoc.data();
-
-    // 3. Update status
     await updateDoc(doc(db, "users", targetDoc.id), {
-      isCoinSeller: setAsSeller,
+      [role]: value,
       updatedAt: serverTimestamp()
     });
 
     return { 
       success: true, 
-      message: `User ${targetData.name || targetMatchFlowId} is now ${setAsSeller ? "a Coin Seller" : "no longer a Coin Seller"}.` 
+      message: `User role updated successfully.` 
     };
   } catch (error: any) {
     return { success: false, error: error.message };
