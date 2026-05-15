@@ -1,33 +1,23 @@
 {
   "rules": {
-    /* Presence system: Anyone logged in can see who is online */
     "status": {
       ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid == $uid"
       }
     },
-    /* Currency Balances:
-       - Users can read their own balance.
-       - Anyone can write to support Gifting and Speedy Reply rewards during this prototype phase.
-    */
     "balances": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
         ".write": "auth != null"
       }
     },
-    /* Chat Messages: Authenticated users can read/write to chat rooms */
     "chat_messages": {
       "$chatId": {
         ".read": "auth != null",
         ".write": "auth != null"
       }
     },
-    /* Unread Counters: 
-       - Owner reads their own count.
-       - Anyone can increment it when sending a message.
-    */
     "unreads": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
