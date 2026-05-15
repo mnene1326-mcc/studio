@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ref, onValue, query, limitToLast } from "firebase/database"
+import { ref, onValue, query as rtdbQuery, limitToLast } from "firebase/database"
 import { useUser, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, Coins, ArrowUpRight, ArrowDownLeft, Loader2 } from "lucide-react"
@@ -29,9 +29,9 @@ export default function CoinHistoryPage() {
     if (!user?.uid) return
 
     // Economical Limit: Only load the last 50 coin events
-    const historyQuery = query(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
+    const historyRef = rtdbQuery(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
     
-    const unsubscribe = onValue(historyQuery, (snapshot) => {
+    const unsubscribe = onValue(historyRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
         const list = Object.entries(data).map(([id, val]: [string, any]) => ({ 

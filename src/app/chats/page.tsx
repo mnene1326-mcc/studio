@@ -3,7 +3,7 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { doc, getDocs, collection, query, where, updateDoc, getDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
+import { doc, getDocs, collection, query, where, updateDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
 import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
@@ -79,23 +79,24 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   const rtdb = useDatabase()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
-  const [partner, setPartner] = useState<UserProfile | null>(null)
-  const [unreadCount, setUnreadCount] = useState(0)
-  const presence = useUserPresence(partner?.uid)
   
   const partnerId = chat.participants.find(id => id !== currentUserUid)
+  const partnerRef = useMemo(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
+  
+  // Use useDoc which has built-in localStorage caching for instant UI
+  const { data: partner } = useDoc<UserProfile>(partnerRef)
+  
+  const [unreadCount, setUnreadCount] = useState(0)
+  const presence = useUserPresence(partner?.uid)
 
   useEffect(() => {
-    if (!partnerId) return
-    getDoc(doc(db, "users", partnerId)).then(snap => {
-      if (snap.exists()) setPartner({ uid: snap.id, ...snap.data() } as UserProfile)
-    })
+    if (!currentUserUid || !chat.id) return
     const unreadRef = ref(rtdb, `unreads/${currentUserUid}/${chat.id}`)
     const unsubscribe = onValue(unreadRef, (snapshot) => {
       setUnreadCount(snapshot.val() || 0)
     })
     return () => unsubscribe()
-  }, [db, rtdb, partnerId, currentUserUid, chat.id])
+  }, [rtdb, currentUserUid, chat.id])
 
   const handleTouchStart = () => {
     isLongPress.current = false
@@ -109,7 +110,9 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   const handleClick = () => { if (isLongPress.current) return; router.push(`/chats?startWith=${partnerId}`) }
 
   if (!partner || blocking.includes(partner.uid) || blockedBy.includes(partner.uid)) return null
-  const lastAt = chat.lastMessageAt?.toDate?.() || new Date(chat.lastMessageAt || Date.now())
+  
+  const lastAtRaw = chat.lastMessageAt;
+  const lastAt = lastAtRaw?.toDate ? lastAtRaw.toDate() : (lastAtRaw?.seconds ? new Date(lastAtRaw.seconds * 1000) : new Date(lastAtRaw || Date.now()))
 
   return (
     <div 
@@ -232,6 +235,7 @@ function ChatsContent() {
   }, [db, currentUser?.uid])
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
+  
   const userChats = useMemo(() => {
     if (!currentUser?.uid || !currentUserProfile) return []
     const blocking = currentUserProfile.blocking || []
@@ -283,60 +287,6 @@ function ChatsContent() {
     findOrCreateChat()
   }, [currentUser?.uid, startWithId, db])
 
-  useEffect(() => {
-    const handleSendMessage = async (text: string) => {
-      if (!text.trim() || !chatId || !currentUser?.uid) return
-      
-      if (currentUserProfile?.gender === 'male' && !currentUserProfile.isAdmin) {
-        const messageCost = 15
-        if (userBalances.coins < messageCost) {
-          toast({ variant: "destructive", title: "Insufficient Coins", description: "Recharge to continue chatting." })
-          return
-        }
-        
-        setUserBalances(prev => ({ ...prev, coins: prev.coins - messageCost }))
-        
-        const timestamp = Date.now()
-        await update(ref(rtdb, `balances/${currentUser.uid}`), {
-          coins: rtdbIncrement(-messageCost),
-          updatedAt: timestamp
-        })
-
-        await set(push(ref(rtdb, `coin_history/${currentUser.uid}`)), {
-          amount: -messageCost,
-          type: 'chat',
-          description: `Chat with ${chatPartner?.name || 'User'}`,
-          timestamp
-        })
-      }
-
-      const partnerId = chatPartner?.uid
-      const timestamp = Date.now()
-      try {
-        await set(push(ref(rtdb, `chat_messages/${chatId}`)), { text: text.trim(), senderId: currentUser.uid, timestamp })
-        if (partnerId) update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
-        await updateDoc(doc(db, "chats", chatId), { lastMessage: text.trim(), lastMessageAt: serverTimestamp() })
-        setNewMessage("")
-      } catch (err: any) { 
-        toast({ variant: "destructive", title: "Error", description: err.message }) 
-      }
-    }
-
-    if (initialMsg && chatId && currentUserProfile && !hasSentInitial.current) {
-      handleSendMessage(initialMsg)
-      hasSentInitial.current = true
-    }
-  }, [initialMsg, chatId, currentUserProfile, chatPartner, rtdb, userBalances.coins, toast])
-
-  useEffect(() => {
-    if (!chatId) return
-    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
-    return onValue(messagesRef, (snapshot) => {
-      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []
-      setMessages(msgs)
-    })
-  }, [chatId, rtdb])
-
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid) return
     
@@ -374,6 +324,22 @@ function ChatsContent() {
       toast({ variant: "destructive", title: "Error", description: err.message }) 
     }
   }
+
+  useEffect(() => {
+    if (initialMsg && chatId && currentUserProfile && !hasSentInitial.current) {
+      handleSendMessage(initialMsg)
+      hasSentInitial.current = true
+    }
+  }, [initialMsg, chatId, currentUserProfile])
+
+  useEffect(() => {
+    if (!chatId) return
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
+    return onValue(messagesRef, (snapshot) => {
+      const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })).sort((a, b) => b.timestamp - a.timestamp) : []
+      setMessages(msgs)
+    })
+  }, [chatId, rtdb])
 
   const handleSendGift = async (gift: typeof GIFTS[0]) => {
     if (!currentUser?.uid || !chatPartner || !chatId) return
@@ -416,7 +382,9 @@ function ChatsContent() {
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
         <main className="flex-1">
-          {userChats.length === 0 ? (
+          {listLoading && userChats.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20"><Circle className="w-8 h-8 animate-spin" /></div>
+          ) : userChats.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 opacity-40"><ShoppingBag className="w-16 h-16 mb-4" /><p className="font-semibold text-xl text-black">No chats yet...</p></div>
           ) : userChats.map(chat => <ChatListItem key={chat.id} chat={chat} currentUserUid={currentUser.uid} blocking={currentUserProfile?.blocking || []} blockedBy={currentUserProfile?.blockedBy || []} onDelete={setChatToDelete} />)}
         </main>
