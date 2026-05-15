@@ -87,15 +87,15 @@ export default function DiamondHistoryPage() {
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-active:scale-95",
-                    tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-blue-50 text-[#00A2FF]"
+                    tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
                   )}>
                     {tx.amount > 0 ? (
                       <div className="relative">
-                        <ArrowDownLeft className="w-6 h-6" />
+                        <ArrowUpRight className="w-6 h-6" />
                         <Sparkles className="absolute -top-1 -right-1 w-3 h-3 animate-pulse" />
                       </div>
                     ) : (
-                      <ArrowUpRight className="w-6 h-6" />
+                      <ArrowDownLeft className="w-6 h-6" />
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5">
@@ -106,7 +106,7 @@ export default function DiamondHistoryPage() {
                       </span>
                       <span className={cn(
                         "text-[8px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-widest",
-                        tx.amount > 0 ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+                        tx.amount > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                       )}>
                         {tx.type}
                       </span>
@@ -121,7 +121,7 @@ export default function DiamondHistoryPage() {
                     )}>
                       {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
                     </span>
-                    <Gem className={cn("w-3.5 h-3.5 fill-current", tx.amount > 0 ? "text-green-500" : "text-blue-400")} />
+                    <Gem className={cn("w-3.5 h-3.5 fill-current", tx.amount > 0 ? "text-green-500" : "text-red-400")} />
                   </div>
                   <p className="text-[8px] font-bold text-gray-300 uppercase tracking-widest mt-0.5">
                     ID: {tx.id.substring(0, 8)}

@@ -78,7 +78,7 @@ export default function CoinHistoryPage() {
                     "w-10 h-10 rounded-full flex items-center justify-center shadow-sm", 
                     tx.amount > 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
                   )}>
-                    {tx.amount > 0 ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                    {tx.amount > 0 ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-sm text-black">{tx.description}</span>
