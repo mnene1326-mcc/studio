@@ -24,7 +24,8 @@ import {
   Coins,
   Users,
   Briefcase,
-  UserPlus
+  UserPlus,
+  Wallet
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -161,7 +162,6 @@ export default function MePage() {
   
   const [copied, setCopied] = useState(false)
   
-  // Economy: Load balances from localStorage first
   const [balances, setBalances] = useState(() => {
     if (typeof window !== 'undefined' && user?.uid) {
       const cached = localStorage.getItem(`balance_cache_${user.uid}`)
@@ -174,7 +174,6 @@ export default function MePage() {
   const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
   const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
 
-  // Redirect logic optimized to use profile cache
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
@@ -185,7 +184,6 @@ export default function MePage() {
     }
   }, [user, authLoading, profile, profileLoading, router])
 
-  // Fetch balances only once when the page is opened (Economy optimization)
   useEffect(() => {
     if (!user?.uid) return
     
@@ -264,14 +262,14 @@ export default function MePage() {
                 <CircleDollarSign className="w-5 h-5" />
                 <span className="text-sm font-bold">{balances.coins}</span>
               </div>
-              <span className="text-[8px] font-bold uppercase opacity-60">Recharge Coins</span>
+              <span className="text-[8px] font-bold uppercase opacity-60">Recharge</span>
             </Button>
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black" onClick={() => router.push("/income")}>
               <div className="flex items-center gap-1.5">
                 <Gem className="w-5 h-5 text-[#4285F4]" />
                 <span className="text-sm font-bold">{balances.diamonds.toFixed(0)}</span>
               </div>
-              <span className="text-[8px] font-bold uppercase opacity-60">Diamond Income</span>
+              <span className="text-[8px] font-bold uppercase opacity-60">Diamond Balance</span>
             </Button>
 
             {profile.isAdmin || profile.isCoinSeller ? (
@@ -298,15 +296,21 @@ export default function MePage() {
             {profile.isAgent && <AgencyDashboardDialog user={profile} />}
             {profile.gender === 'female' && profile.agencyStatus !== 'approved' && !profile.isAgent && !profile.isAdmin && <JoinAgencyDialog userUid={user.uid} />}
             
+            {profile.agencyStatus === 'approved' && (
+              <Button 
+                onClick={() => router.push("/agency/member")}
+                className="h-20 bg-blue-600 hover:bg-blue-700 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-white active:scale-95 transition-all col-span-2 mt-4"
+              >
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-6 h-6" />
+                  <span className="text-sm font-bold uppercase tracking-widest">Agency Wallet (Withdraw/Convert)</span>
+                </div>
+              </Button>
+            )}
+
             {profile.agencyStatus === 'pending' && (
               <div className="col-span-2 bg-yellow-50 p-4 rounded-2xl border border-yellow-100 text-center">
                 <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-widest">Agency Application Pending</p>
-              </div>
-            )}
-             {profile.agencyStatus === 'approved' && profile.agencyId && (
-              <div className="col-span-2 bg-green-50 p-4 rounded-2xl border border-green-100 text-center flex items-center justify-center gap-2">
-                <Briefcase className="w-4 h-4 text-green-600" />
-                <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Member of Agency: {profile.agencyId}</p>
               </div>
             )}
           </div>
