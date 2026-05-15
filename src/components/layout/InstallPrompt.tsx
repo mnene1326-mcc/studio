@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -70,7 +69,7 @@ export function InstallPrompt() {
           
           <div className="space-y-2">
             <h1 className="text-4xl font-black text-white tracking-tighter">MatchFlow</h1>
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.4em]">Launch App Version</p>
+            <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.4em]">Launch App Version</div>
           </div>
         </div>
 
@@ -91,17 +90,17 @@ export function InstallPrompt() {
           ) : (
             <div className="space-y-4">
               <div className="text-left space-y-3 p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400" /> iOS Setup
-                </p>
+                </div>
                 <p className="text-[11px] text-white/60">
-                  Tap <Share className="w-3 h-3 inline mx-1" /> "Share" then <PlusSquare className="w-3 h-3 inline mx-1" /> "Add to Home Screen"
+                  Tap <Share className="w-3 h-3 inline mx-1 text-blue-400" /> "Share" then <PlusSquare className="w-3 h-3 inline mx-1 text-blue-400" /> "Add to Home Screen"
                 </p>
               </div>
               <div className="text-left space-y-3 p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400" /> Android Setup
-                </p>
+                </div>
                 <p className="text-[11px] text-white/60">
                   Tap the browser menu (three dots) and select "Install App" or "Add to Home Screen".
                 </p>
