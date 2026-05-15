@@ -2,7 +2,7 @@
 'use server';
 
 import { initializeFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, update, increment as rtdbIncrement, get } from 'firebase/database';
 
 /**
@@ -13,47 +13,51 @@ export async function awardCoinsAction(callerUid: string, targetMatchFlowId: str
   const { firestore: db, database: rtdb } = initializeFirebase();
 
   try {
+    // 1. Get caller profile
     const callerSnap = await getDoc(doc(db, "users", callerUid));
     if (!callerSnap.exists()) return { success: false, error: "Caller profile not found." };
     
-    const callerData = callerSnap.docs ? callerSnap.docs[0].data() : callerSnap.data();
+    const callerData = callerSnap.data();
+    if (!callerData) return { success: false, error: "Caller data is empty." };
     
+    // 2. Security Check: Only Admin or Coin Seller can award
     if (!callerData.isAdmin && !callerData.isCoinSeller) {
-      return { success: false, error: "Unauthorized." };
+      return { success: false, error: "Unauthorized. You are not an Admin or Coin Seller." };
     }
 
+    // 3. If Coin Seller, check their own balance first
     if (callerData.isCoinSeller && !callerData.isAdmin) {
-      // Check RTDB balance
       const balanceSnap = await get(ref(rtdb, `balances/${callerUid}`));
       const currentBalance = balanceSnap.val()?.coins || 0;
       
       if (currentBalance < amount) {
-        return { success: false, error: `Insufficient balance. You have ${currentBalance} coins.` };
+        return { success: false, error: `Insufficient balance. You only have ${currentBalance} coins.` };
       }
       
-      // Deduct from seller in RTDB
+      // Deduct from seller
       await update(ref(rtdb, `balances/${callerUid}`), {
         coins: rtdbIncrement(-amount),
         updatedAt: Date.now()
       });
     }
 
-    // Find target in Firestore
+    // 4. Find target user by numeric MatchFlow ID
     const targetQuery = query(collection(db, "users"), where("matchFlowId", "==", targetMatchFlowId.trim()));
     const targetSnap = await getDocs(targetQuery);
-    if (targetSnap.empty) return { success: false, error: "User with this ID not found." };
+    if (targetSnap.empty) return { success: false, error: "User with this MatchFlow ID not found." };
 
     const targetDoc = targetSnap.docs[0];
-    const targetUid = targetDoc.data().uid;
+    const targetUid = targetDoc.id;
 
-    // Award to target in RTDB
+    // 5. Award coins to target in RTDB
     await update(ref(rtdb, `balances/${targetUid}`), {
       coins: rtdbIncrement(amount),
       updatedAt: Date.now()
     });
 
-    return { success: true, message: `Successfully awarded ${amount} coins.` };
+    return { success: true, message: `Successfully awarded ${amount} coins to ${targetDoc.data().name}.` };
   } catch (error: any) {
+    console.error("Award Coins Action Error:", error);
     return { success: false, error: error.message };
   }
 }
@@ -66,8 +70,8 @@ export async function toggleUserRoleAction(callerUid: string, targetMatchFlowId:
 
   try {
     const callerSnap = await getDoc(doc(db, "users", callerUid));
-    if (!callerSnap.exists() || !callerSnap.data().isAdmin) {
-      return { success: false, error: "Unauthorized. Only Admins can manage roles." };
+    if (!callerSnap.exists() || !callerSnap.data()?.isAdmin) {
+      return { success: false, error: "Unauthorized. Only system Admins can manage roles." };
     }
 
     const targetQuery = query(collection(db, "users"), where("matchFlowId", "==", targetMatchFlowId.trim()));
@@ -75,14 +79,14 @@ export async function toggleUserRoleAction(callerUid: string, targetMatchFlowId:
     if (targetSnap.empty) return { success: false, error: "User not found." };
 
     const targetDoc = targetSnap.docs[0];
-    const { updateDoc, serverTimestamp } = await import('firebase/firestore');
     await updateDoc(doc(db, "users", targetDoc.id), {
       [role]: value,
       updatedAt: serverTimestamp()
     });
 
-    return { success: true, message: `User role updated successfully.` };
+    return { success: true, message: `User role [${role}] updated to ${value}.` };
   } catch (error: any) {
+    console.error("Toggle Role Action Error:", error);
     return { success: false, error: error.message };
   }
 }
