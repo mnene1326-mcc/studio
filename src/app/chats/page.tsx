@@ -61,6 +61,7 @@ interface Chat {
   createdAt: any
   clearedAt?: Record<string, any>
   unreadCount?: Record<string, number>
+  maleMessageCount?: number
 }
 
 interface UserProfile {
@@ -366,7 +367,8 @@ function ChatsContent() {
             createdAt: serverTimestamp(),
             lastMessage: "",
             lastMessageAt: serverTimestamp(),
-            unreadCount: { [currentUser.uid]: 0, [startWithId]: 0 }
+            unreadCount: { [currentUser.uid]: 0, [startWithId]: 0 },
+            maleMessageCount: 0
           }
           const newChatDoc = await addDoc(chatsRef, chatData)
           if (isMounted) setChatId(newChatDoc.id)
@@ -407,9 +409,40 @@ function ChatsContent() {
     
     const isFree = currentUserProfile.isAdmin || currentUserProfile.isCoinSeller || chatPartner?.isAdmin || chatPartner?.isCoinSeller;
 
+    const chatUpdate: any = { 
+      lastMessage: text.trim(), 
+      lastMessageAt: serverTimestamp()
+    };
+    
+    const partnerId = currentChatData?.participants.find(p => p !== currentUser.uid);
+    if (partnerId) {
+      chatUpdate[`unreadCount.${partnerId}`] = increment(1);
+    }
+
+    // Portion-based Coin Deduction Logic (Every 10 messages)
+    if (!isFree && currentUserProfile.gender === 'male') {
+      const currentCount = currentChatData?.maleMessageCount || 0;
+      const nextCount = currentCount + 1;
+
+      if (nextCount >= 10) {
+        const balance = currentUserProfile.coins || 0;
+        if (balance < 150) {
+          toast({
+            variant: "destructive",
+            title: "Insufficient Coins",
+            description: "You need 150 coins to send the next batch of 10 messages.",
+          });
+          return;
+        }
+        // Deduct 150 coins (10 messages * 15 coins)
+        await updateDoc(doc(db, "users", currentUser.uid), { coins: increment(-150) });
+        chatUpdate.maleMessageCount = 0;
+      } else {
+        chatUpdate.maleMessageCount = nextCount;
+      }
+    }
+
     // Speedy Reply Logic & Reward
-    // If male replies to female within 60s -> Female gets 5 diamonds
-    // Else -> Female gets 2 coins
     if (currentUserProfile.gender === 'male' && chatPartner?.gender === 'female' && messagesRaw.length > 0) {
       const lastMsg = messagesRaw[0]
       if (lastMsg.senderId === chatPartner.uid) {
@@ -417,34 +450,16 @@ function ChatsContent() {
         const nowTime = Date.now()
         const diffSeconds = (nowTime - lastTime) / 1000
         
-        const partnerRef = doc(db, "users", chatPartner.uid)
+        const pRef = doc(db, "users", chatPartner.uid)
         if (diffSeconds < 60) {
-          await updateDoc(partnerRef, { diamonds: increment(5) })
+          await updateDoc(pRef, { diamonds: increment(5) })
           toast({ title: "Quick Reply Bonus!", description: `${chatPartner.name} earned 5 Diamonds.` })
         } else {
-          await updateDoc(partnerRef, { coins: increment(2) })
+          await updateDoc(pRef, { coins: increment(2) })
           toast({ title: "Reply Reward", description: `${chatPartner.name} earned 2 Coins.` })
         }
       }
     }
-
-    if (!isFree && currentUserProfile.gender === 'male') {
-      const currentCoins = currentUserProfile.coins || 0
-      if (currentCoins < 15) {
-        toast({
-          variant: "destructive",
-          title: "Insufficient Coins",
-          description: "Sending a message costs 15 coins. Please recharge.",
-        })
-        return
-      }
-      const userRef = doc(db, "users", currentUser.uid)
-      await updateDoc(userRef, { coins: increment(-15) }).catch((err) => {
-         toast({ variant: "destructive", title: "Error", description: err.message })
-      })
-    }
-
-    const partnerId = currentChatData?.participants.find(p => p !== currentUser.uid);
 
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
     setNewMessage("")
@@ -455,13 +470,6 @@ function ChatsContent() {
     
     try {
       await addDoc(collection(db, "chats", chatId, "messages"), msgData)
-      const chatUpdate: any = { 
-        lastMessage: text.trim(), 
-        lastMessageAt: serverTimestamp()
-      };
-      if (partnerId) {
-        chatUpdate[`unreadCount.${partnerId}`] = increment(1);
-      }
       await updateDoc(doc(db, "chats", chatId), chatUpdate)
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
@@ -478,16 +486,12 @@ function ChatsContent() {
     }
 
     try {
-      // 1. Deduct from sender
       await updateDoc(doc(db, "users", currentUser.uid), { coins: increment(-gift.price) })
 
-      // 2. Credit to recipient as diamonds
-      // Male -> 40%, Female -> 50%
       const share = chatPartner.gender === 'female' ? 0.5 : 0.4
       const diamondReward = Math.floor(gift.price * share)
       await updateDoc(doc(db, "users", chatPartner.uid), { diamonds: increment(diamondReward) })
 
-      // 3. Send system message
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
       await addDoc(collection(db, "chats", chatId, "messages"), {
         text,
