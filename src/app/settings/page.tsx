@@ -8,7 +8,7 @@ import { deleteUser, signOut } from "firebase/auth"
 import { doc, deleteDoc } from "firebase/firestore"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, ShieldAlert, Link as LinkIcon, Info } from "lucide-react"
+import { ChevronLeft, ChevronRight, ShieldAlert, Link as LinkIcon, Info, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import {
@@ -71,6 +71,26 @@ export default function SettingsPage() {
     }
   }
 
+  const handleClearCache = () => {
+    try {
+      // Clear Firestore local cache stored in hooks
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      toast({ 
+        title: "Cache Cleared", 
+        description: "All temporary app data has been removed. Reloading..." 
+      })
+
+      // Reload to ensure all memory state is reset
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (err) {
+      toast({ variant: "destructive", title: "Error clearing cache" })
+    }
+  }
+
   const handleDeleteAccount = async () => {
     if (!user) return
 
@@ -111,7 +131,7 @@ export default function SettingsPage() {
     { label: "Charge settings", href: "/recharge" },
     { label: "Blocked List", href: "/blocked-list" },
     { label: "About MatchFlow", href: "/about", icon: <Info className="w-4 h-4 text-blue-500" /> },
-    { label: "Clear Cache", onClick: () => toast({ title: "Cache Cleared", description: "Temporary files have been removed." }) },
+    { label: "Clear Cache", onClick: handleClearCache, icon: <Trash2 className="w-4 h-4 text-orange-500" /> },
   ]
 
   return (
