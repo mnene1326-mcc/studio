@@ -162,7 +162,7 @@ function ChatsContent() {
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [selectedGift, setSelectedGift] = useState<any>(null)
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
-  const [activeChatSummary, setActiveChatSummary] = useState<ChatSummary | null>(null)
+  const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
   useEffect(() => {
     if (!currentUser?.uid) return
@@ -180,7 +180,7 @@ function ChatsContent() {
         
         if (chatId) {
           const current = list.find(s => s.id === chatId)
-          if (current) setActiveChatSummary(current)
+          if (current) setActiveDeletedAt(current.deletedAt || 0)
         }
       } else {
         setChatSummaries([])
@@ -194,6 +194,11 @@ function ChatsContent() {
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
+      // Specific fetch for deletedAt to ensure no race condition on room opening
+      get(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}/deletedAt`)).then((snap) => {
+        if (snap.exists()) setActiveDeletedAt(snap.val())
+        else setActiveDeletedAt(0)
+      })
     }
   }, [chatId, currentUser?.uid, rtdb])
 
@@ -214,15 +219,15 @@ function ChatsContent() {
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(20))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const msgs = snapshot.val() ? Object.entries(snapshot.val()).map(([id, val]: [string, any]) => ({ id, ...val })) : []
-      // Use the local summary's deletedAt for filtering history
+      // Use the dedicated activeDeletedAt state for filtering
       const filtered = msgs
-        .filter(m => !activeChatSummary?.deletedAt || m.timestamp > activeChatSummary.deletedAt)
+        .filter(m => !activeDeletedAt || m.timestamp > activeDeletedAt)
         .sort((a, b) => b.timestamp - a.timestamp)
       
       setMessages(filtered)
     })
     return () => off(messagesRef, 'value', unsubscribe)
-  }, [chatId, rtdb, activeChatSummary?.deletedAt])
+  }, [chatId, rtdb, activeDeletedAt])
 
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
@@ -281,7 +286,6 @@ function ChatsContent() {
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
-    // We do NOT reset deletedAt to 0 here to keep the history hidden for User A
 
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "MatchFlow User"
@@ -289,7 +293,6 @@ function ChatsContent() {
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${partnerProfile.uid}/${chatId}/unreadCount`] = rtdbIncrement(1)
-    // Partner's deletedAt is also left as is
 
     await update(ref(rtdb), updates)
     setNewMessage("")
@@ -357,9 +360,7 @@ function ChatsContent() {
           <AlertDialogContent className="rounded-3xl max-w-[85vw]">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-xl font-bold">Delete Chat?</AlertDialogTitle>
-              <AlertDialogDescription className="text-xs font-medium sr-only">
-                Confirm deletion.
-              </AlertDialogDescription>
+              <AlertDialogDescription className="sr-only">Confirm deletion.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-2 mt-4">
               <AlertDialogCancel className="flex-1 h-12 rounded-full border-none bg-gray-100 font-bold uppercase tracking-widest text-[10px]">Cancel</AlertDialogCancel>
