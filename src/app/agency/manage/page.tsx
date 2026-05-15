@@ -1,8 +1,7 @@
-
 "use client"
 
 import { useMemo, useState } from "react"
-import { collection, query, where, doc, getDoc } from "firebase/firestore"
+import { collection, query, where, doc, getDoc, limit } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -42,25 +41,39 @@ export default function AgencyManagePage() {
   
   const { data: profile } = useDoc<UserProfile>(user?.uid ? doc(db, "users", user.uid) : null)
   
-  // Queries
+  // Queries with strict limits (50 max results)
   const applicantsQuery = useMemo(() => {
     if (!profile?.agencyId) return null
-    return query(collection(db, "users"), where("agencyId", "==", profile.agencyId), where("agencyStatus", "==", "pending"))
+    return query(
+      collection(db, "users"), 
+      where("agencyId", "==", profile.agencyId), 
+      where("agencyStatus", "==", "pending"),
+      limit(50)
+    )
   }, [db, profile?.agencyId])
 
   const membersQuery = useMemo(() => {
     if (!profile?.agencyId) return null
-    return query(collection(db, "users"), where("agencyId", "==", profile.agencyId), where("agencyStatus", "==", "approved"))
+    return query(
+      collection(db, "users"), 
+      where("agencyId", "==", profile.agencyId), 
+      where("agencyStatus", "==", "approved"),
+      limit(50)
+    )
   }, [db, profile?.agencyId])
 
   const withdrawalsQuery = useMemo(() => {
     if (!profile?.agencyId) return null
-    return query(collection(db, "agencies", profile.agencyId, "withdrawals"), where("status", "==", "pending"))
+    return query(
+      collection(db, "agencies", profile.agencyId, "withdrawals"), 
+      where("status", "==", "pending"),
+      limit(50)
+    )
   }, [db, profile?.agencyId])
 
-  const { data: applicants, loading: appLoading } = useCollection<UserProfile>(applicantsQuery)
-  const { data: members, loading: memLoading } = useCollection<UserProfile>(membersQuery)
-  const { data: withdrawals, loading: withLoading } = useCollection<WithdrawalRequest>(withdrawalsQuery)
+  const { data: applicants } = useCollection<UserProfile>(applicantsQuery)
+  const { data: members } = useCollection<UserProfile>(membersQuery)
+  const { data: withdrawals } = useCollection<WithdrawalRequest>(withdrawalsQuery)
 
   const handleReview = async (applicantUid: string, status: 'approved' | 'rejected') => {
     if (!user) return
@@ -80,7 +93,6 @@ export default function AgencyManagePage() {
 
   const formatTimestamp = (ts: any) => {
     if (!ts) return "---";
-    // Handle both live Timestamps and serialized objects from cache
     const date = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
     return format(date, "MMM d, HH:mm");
   };

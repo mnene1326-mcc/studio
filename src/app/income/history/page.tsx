@@ -1,12 +1,11 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ref, onValue, query, limitToLast } from "firebase/database"
+import { ref, onValue, query as rtdbQuery, limitToLast } from "firebase/database"
 import { useUser, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Gem, ArrowUpRight, ArrowDownLeft, Loader2, Sparkles, Wallet, History } from "lucide-react"
+import { ChevronLeft, Gem, ArrowUpRight, ArrowDownLeft, Loader2, Sparkles, History } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
@@ -28,8 +27,8 @@ export default function DiamondHistoryPage() {
   useEffect(() => {
     if (!user?.uid) return
 
-    // Economical Limit: Only load the last 50 diamond events
-    const historyQuery = query(ref(rtdb, `diamond_history/${user.uid}`), limitToLast(50))
+    // Economical Limit: Only load the last 50 diamond events using RTDB query
+    const historyQuery = rtdbQuery(ref(rtdb, `diamond_history/${user.uid}`), limitToLast(50))
     
     const unsubscribe = onValue(historyQuery, (snapshot) => {
       const data = snapshot.val()

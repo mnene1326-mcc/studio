@@ -27,7 +27,7 @@ export default function CoinHistoryPage() {
   useEffect(() => {
     if (!user?.uid) return
 
-    // Optimized: Only fetch last 50 entries using a scoped RTDB query
+    // Optimized: Only fetch last 50 entries using a scoped and limited RTDB query
     const historyRef = rtdbQuery(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
     
     const unsubscribe = onValue(historyRef, (snapshot) => {
