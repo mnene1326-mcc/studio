@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, getDocs, collection, query, where, updateDoc, getDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get } from "firebase/database"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, onDisconnect } from "firebase/database"
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -34,7 +34,13 @@ import {
   BadgeCheck,
   Gift as GiftIcon,
   Coins,
-  ChevronRight
+  ChevronRight,
+  Phone,
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  PhoneOff
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -84,6 +90,211 @@ const GIFTS = [
   { id: 'dress', name: 'Dress', price: 800, icon: '👗' },
   { id: 'phone', name: 'Antique Telephone', price: 400, icon: '☎️' },
 ]
+
+const RTC_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ],
+}
+
+function CallInterface({ 
+  chatId, 
+  currentUser, 
+  partner, 
+  callType, 
+  onClose 
+}: { 
+  chatId: string, 
+  currentUser: any, 
+  partner: UserProfile, 
+  callType: 'voice' | 'video',
+  onClose: () => void 
+}) {
+  const rtdb = useDatabase()
+  const { toast } = useToast()
+  const [callState, setCallState] = useState<'initiating' | 'ringing' | 'connected' | 'ended'>('initiating')
+  const [isMuted, setIsMuted] = useState(false)
+  const [isVideoOff, setIsVideoOff] = useState(callType === 'voice')
+  
+  const localVideoRef = useRef<HTMLVideoElement>(null)
+  const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const peerConnection = useRef<RTCPeerConnection | null>(null)
+  const localStream = useRef<MediaStream | null>(null)
+
+  useEffect(() => {
+    const startCall = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: callType === 'video',
+          audio: true
+        })
+        localStream.current = stream
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream
+
+        peerConnection.current = new RTCPeerConnection(RTC_CONFIG)
+        
+        stream.getTracks().forEach(track => {
+          peerConnection.current?.addTrack(track, stream)
+        })
+
+        peerConnection.current.ontrack = (event) => {
+          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = event.streams[0]
+          setCallState('connected')
+        }
+
+        const callRef = ref(rtdb, `calls/${chatId}`)
+        
+        // Check for incoming call
+        const snapshot = await get(callRef)
+        const callData = snapshot.val()
+
+        if (callData && callData.callerId !== currentUser.uid && callData.status === 'initiating') {
+          // Join Call
+          setCallState('ringing')
+          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(callData.offer))
+          const answer = await peerConnection.current.createAnswer()
+          await peerConnection.current.setLocalDescription(answer)
+          await update(callRef, { answer, status: 'connected' })
+        } else {
+          // Initiate Call
+          const offer = await peerConnection.current.createOffer()
+          await peerConnection.current.setLocalDescription(offer)
+          await set(callRef, {
+            offer,
+            callerId: currentUser.uid,
+            type: callType,
+            status: 'initiating',
+            timestamp: serverTimestamp()
+          })
+          
+          onValue(callRef, (snap) => {
+            const data = snap.val()
+            if (data?.answer && callState === 'initiating') {
+              peerConnection.current?.setRemoteDescription(new RTCSessionDescription(data.answer))
+            }
+            if (data?.status === 'ended') endCall()
+          })
+        }
+
+        // Handle ICE Candidates
+        peerConnection.current.onicecandidate = (event) => {
+          if (event.candidate) {
+            const candidatesRef = ref(rtdb, `calls/${chatId}/candidates/${currentUser.uid}`)
+            push(candidatesRef, event.candidate.toJSON())
+          }
+        }
+
+        const otherUserId = partner.uid
+        onValue(ref(rtdb, `calls/${chatId}/candidates/${otherUserId}`), (snap) => {
+          snap.forEach((child) => {
+            peerConnection.current?.addIceCandidate(new RTCIceCandidate(child.val()))
+          })
+        })
+
+        onDisconnect(callRef).update({ status: 'ended' })
+
+      } catch (err) {
+        toast({ variant: "destructive", title: "Call Error", description: "Camera or Mic access denied." })
+        onClose()
+      }
+    }
+
+    startCall()
+
+    return () => {
+      endCall()
+    }
+  }, [])
+
+  const endCall = () => {
+    localStream.current?.getTracks().forEach(track => track.stop())
+    peerConnection.current?.close()
+    update(ref(rtdb, `calls/${chatId}`), { status: 'ended' })
+    onClose()
+  }
+
+  const toggleMute = () => {
+    if (localStream.current) {
+      const audioTrack = localStream.current.getAudioTracks()[0]
+      audioTrack.enabled = !audioTrack.enabled
+      setIsMuted(!audioTrack.enabled)
+    }
+  }
+
+  const toggleVideo = () => {
+    if (localStream.current && callType === 'video') {
+      const videoTrack = localStream.current.getVideoTracks()[0]
+      videoTrack.enabled = !videoTrack.enabled
+      setIsVideoOff(!videoTrack.enabled)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-between p-8 text-white">
+      <div className="w-full flex flex-col items-center gap-4 mt-12">
+        <Avatar className="w-24 h-24 border-4 border-white/10">
+          <AvatarImage src={partner.photoURL} />
+          <AvatarFallback>{partner.name[0]}</AvatarFallback>
+        </Avatar>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">{partner.name}</h2>
+          <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">
+            {callState === 'initiating' ? 'Calling...' : (callState === 'ringing' ? 'Ringing...' : 'Connected')}
+          </p>
+        </div>
+      </div>
+
+      <div className="relative w-full max-w-sm flex-1 flex items-center justify-center">
+        {callType === 'video' && (
+          <video 
+            ref={remoteVideoRef} 
+            autoPlay 
+            playsInline 
+            className="w-full h-full object-cover rounded-[3rem] bg-gray-900 shadow-2xl" 
+          />
+        )}
+        <div className={cn(
+          "absolute bottom-4 right-4 w-32 aspect-[3/4] bg-black border-2 border-white/20 rounded-2xl overflow-hidden shadow-xl transition-all",
+          callType === 'voice' && "hidden"
+        )}>
+          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm flex items-center justify-around pb-12">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleMute}
+          className={cn("w-16 h-16 rounded-full", isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white")}
+        >
+          {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={endCall}
+          className="w-20 h-20 rounded-full bg-red-600 text-white shadow-2xl"
+        >
+          <PhoneOff className="w-8 h-8" />
+        </Button>
+
+        {callType === 'video' && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleVideo}
+            className={cn("w-16 h-16 rounded-full", isVideoOff ? "bg-red-500 text-white" : "bg-white/10 text-white")}
+          >
+            {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: { chat: Chat, currentUserUid: string, blocking: string[], blockedBy: string[], onDelete: (chat: Chat) => void }) {
   const router = useRouter()
@@ -215,6 +426,7 @@ function ChatsContent() {
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
+  const [activeCall, setActiveCall] = useState<{ type: 'voice' | 'video' } | null>(null)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
@@ -231,7 +443,17 @@ function ChatsContent() {
     fetchBalance()
   }, [rtdb, currentUser?.uid])
 
-  // Economical Query: Only fetch the 20 most recently active chats
+  useEffect(() => {
+    if (!chatId) return
+    const callRef = ref(rtdb, `calls/${chatId}`)
+    return onValue(callRef, (snap) => {
+      const data = snap.val()
+      if (data && data.status === 'initiating' && data.callerId !== currentUser?.uid) {
+        setActiveCall({ type: data.type })
+      }
+    })
+  }, [chatId, currentUser?.uid, rtdb])
+
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
     return query(
@@ -374,15 +596,25 @@ function ChatsContent() {
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <Button variant="ghost" size="sm" onClick={() => router.push("/chats")} className="text-[#00A2FF]"><ChevronLeft className="w-6 h-6" /></Button>
-        <div className="flex flex-col items-center flex-1">
-          <h3 className="font-semibold text-sm text-black truncate">{chatPartner?.name || '...'}</h3>
+        <div className="flex flex-col items-center flex-1 mx-2">
+          <h3 className="font-semibold text-sm text-black truncate max-w-[120px]">{chatPartner?.name || '...'}</h3>
           {partnerPresence?.state === 'online' && <span className="text-[9px] font-bold text-green-500 uppercase">Online</span>}
         </div>
-        <Avatar className="w-8 h-8 cursor-pointer" onClick={() => router.push(`/users/${chatPartner?.uid}`)}>
-          <AvatarImage src={chatPartner?.photoURL} />
-          <AvatarFallback>{chatPartner?.name?.[0]}</AvatarFallback>
-        </Avatar>
+        
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setActiveCall({ type: 'voice' })} className="text-gray-400">
+            <Phone className="w-5 h-5" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setActiveCall({ type: 'video' })} className="text-gray-400">
+            <Video className="w-5 h-5" />
+          </Button>
+          <Avatar className="w-8 h-8 cursor-pointer ml-1" onClick={() => router.push(`/users/${chatPartner?.uid}`)}>
+            <AvatarImage src={chatPartner?.photoURL} />
+            <AvatarFallback>{chatPartner?.name?.[0]}</AvatarFallback>
+          </Avatar>
+        </div>
       </header>
+
       <main className="flex-1 overflow-y-auto no-scrollbar flex flex-col-reverse p-4">
         <div className="flex flex-col-reverse space-y-4 space-y-reverse">
           <div ref={messagesEndRef} />
@@ -395,6 +627,7 @@ function ChatsContent() {
           ))}
         </div>
       </main>
+
       <footer className="bg-white border-t p-4 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => setIsGiftDrawerOpen(true)} className="text-[#00A2FF]"><GiftIcon className="w-6 h-6" /></Button>
         <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
@@ -402,7 +635,18 @@ function ChatsContent() {
         </div>
         <Button variant="ghost" onClick={() => handleSendMessage(newMessage)}><Send className="w-6 h-6 text-[#00A2FF]" /></Button>
       </footer>
+
       <GiftDrawer open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen} userBalance={userBalances.coins} onSend={handleSendGift} />
+      
+      {activeCall && chatPartner && chatId && (
+        <CallInterface 
+          chatId={chatId} 
+          currentUser={currentUser} 
+          partner={chatPartner} 
+          callType={activeCall.type} 
+          onClose={() => setActiveCall(null)} 
+        />
+      )}
     </div>
   )
 }
