@@ -284,4 +284,5 @@ function DetailItem({ icon: Icon, label, value }: { icon: any, label: string, va
         <p className="text-sm font-semibold text-black">{value}</p>
       </div>
     </div>
+  )
 }
