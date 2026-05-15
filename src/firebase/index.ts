@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { initializeFirestore, getFirestore, Firestore } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, Firestore, terminate } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 import { getDatabase, Database } from 'firebase/database';
 import { firebaseConfig } from './config';
@@ -19,18 +19,17 @@ export function initializeFirebase(): {
   
   let firestore: Firestore;
   
-  // Use experimentalForceLongPolling specifically on the client to fix backend reachability issues.
   if (typeof window !== 'undefined') {
-    try {
+    // On the client, we ensure we only initialize firestore once with the correct settings
+    const existingApps = getApps();
+    if (existingApps.length > 0) {
+      firestore = getFirestore(app);
+    } else {
       firestore = initializeFirestore(app, {
         experimentalForceLongPolling: true,
       });
-    } catch (e) {
-      // If Firestore was already initialized (e.g. during Hot Module Replacement), get the existing instance.
-      firestore = getFirestore(app);
     }
   } else {
-    // Server-side initialization
     firestore = getFirestore(app);
   }
 

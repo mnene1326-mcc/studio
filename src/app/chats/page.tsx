@@ -4,7 +4,7 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, getDocs, collection, query, where, updateDoc, increment, getDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, serverTimestamp as rtdbTimestamp, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery } from "firebase/database"
+import { ref, onValue, push, set, serverTimestamp as rtdbTimestamp, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, off } from "firebase/database"
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -107,9 +107,10 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
     })
 
     const unreadRef = ref(rtdb, `unreads/${currentUserUid}/${chat.id}`)
-    return onValue(unreadRef, (snapshot) => {
+    const unsubscribe = onValue(unreadRef, (snapshot) => {
       setUnreadCount(snapshot.val() || 0)
     })
+    return () => unsubscribe()
   }, [db, rtdb, partnerId, currentUserUid, chat.id])
 
   const handleTouchStart = () => {
@@ -275,10 +276,11 @@ function ChatsContent() {
   useEffect(() => {
     if (!currentUser?.uid) return
     const balanceRef = ref(rtdb, `balances/${currentUser.uid}`)
-    return onValue(balanceRef, (snapshot) => {
+    const unsubscribe = onValue(balanceRef, (snapshot) => {
       const data = snapshot.val()
       if (data) setUserBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
     })
+    return () => unsubscribe()
   }, [rtdb, currentUser?.uid])
 
   const chatListQuery = useMemoFirebase(() => {
@@ -335,20 +337,25 @@ function ChatsContent() {
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) {
       setChatId(null)
+      setIsInitializingChat(false)
       return
     }
+    
     let isMounted = true
     const findOrCreateChat = async () => {
       setIsInitializingChat(true)
       try {
         const chatsRef = collection(db, "chats")
         const chatsSnap = await getDocs(query(chatsRef, where("participants", "array-contains", currentUser.uid)))
+        
+        if (!isMounted) return
+
         let existingChatId = null
         chatsSnap.forEach((doc) => {
           const data = doc.data()
           if (data.participants?.includes(startWithId)) existingChatId = doc.id
         })
-        if (!isMounted) return
+
         if (existingChatId) {
           setChatId(existingChatId)
         } else {
@@ -375,8 +382,10 @@ function ChatsContent() {
   useEffect(() => {
     if (!chatId) {
       setMessages([])
+      setMessagesLoading(false)
       return
     }
+    
     setMessagesLoading(true)
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
@@ -391,7 +400,11 @@ function ChatsContent() {
         setMessages([])
       }
       setMessagesLoading(false)
+    }, (err) => {
+      console.error("RTDB Error:", err)
+      setMessagesLoading(false)
     })
+    
     return () => unsubscribe()
   }, [chatId, rtdb])
 
@@ -409,7 +422,6 @@ function ChatsContent() {
       await set(msgRef, msgData)
 
       if (partnerId) {
-        const partnerUnreadRef = ref(rtdb, `unreads/${partnerId}/${chatId}`)
         update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
       }
 
