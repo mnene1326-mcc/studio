@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -6,7 +7,7 @@ import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, RotateCw, FileText, ChevronDown } from "lucide-react"
+import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -189,7 +190,10 @@ export default function HomePage() {
                     <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-black text-[12px] uppercase shadow-md" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
-                      <h4 className="text-white font-black text-[18px] truncate tracking-tight">{user.name}</h4>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-white font-black text-[18px] truncate tracking-tight">{user.name}</h4>
+                        {user.isVerified && <BadgeCheck className="w-4 h-4 text-[#00A2FF] fill-white shrink-0" />}
+                      </div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="bg-[#006400] text-white font-black text-[10px] px-2.5 py-0.5 rounded-full">{calculateAge(user.dob)}</span>
                         <span className="bg-white/10 backdrop-blur-md px-2.5 py-0.5 rounded-full text-white font-bold text-[10px] border border-white/20 truncate">{user.country || "Kenya"}</span>

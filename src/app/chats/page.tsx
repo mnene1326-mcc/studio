@@ -28,7 +28,8 @@ import {
   ChevronDown,
   Lock,
   Trash2,
-  Circle
+  Circle,
+  BadgeCheck
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -61,6 +62,7 @@ interface UserProfile {
   blockedBy?: string[]
   isAdmin?: boolean
   isCoinSeller?: boolean
+  isVerified?: boolean
 }
 
 const toMillisSafe = (ts: any): number => {
@@ -138,9 +140,10 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
       
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 max-w-[70%]">
             <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
-            {partner.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF]" />}
+            {partner.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
+            {partner.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF] shrink-0" />}
           </div>
           <span className="text-[10px] text-gray-400 font-bold">
             {chat.lastMessageAt ? format(toDateSafe(chat.lastMessageAt), "HH:mm") : "..."}
@@ -466,9 +469,12 @@ function ChatsContent() {
         </div>
         
         <div className="flex flex-col items-center justify-center flex-1 min-w-0 px-2">
-          <h3 className="font-black text-sm tracking-tight text-center text-black uppercase truncate w-full">
-            {chatPartner?.name || '...'}
-          </h3>
+          <div className="flex items-center justify-center gap-1 w-full">
+            <h3 className="font-black text-sm tracking-tight text-black uppercase truncate max-w-[80%]">
+              {chatPartner?.name || '...'}
+            </h3>
+            {chatPartner?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
+          </div>
           {partnerPresence?.state === 'online' && (
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
