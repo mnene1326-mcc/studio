@@ -4,7 +4,8 @@
 import { useState, Suspense, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
-import { useFirestore, useUser } from "@/firebase"
+import { ref, set as rtdbSet } from "firebase/database"
+import { useFirestore, useUser, useDatabase } from "@/firebase"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError, type SecurityRuleContext } from "@/firebase/errors"
 import { Button } from "@/components/ui/button"
@@ -41,6 +42,7 @@ function OnboardingContent() {
   
   const { user } = useUser()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const router = useRouter()
   const { toast } = useToast()
 
@@ -70,7 +72,6 @@ function OnboardingContent() {
     if (!user) return
     setLoading(true)
 
-    // Fast Login specific: Generate random name and DOB (18+)
     const finalName = isFast ? RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)] : name;
     const finalDob = isFast ? generateRandomDOB() : dob;
     const finalLookingFor = isFast ? LOOKING_FOR_OPTIONS[Math.floor(Math.random() * LOOKING_FOR_OPTIONS.length)] : lookingFor;
@@ -79,8 +80,9 @@ function OnboardingContent() {
     const userSnap = await getDoc(userRef)
     const existingData = userSnap.data()
 
-    const initialCoins = gender === 'male' ? 150 : (existingData?.coins || 0)
-    const initialDiamonds = gender === 'female' ? 150 : (existingData?.diamonds || 0)
+    // Financial data moved to RTDB for optimization
+    const initialCoins = gender === 'male' ? 150 : 0
+    const initialDiamonds = gender === 'female' ? 150 : 0
 
     const updateData: any = {
       uid: user.uid,
@@ -92,21 +94,29 @@ function OnboardingContent() {
       lookingFor: finalLookingFor,
       onboardingComplete: true,
       photoURL: `https://picsum.photos/seed/${user.uid}/400/400`,
-      coins: initialCoins,
-      diamonds: initialDiamonds,
       updatedAt: serverTimestamp(),
       createdAt: existingData?.createdAt || serverTimestamp(),
       matchFlowId: existingData?.matchFlowId || generateMatchFlowId(),
       isDeleted: false,
       isVerified: false,
-      isAdmin: false, // Default to false for all new accounts
-      isCoinSeller: false, // Default to false for all new accounts
+      isAdmin: false,
+      isCoinSeller: false,
       blocking: [],
       blockedBy: []
     }
 
     try {
+      // 1. Update Firestore Profile (The "Vault")
       await setDoc(userRef, updateData, { merge: true })
+      
+      // 2. Initialize RTDB Balances (The "Cashier")
+      const balanceRef = ref(rtdb, `balances/${user.uid}`)
+      await rtdbSet(balanceRef, {
+        coins: initialCoins,
+        diamonds: initialDiamonds,
+        updatedAt: Date.now()
+      })
+
       router.replace("/home")
     } catch (serverError) {
       const permissionError = new FirestorePermissionError({
@@ -123,10 +133,10 @@ function OnboardingContent() {
     <div className="flex-1 flex flex-col p-6 max-w-md mx-auto space-y-8 min-h-screen bg-background">
       <header className="text-center space-y-2 mt-8">
         <Heart className="w-12 h-12 text-[#00A2FF] mx-auto fill-current" />
-        <h1 className="text-3xl font-black text-black tracking-tight">
+        <h1 className="text-3xl font-bold text-black tracking-tight">
           {isFast ? "Fast Login" : "Create Profile"}
         </h1>
-        <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
+        <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest">
           {isFast ? `Step ${step} of 2` : `Step ${step} of 3`}
         </p>
       </header>
@@ -136,7 +146,7 @@ function OnboardingContent() {
           <div className="space-y-6 animate-in slide-in-from-right duration-300">
             {!isFast && (
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-[10px] font-black uppercase ml-1">What's your name?</Label>
+                <Label htmlFor="name" className="text-[10px] font-bold uppercase ml-1">What's your name?</Label>
                 <Input 
                   id="name" 
                   placeholder="Full Name" 
@@ -147,7 +157,7 @@ function OnboardingContent() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="gender" className="text-[10px] font-black uppercase ml-1">Gender</Label>
+              <Label htmlFor="gender" className="text-[10px] font-bold uppercase ml-1">Gender</Label>
               <Select onValueChange={setGender} value={gender}>
                 <SelectTrigger className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary">
                   <SelectValue placeholder="Select gender" />
@@ -159,7 +169,7 @@ function OnboardingContent() {
               </Select>
             </div>
             <Button 
-              className="w-full rounded-full h-14 font-black text-lg mt-4 shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
+              className="w-full rounded-full h-14 font-bold text-lg mt-4 shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
               onClick={() => setStep(2)}
               disabled={isFast ? !gender : (!name || !gender)}
             >
@@ -172,7 +182,7 @@ function OnboardingContent() {
           <div className="space-y-6 animate-in slide-in-from-right duration-300">
             {!isFast && (
               <div className="space-y-1.5">
-                <Label htmlFor="dob" className="text-[10px] font-black uppercase ml-1">Date of Birth</Label>
+                <Label htmlFor="dob" className="text-[10px] font-bold uppercase ml-1">Date of Birth</Label>
                 <Input 
                   id="dob" 
                   type="date" 
@@ -184,7 +194,7 @@ function OnboardingContent() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="country" className="text-[10px] font-black uppercase ml-1">Country</Label>
+              <Label htmlFor="country" className="text-[10px] font-bold uppercase ml-1">Country</Label>
               <Select onValueChange={setCountry} value={country}>
                 <SelectTrigger className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary">
                   <SelectValue placeholder="Select country" />
@@ -198,13 +208,13 @@ function OnboardingContent() {
             </div>
             <div className="flex flex-col gap-4">
               <Button 
-                className="w-full rounded-full h-14 font-black text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
+                className="w-full rounded-full h-14 font-bold text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
                 onClick={isFast ? handleComplete : () => setStep(3)}
                 disabled={isFast ? (!country || loading) : (!dob || !country)}
               >
                 {isFast ? (loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete") : "Continue"}
               </Button>
-              <Button variant="ghost" className="text-muted-foreground font-black text-xs" onClick={() => setStep(1)}>
+              <Button variant="ghost" className="text-muted-foreground font-bold text-xs" onClick={() => setStep(1)}>
                 Back
               </Button>
             </div>
@@ -214,7 +224,7 @@ function OnboardingContent() {
         {step === 3 && !isFast && (
           <div className="space-y-6 animate-in slide-in-from-right duration-300">
             <div className="space-y-1.5">
-              <Label htmlFor="lookingFor" className="text-[10px] font-black uppercase ml-1">What are you looking for?</Label>
+              <Label htmlFor="lookingFor" className="text-[10px] font-bold uppercase ml-1">What are you looking for?</Label>
               <Select onValueChange={setLookingFor} value={lookingFor}>
                 <SelectTrigger className="rounded-2xl h-14 border-muted shadow-sm focus-visible:ring-primary">
                   <SelectValue placeholder="Preferences" />
@@ -228,13 +238,13 @@ function OnboardingContent() {
             </div>
             <div className="flex flex-col gap-4">
               <Button 
-                className="w-full rounded-full h-14 font-black text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
+                className="w-full rounded-full h-14 font-bold text-lg shadow-lg active:scale-95 transition-all bg-[#00A2FF] text-white" 
                 onClick={handleComplete}
                 disabled={!lookingFor || loading}
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Setup"}
               </Button>
-              <Button variant="ghost" className="text-muted-foreground font-black text-xs" onClick={() => setStep(2)}>
+              <Button variant="ghost" className="text-muted-foreground font-bold text-xs" onClick={() => setStep(2)}>
                 Back
               </Button>
             </div>
@@ -247,7 +257,7 @@ function OnboardingContent() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<div className="p-16 text-center font-black text-xl text-[#00A2FF] animate-pulse">MatchFlow...</div>}>
+    <Suspense fallback={<div className="p-16 text-center font-bold text-xl text-[#00A2FF] animate-pulse">MatchFlow...</div>}>
       <OnboardingContent />
     </Suspense>
   )

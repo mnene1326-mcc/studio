@@ -1,31 +1,34 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, MessageSquare, User } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useMemo } from "react"
-import { collection, query, where } from "firebase/firestore"
-import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase"
+import { useMemo, useEffect, useState } from "react"
+import { ref, onValue } from "firebase/database"
+import { useUser, useDatabase } from "@/firebase"
 
 export function BottomNav() {
   const pathname = usePathname()
   const { user } = useUser()
-  const db = useFirestore()
+  const rtdb = useDatabase()
+  const [totalUnread, setTotalUnread] = useState(0)
 
-  const chatsQuery = useMemoFirebase(() => {
-    if (!user?.uid) return null
-    return query(collection(db, "chats"), where("participants", "array-contains", user.uid))
-  }, [db, user?.uid])
-
-  const { data: chats } = useCollection(chatsQuery)
-
-  const totalUnread = useMemo(() => {
-    if (!user?.uid || !chats) return 0
-    return chats.reduce((acc, chat) => {
-      return acc + (chat.unreadCount?.[user.uid] || 0)
-    }, 0)
-  }, [chats, user?.uid])
+  // Listen to RTDB for unread counts (Optimization)
+  useEffect(() => {
+    if (!user?.uid) return
+    const unreadRef = ref(rtdb, `unreads/${user.uid}`)
+    return onValue(unreadRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const total = Object.values(data).reduce((acc: number, val: any) => acc + (val || 0), 0)
+        setTotalUnread(total as number)
+      } else {
+        setTotalUnread(0)
+      }
+    })
+  }, [rtdb, user?.uid])
 
   const navItems = [
     { label: "Home", icon: Home, href: "/home" },

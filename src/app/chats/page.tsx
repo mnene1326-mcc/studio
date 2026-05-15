@@ -3,8 +3,9 @@
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy, getDoc, Timestamp } from "firebase/firestore"
-import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
+import { doc, getDocs, collection, query, where, updateDoc, increment, getDoc, serverTimestamp } from "firebase/firestore"
+import { ref, onValue, push, set, serverTimestamp as rtdbTimestamp, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery } from "firebase/database"
+import { useFirestore, useUser, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -22,15 +23,12 @@ import {
 import { 
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { 
   Send, 
   ChevronLeft, 
   ShoppingBag, 
-  User as UserIcon, 
   Loader2, 
   ChevronDown,
   Lock,
@@ -39,7 +37,6 @@ import {
   BadgeCheck,
   Gift as GiftIcon,
   Coins,
-  Gem,
   ChevronRight
 } from "lucide-react"
 import { format } from "date-fns"
@@ -50,7 +47,8 @@ interface Message {
   id: string
   text: string
   senderId: string
-  timestamp: any
+  timestamp: number
+  isGift?: boolean
 }
 
 interface Chat {
@@ -60,7 +58,6 @@ interface Chat {
   lastMessageAt?: any
   createdAt: any
   clearedAt?: Record<string, any>
-  unreadCount?: Record<string, number>
   maleMessageCount?: number
 }
 
@@ -69,8 +66,6 @@ interface UserProfile {
   name: string
   photoURL: string
   gender?: string
-  coins?: number
-  diamonds?: number
   blocking?: string[]
   blockedBy?: string[]
   isAdmin?: boolean
@@ -93,39 +88,30 @@ const GIFTS = [
   { id: 'phone', name: 'Antique Telephone', price: 400, icon: '☎️' },
 ]
 
-const toMillisSafe = (ts: any): number => {
-  if (!ts) return Date.now();
-  if (typeof ts.toMillis === 'function') return ts.toMillis();
-  if (ts.seconds !== undefined) return ts.seconds * 1000;
-  if (typeof ts === 'number') return ts;
-  if (typeof ts === 'string') return new Date(ts).getTime();
-  return 0;
-};
-
-const toDateSafe = (ts: any): Date => {
-  if (!ts) return new Date();
-  if (typeof ts.toDate === 'function') return ts.toDate();
-  if (ts.seconds !== undefined) return new Date(ts.seconds * 1000);
-  return new Date(ts);
-};
-
 function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: { chat: Chat, currentUserUid: string, blocking: string[], blockedBy: string[], onDelete: (chat: Chat) => void }) {
   const router = useRouter()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
   const [partner, setPartner] = useState<UserProfile | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const presence = useUserPresence(partner?.uid)
   
   const partnerId = chat.participants.find(id => id !== currentUserUid)
-  const unread = chat.unreadCount?.[currentUserUid] || 0
 
   useEffect(() => {
     if (!partnerId) return
     getDoc(doc(db, "users", partnerId)).then(snap => {
       if (snap.exists()) setPartner({ uid: snap.id, ...snap.data() } as UserProfile)
     })
-  }, [db, partnerId])
+
+    // Listen to RTDB for unreads (Optimization)
+    const unreadRef = ref(rtdb, `unreads/${currentUserUid}/${chat.id}`)
+    return onValue(unreadRef, (snapshot) => {
+      setUnreadCount(snapshot.val() || 0)
+    })
+  }, [db, rtdb, partnerId, currentUserUid, chat.id])
 
   const handleTouchStart = () => {
     isLongPress.current = false
@@ -145,6 +131,8 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   }
 
   if (!partner || blocking.includes(partner.uid) || blockedBy.includes(partner.uid)) return null
+
+  const lastAt = chat.lastMessageAt?.toDate?.() || new Date(chat.lastMessageAt || Date.now())
 
   return (
     <div 
@@ -174,16 +162,16 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
             {partner.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF] shrink-0" />}
           </div>
           <span className="text-[10px] text-gray-400 font-medium">
-            {chat.lastMessageAt ? format(toDateSafe(chat.lastMessageAt), "HH:mm") : "..."}
+            {format(lastAt, "HH:mm")}
           </span>
         </div>
         <div className="flex justify-between items-center">
-          <p className={cn("text-xs truncate flex-1 pr-2", unread > 0 ? "text-black font-semibold" : "text-gray-500 font-medium")}>
+          <p className={cn("text-xs truncate flex-1 pr-2", unreadCount > 0 ? "text-black font-semibold" : "text-gray-500 font-medium")}>
             {chat.lastMessage || "Start talking..."}
           </p>
-          {unread > 0 && (
+          {unreadCount > 0 && (
             <div className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-              {unread}
+              {unreadCount}
             </div>
           )}
         </div>
@@ -211,7 +199,7 @@ function GiftDrawer({
       <DialogContent className="p-0 border-none bg-[#1A1C21] text-white rounded-t-[2.5rem] sm:rounded-t-[2.5rem] max-w-md mx-auto fixed bottom-0 top-auto translate-y-0">
         <div className="p-4 space-y-4">
           <div className="flex items-center gap-6 px-2 overflow-x-auto no-scrollbar py-2 border-b border-white/5">
-            {['HOT EVENTS', 'Gift', 'Privilege'].map(tab => (
+            {['Gift', 'Privilege'].map(tab => (
               <span key={tab} className={cn(
                 "text-xs font-bold uppercase tracking-widest cursor-pointer whitespace-nowrap",
                 tab === 'Gift' ? "text-white border-b-2 border-[#D4FF00] pb-1" : "text-gray-500"
@@ -248,18 +236,12 @@ function GiftDrawer({
               <ChevronRight className="w-4 h-4 text-gray-500" />
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="bg-white/10 px-3 py-2 rounded-full flex items-center gap-2">
-                <span className="text-sm font-bold">1</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </div>
-              <Button 
-                onClick={() => onSend(selectedGift)}
-                className="bg-[#D4FF00] text-black font-bold h-12 px-8 rounded-full hover:bg-[#c4eb00] active:scale-95 transition-all"
-              >
-                Send
-              </Button>
-            </div>
+            <Button 
+              onClick={() => onSend(selectedGift)}
+              className="bg-[#D4FF00] text-black font-bold h-12 px-8 rounded-full hover:bg-[#c4eb00] active:scale-95 transition-all"
+            >
+              Send
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -274,6 +256,7 @@ function ChatsContent() {
   const startWithId = searchParams.get("startWith")
   const { user: currentUser } = useUser()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -282,12 +265,23 @@ function ChatsContent() {
   const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [messagesLoading, setMessagesLoading] = useState(false)
   
-  const [chatListLimit, setChatListLimit] = useState(20)
-  const [messagesLimit, setMessagesLimit] = useState(20)
+  const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
+
+  // Load balances from RTDB (Optimization)
+  useEffect(() => {
+    if (!currentUser?.uid) return
+    const balanceRef = ref(rtdb, `balances/${currentUser.uid}`)
+    return onValue(balanceRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) setUserBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
+    })
+  }, [rtdb, currentUser?.uid])
 
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
@@ -295,9 +289,9 @@ function ChatsContent() {
       collection(db, "chats"), 
       where("participants", "array-contains", currentUser.uid),
       orderBy("lastMessageAt", "desc"),
-      limit(chatListLimit)
+      limit(20)
     )
-  }, [db, currentUser?.uid, chatListLimit])
+  }, [db, currentUser?.uid])
 
   const { data: userChatsRaw, loading: listLoading } = useCollection<Chat>(chatListQuery)
 
@@ -311,9 +305,9 @@ function ChatsContent() {
       const clearedAt = chat.clearedAt?.[currentUser.uid]
       const partnerId = chat.participants.find(p => p !== currentUser.uid)
       if (partnerId && (blocking.includes(partnerId) || blockedBy.includes(partnerId))) return false
-      if (!clearedAt) return true
-      const lastAtMillis = toMillisSafe(chat.lastMessageAt)
-      const clearedAtMillis = toMillisSafe(clearedAt)
+      
+      const lastAtMillis = chat.lastMessageAt?.toMillis?.() || new Date(chat.lastMessageAt).getTime()
+      const clearedAtMillis = clearedAt?.toMillis?.() || new Date(clearedAt || 0).getTime()
       return lastAtMillis > clearedAtMillis
     })
   }, [userChatsRaw, currentUser?.uid, currentUserProfile])
@@ -333,15 +327,15 @@ function ChatsContent() {
     return blocking.includes(chatPartner.uid) || blockedBy.includes(chatPartner.uid)
   }, [chatPartner, currentUserProfile])
 
+  // Clear unreads on RTDB when entering chat (Optimization)
   useEffect(() => {
     if (chatId && currentUser?.uid) {
-      const chatRef = doc(db, "chats", chatId);
-      updateDoc(chatRef, {
-        [`unreadCount.${currentUser.uid}`]: 0
-      });
+      const unreadRef = ref(rtdb, `unreads/${currentUser.uid}/${chatId}`)
+      set(unreadRef, 0)
     }
-  }, [chatId, currentUser?.uid, db]);
+  }, [chatId, currentUser?.uid, rtdb])
 
+  // Find or Create Chat Metadata in Firestore (Slow moving)
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) {
       setChatId(null)
@@ -367,16 +361,13 @@ function ChatsContent() {
             createdAt: serverTimestamp(),
             lastMessage: "",
             lastMessageAt: serverTimestamp(),
-            unreadCount: { [currentUser.uid]: 0, [startWithId]: 0 },
             maleMessageCount: 0
           }
           const newChatDoc = await addDoc(chatsRef, chatData)
           if (isMounted) setChatId(newChatDoc.id)
         }
       } catch (err: any) {
-        if (isMounted) {
-          toast({ variant: "destructive", title: "Chat Error", description: err.message || "Failed to initialize chat." })
-        }
+        if (isMounted) toast({ variant: "destructive", title: "Chat Error", description: err.message })
       } finally {
         if (isMounted) setIsInitializingChat(false)
       }
@@ -385,92 +376,94 @@ function ChatsContent() {
     return () => { isMounted = false }
   }, [currentUser?.uid, startWithId, db, toast])
 
-  const messagesQuery = useMemoFirebase(() => {
-    if (!chatId) return null
-    return query(
-      collection(db, "chats", chatId, "messages"), 
-      orderBy("timestamp", "desc"),
-      limit(messagesLimit)
-    )
-  }, [db, chatId, messagesLimit])
-
-  const { data: messagesRaw, loading: messagesLoading } = useCollection<Message>(messagesQuery)
-
-  const messages = useMemo(() => {
-    if (!currentUser?.uid || !currentChatData) return messagesRaw
-    const clearedAt = currentChatData.clearedAt?.[currentUser.uid]
-    if (!clearedAt) return messagesRaw
-    const clearedAtMillis = toMillisSafe(clearedAt)
-    return messagesRaw.filter(m => toMillisSafe(m.timestamp) > clearedAtMillis)
-  }, [messagesRaw, currentUser?.uid, currentChatData])
+  // Listen to RTDB for high-frequency messages (Optimization)
+  useEffect(() => {
+    if (!chatId) {
+      setMessages([])
+      return
+    }
+    setMessagesLoading(true)
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(50))
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) {
+        const msgs = Object.entries(data).map(([id, val]: [string, any]) => ({
+          id,
+          ...val
+        })).sort((a, b) => b.timestamp - a.timestamp)
+        setMessages(msgs)
+      } else {
+        setMessages([])
+      }
+      setMessagesLoading(false)
+    })
+    return () => unsubscribe()
+  }, [chatId, rtdb])
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
     
     const isFree = currentUserProfile.isAdmin || currentUserProfile.isCoinSeller || chatPartner?.isAdmin || chatPartner?.isCoinSeller;
-
-    const chatUpdate: any = { 
-      lastMessage: text.trim(), 
-      lastMessageAt: serverTimestamp()
-    };
-    
     const partnerId = currentChatData?.participants.find(p => p !== currentUser.uid);
-    if (partnerId) {
-      chatUpdate[`unreadCount.${partnerId}`] = increment(1);
-    }
 
-    // Portion-based Coin Deduction Logic (Every 10 messages)
-    if (!isFree && currentUserProfile.gender === 'male') {
-      const currentCount = currentChatData?.maleMessageCount || 0;
-      const nextCount = currentCount + 1;
+    // RTDB Updates for Live Data (Optimization)
+    const msgRef = push(ref(rtdb, `chat_messages/${chatId}`))
+    const timestamp = Date.now()
+    const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
 
-      if (nextCount >= 10) {
-        const balance = currentUserProfile.coins || 0;
-        if (balance < 150) {
-          toast({
-            variant: "destructive",
-            title: "Insufficient Coins",
-            description: "You need 150 coins to send the next batch of 10 messages.",
-          });
-          return;
-        }
-        // Deduct 150 coins (10 messages * 15 coins)
-        await updateDoc(doc(db, "users", currentUser.uid), { coins: increment(-150) });
-        chatUpdate.maleMessageCount = 0;
-      } else {
-        chatUpdate.maleMessageCount = nextCount;
-      }
-    }
-
-    // Speedy Reply Logic & Reward
-    if (currentUserProfile.gender === 'male' && chatPartner?.gender === 'female' && messagesRaw.length > 0) {
-      const lastMsg = messagesRaw[0]
-      if (lastMsg.senderId === chatPartner.uid) {
-        const lastTime = toMillisSafe(lastMsg.timestamp)
-        const nowTime = Date.now()
-        const diffSeconds = (nowTime - lastTime) / 1000
-        
-        const pRef = doc(db, "users", chatPartner.uid)
-        if (diffSeconds < 60) {
-          await updateDoc(pRef, { diamonds: increment(5) })
-          toast({ title: "Quick Reply Bonus!", description: `${chatPartner.name} earned 5 Diamonds.` })
-        } else {
-          await updateDoc(pRef, { coins: increment(2) })
-          toast({ title: "Reply Reward", description: `${chatPartner.name} earned 2 Coins.` })
-        }
-      }
-    }
-
-    const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp: serverTimestamp() }
-    setNewMessage("")
-    
-    setTimeout(() => {
-      inputRef.current?.focus()
-    }, 0)
-    
     try {
-      await addDoc(collection(db, "chats", chatId, "messages"), msgData)
-      await updateDoc(doc(db, "chats", chatId), chatUpdate)
+      // 1. Send Message to RTDB
+      await set(msgRef, msgData)
+
+      // 2. Increment Unread in RTDB
+      if (partnerId) {
+        const partnerUnreadRef = ref(rtdb, `unreads/${partnerId}/${chatId}`)
+        update(ref(rtdb), { [`unreads/${partnerId}/${chatId}`]: rtdbIncrement(1) })
+      }
+
+      // 3. Batch Coin Deduction in RTDB
+      if (!isFree && currentUserProfile.gender === 'male') {
+        const currentCount = currentChatData?.maleMessageCount || 0
+        const nextCount = currentCount + 1
+
+        if (nextCount >= 10) {
+          if (userBalances.coins < 150) {
+            toast({ variant: "destructive", title: "Insufficient Coins", description: "Batch of 10 messages costs 150 coins." })
+            return
+          }
+          // Deduct from RTDB Balance
+          await update(ref(rtdb, `balances/${currentUser.uid}`), {
+            coins: rtdbIncrement(-150),
+            updatedAt: timestamp
+          })
+          await updateDoc(doc(db, "chats", chatId), { maleMessageCount: 0 })
+        } else {
+          await updateDoc(doc(db, "chats", chatId), { maleMessageCount: nextCount })
+        }
+      }
+
+      // 4. Speedy Reply Rewards in RTDB
+      if (currentUserProfile.gender === 'male' && chatPartner?.gender === 'female' && messages.length > 0) {
+        const lastMsg = messages[0]
+        if (lastMsg.senderId === chatPartner.uid) {
+          const diffSeconds = (timestamp - lastMsg.timestamp) / 1000
+          const partnerBalRef = ref(rtdb, `balances/${chatPartner.uid}`)
+          if (diffSeconds < 60) {
+            await update(partnerBalRef, { diamonds: rtdbIncrement(5), updatedAt: timestamp })
+          } else {
+            await update(partnerBalRef, { coins: rtdbIncrement(2), updatedAt: timestamp })
+          }
+        }
+      }
+
+      // 5. Update Metadata in Firestore (Slow moving)
+      await updateDoc(doc(db, "chats", chatId), {
+        lastMessage: text.trim(),
+        lastMessageAt: serverTimestamp()
+      })
+
+      setNewMessage("")
+      inputRef.current?.focus()
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
     }
@@ -479,35 +472,44 @@ function ChatsContent() {
   const handleSendGift = async (gift: typeof GIFTS[0]) => {
     if (!currentUser?.uid || !currentUserProfile || !chatPartner || !chatId) return
     
-    const balance = currentUserProfile.coins || 0
-    if (balance < gift.price) {
-      toast({ variant: "destructive", title: "Insufficient Coins", description: "Please recharge to send this gift." })
+    if (userBalances.coins < gift.price) {
+      toast({ variant: "destructive", title: "Insufficient Coins" })
       return
     }
 
+    const timestamp = Date.now()
     try {
-      await updateDoc(doc(db, "users", currentUser.uid), { coins: increment(-gift.price) })
+      // 1. Deduct from Sender in RTDB
+      await update(ref(rtdb, `balances/${currentUser.uid}`), { 
+        coins: rtdbIncrement(-gift.price),
+        updatedAt: timestamp
+      })
 
+      // 2. Award to Recipient in RTDB
       const share = chatPartner.gender === 'female' ? 0.5 : 0.4
       const diamondReward = Math.floor(gift.price * share)
-      await updateDoc(doc(db, "users", chatPartner.uid), { diamonds: increment(diamondReward) })
+      await update(ref(rtdb, `balances/${chatPartner.uid}`), { 
+        diamonds: rtdbIncrement(diamondReward),
+        updatedAt: timestamp
+      })
 
+      // 3. Post Message to RTDB
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
-      await addDoc(collection(db, "chats", chatId, "messages"), {
+      await push(ref(rtdb, `chat_messages/${chatId}`), {
         text,
         senderId: currentUser.uid,
-        timestamp: serverTimestamp(),
+        timestamp,
         isGift: true
       })
       
+      // 4. Update Metadata
       await updateDoc(doc(db, "chats", chatId), {
         lastMessage: text,
-        lastMessageAt: serverTimestamp(),
-        [`unreadCount.${chatPartner.uid}`]: increment(1)
+        lastMessageAt: serverTimestamp()
       })
 
       setIsGiftDrawerOpen(false)
-      toast({ title: "Gift Sent!", description: `You sent a ${gift.name} to ${chatPartner.name}.` })
+      toast({ title: "Gift Sent!" })
     } catch (err: any) {
       toast({ variant: "destructive", title: "Gift Error", description: err.message })
     }
@@ -516,12 +518,11 @@ function ChatsContent() {
   const handleSoftDelete = async () => {
     if (!chatToDelete || !currentUser?.uid) return
     try {
-      const chatRef = doc(db, "chats", chatToDelete.id)
-      await updateDoc(chatRef, {
-        [`clearedAt.${currentUser.uid}`]: serverTimestamp(),
-        [`unreadCount.${currentUser.uid}`]: 0
+      await updateDoc(doc(db, "chats", chatToDelete.id), {
+        [`clearedAt.${currentUser.uid}`]: serverTimestamp()
       })
-      toast({ title: "Chat deleted", description: "The conversation has been cleared." })
+      set(ref(rtdb, `unreads/${currentUser.uid}/${chatToDelete.id}`), 0)
+      toast({ title: "Chat deleted" })
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
     } finally {
@@ -535,8 +536,7 @@ function ChatsContent() {
     return (
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
-          <h1 className="text-2xl font-logo text-[#00A2FF] tracking-tight">Chat</h1>
-          <div className="w-10" />
+          <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
 
         <main className="flex-1">
@@ -547,13 +547,12 @@ function ChatsContent() {
                    <div className="w-14 h-14 rounded-full bg-muted animate-pulse" />
                    <div className="flex-1 space-y-2">
                      <div className="h-4 w-1/3 bg-muted animate-pulse rounded" />
-                     <div className="h-3 w-1/2 bg-muted animate-pulse rounded opacity-50" />
                    </div>
                  </div>
                ))}
              </div>
           ) : userChats.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 space-y-4 opacity-40">
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 opacity-40">
               <ShoppingBag className="w-16 h-16 mb-4" />
               <p className="font-semibold text-xl text-black">No chats yet...</p>
             </div>
@@ -569,19 +568,6 @@ function ChatsContent() {
                   onDelete={setChatToDelete}
                 />
               ))}
-              
-              {userChatsRaw.length >= chatListLimit && (
-                <div className="p-4 flex justify-center">
-                   <Button 
-                    variant="ghost" 
-                    className="text-[10px] font-bold uppercase text-gray-400 gap-2"
-                    onClick={() => setChatListLimit(prev => prev + 20)}
-                   >
-                     <ChevronDown className="w-4 h-4" />
-                     Show older chats
-                   </Button>
-                </div>
-              )}
             </div>
           )}
         </main>
@@ -593,18 +579,10 @@ function ChatsContent() {
                 <Trash2 className="w-8 h-8 text-[#00A2FF]" />
               </div>
               <AlertDialogTitle className="text-xl font-semibold text-black">Delete Chat?</AlertDialogTitle>
-              <AlertDialogDescription />
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-3 mt-6">
-              <AlertDialogCancel className="flex-1 rounded-full h-14 border-2 border-gray-100 font-bold text-gray-400 uppercase tracking-widest text-[10px] mt-0">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleSoftDelete}
-                className="flex-1 rounded-full h-14 bg-[#00A2FF] hover:bg-[#0081CC] font-bold text-white uppercase tracking-widest text-[10px]"
-              >
-                Delete
-              </AlertDialogAction>
+              <AlertDialogCancel className="flex-1 rounded-full h-14 border-2 mt-0">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSoftDelete} className="flex-1 rounded-full h-14 bg-[#00A2FF]">Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -618,21 +596,14 @@ function ChatsContent() {
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative">
       <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
         <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => router.push("/chats")} 
-            className="rounded-full text-[#00A2FF] font-semibold px-2 hover:bg-blue-50"
-          >
+          <Button variant="ghost" size="sm" onClick={() => router.push("/chats")} className="rounded-full text-[#00A2FF] font-semibold px-2">
             <ChevronLeft className="w-6 h-6 mr-0.5" />
           </Button>
         </div>
         
         <div className="flex flex-col items-center justify-center flex-1 min-w-0 px-2">
           <div className="flex items-center justify-center gap-1 w-full">
-            <h3 className="font-semibold text-sm tracking-tight text-black uppercase truncate max-w-[80%]">
-              {chatPartner?.name || '...'}
-            </h3>
+            <h3 className="font-semibold text-sm tracking-tight text-black uppercase truncate max-w-[80%]">{chatPartner?.name || '...'}</h3>
             {chatPartner?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
           </div>
           {partnerPresence?.state === 'online' && (
@@ -643,18 +614,15 @@ function ChatsContent() {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <Avatar className="w-8 h-8 rounded-full border border-gray-100">
-            <AvatarImage src={chatPartner?.photoURL} />
-            <AvatarFallback className="font-semibold text-[10px]">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
-          </Avatar>
-        </div>
+        <Avatar className="w-8 h-8 rounded-full border border-gray-100">
+          <AvatarImage src={chatPartner?.photoURL} />
+          <AvatarFallback className="font-semibold text-[10px]">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
+        </Avatar>
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar bg-white flex flex-col-reverse">
         <div className="flex flex-col-reverse px-4 py-6 space-y-6 space-y-reverse">
           <div ref={messagesEndRef} />
-          
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
               {msg.senderId !== currentUser.uid && (
@@ -673,32 +641,12 @@ function ChatsContent() {
               </div>
             </div>
           ))}
-
-          {(isInitializingChat || (messagesLoading && messages.length === 0)) && (
-            <div className="flex justify-center p-8">
-              <Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" />
-            </div>
+          {(isInitializingChat || messagesLoading) && (
+            <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-[#00A2FF] animate-spin opacity-20" /></div>
           )}
-
-          {messagesRaw.length >= messagesLimit && messagesRaw.length > 0 && (
-            <div className="flex justify-center py-4">
-               <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-[10px] font-bold text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
-                onClick={() => setMessagesLimit(prev => prev + 20)}
-               >
-                 <ChevronDown className="w-3.5 h-3.5" />
-                 Load previous messages
-               </Button>
-            </div>
-          )}
-
           {isBlocked && (
-            <div className="flex flex-col items-center justify-center p-8 text-center space-y-2 opacity-50">
-               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Lock className="w-6 h-6 text-gray-400" />
-               </div>
+            <div className="flex flex-col items-center justify-center p-8 opacity-50">
+               <Lock className="w-8 h-8 text-gray-400 mb-2" />
                <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Messaging disabled</p>
             </div>
           )}
@@ -708,12 +656,7 @@ function ChatsContent() {
       {!isBlocked && (
         <footer className="shrink-0 bg-white border-t z-50 pb-safe sticky bottom-0">
           <div className="px-4 py-3 flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setIsGiftDrawerOpen(true)}
-              className="text-[#00A2FF] hover:bg-blue-50 rounded-full w-11 h-11"
-            >
+            <Button variant="ghost" size="icon" onClick={() => setIsGiftDrawerOpen(true)} className="text-[#00A2FF] rounded-full w-11 h-11">
               <GiftIcon className="w-6 h-6" />
             </Button>
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
@@ -723,23 +666,10 @@ function ChatsContent() {
                 className="bg-transparent border-none flex-1 outline-none text-sm font-medium placeholder:text-gray-400 text-black" 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSendMessage(newMessage);
-                  }
-                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(newMessage); }}
               />
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={cn("w-10 h-10 rounded-full transition-all", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleSendMessage(newMessage);
-              }}
-            >
+            <Button variant="ghost" size="icon" className={cn("w-10 h-10 rounded-full", newMessage.trim() ? "text-[#00A2FF]" : "text-gray-300")} onClick={() => handleSendMessage(newMessage)}>
               <Send className="w-6 h-6" />
             </Button>
           </div>
@@ -749,7 +679,7 @@ function ChatsContent() {
       <GiftDrawer 
         open={isGiftDrawerOpen} 
         onOpenChange={setIsGiftDrawerOpen}
-        userBalance={currentUserProfile?.coins || 0}
+        userBalance={userBalances.coins}
         onSend={handleSendGift}
       />
     </div>

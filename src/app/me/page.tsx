@@ -1,8 +1,10 @@
+
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
 import { doc, getDoc } from "firebase/firestore"
-import { useFirestore, useUser, useDoc } from "@/firebase"
+import { ref, onValue, update, increment as rtdbIncrement } from "firebase/database"
+import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Button } from "@/components/ui/button"
@@ -37,7 +39,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { awardCoinsAction, toggleUserRoleAction } from "@/app/actions/admin"
 import { createAgencyAction, joinAgencyAction } from "@/app/actions/agency"
 
@@ -46,8 +47,6 @@ interface UserProfile {
   name: string
   photoURL: string
   matchFlowId?: string
-  coins?: number
-  diamonds?: number
   isVerified?: boolean
   onboardingComplete?: boolean
   isAdmin?: boolean
@@ -266,8 +265,23 @@ export default function MePage() {
   const router = useRouter()
   const { user, loading: authLoading } = useUser()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
+  const [balances, setBalances] = useState({ coins: 0, diamonds: 0 })
+
+  const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
+  const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
+
+  // Listen to RTDB for high-frequency balance data (Optimization)
+  useEffect(() => {
+    if (!user?.uid) return
+    const balanceRef = ref(rtdb, `balances/${user.uid}`)
+    return onValue(balanceRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) setBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
+    })
+  }, [rtdb, user?.uid])
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -280,9 +294,6 @@ export default function MePage() {
       router.replace("/welcome")
     }
   }, [user, authLoading, router, db])
-
-  const profileRef = useMemo(() => user ? doc(db, "users", user.uid) : null, [db, user])
-  const { data: profile, loading: profileLoading } = useDoc<UserProfile>(profileRef)
 
   const handleCopyId = () => {
     if (profile?.matchFlowId) {
@@ -333,11 +344,11 @@ export default function MePage() {
         <main className="px-6 space-y-6">
           <div className="grid grid-cols-2 gap-4 relative z-20 -mt-6">
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-[#00A2FF]" onClick={() => router.push("/recharge")}>
-              <div className="flex items-center gap-1.5"><CircleDollarSign className="w-5 h-5" /><span className="text-sm font-bold">{profile.coins || 0}</span></div>
+              <div className="flex items-center gap-1.5"><CircleDollarSign className="w-5 h-5" /><span className="text-sm font-bold">{balances.coins}</span></div>
               <span className="text-[8px] font-bold uppercase opacity-60">Recharge Coins</span>
             </Button>
             <Button className="h-20 bg-white hover:bg-gray-50 rounded-2xl border-none shadow-xl flex flex-col items-center justify-center gap-1 text-black" onClick={() => router.push("/income")}>
-              <div className="flex items-center gap-1.5"><Gem className="w-5 h-5 text-[#4285F4]" /><span className="text-sm font-bold">{profile.diamonds || 0}</span></div>
+              <div className="flex items-center gap-1.5"><Gem className="w-5 h-5 text-[#4285F4]" /><span className="text-sm font-bold">{balances.diamonds}</span></div>
               <span className="text-[8px] font-bold uppercase opacity-60">Diamond Income</span>
             </Button>
 

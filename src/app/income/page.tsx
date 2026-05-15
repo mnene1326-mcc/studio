@@ -1,25 +1,22 @@
 
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore"
-import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase"
+import { doc } from "firebase/firestore"
+import { ref, onValue, update, increment as rtdbIncrement } from "firebase/database"
+import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, FileText, Gem, Star, RefreshCw, Coins, Banknote, AlertCircle } from "lucide-react"
+import { ChevronLeft, Gem, Coins, Banknote, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
 import { requestWithdrawalAction } from "@/app/actions/agency"
 import { cn } from "@/lib/utils"
 
 interface UserProfile {
   uid: string
   name: string
-  diamonds?: number
-  coins?: number
   agencyId?: string
   agencyStatus?: string
 }
@@ -28,20 +25,32 @@ export default function IncomePage() {
   const router = useRouter()
   const { user } = useUser()
   const db = useFirestore()
+  const rtdb = useDatabase()
   const { toast } = useToast()
   
   const [activeTab, setActiveTab] = useState<'convert' | 'withdraw'>('convert')
   const [diamondsToConvert, setDiamondsToConvert] = useState<string>("")
   const [isProcessing, setIsProcessing] = useState(false)
+  const [balances, setBalances] = useState({ coins: 0, diamonds: 0 })
 
-  const userRef = useMemoFirebase(() => user?.uid ? doc(db, "users", user.uid) : null, [db, user?.uid])
+  const userRef = user?.uid ? doc(db, "users", user.uid) : null
   const { data: profile } = useDoc<UserProfile>(userRef)
 
-  const diamondBalance = profile?.diamonds || 0
+  // Listen to RTDB for high-frequency balance data (Optimization)
+  useEffect(() => {
+    if (!user?.uid) return
+    const balanceRef = ref(rtdb, `balances/${user.uid}`)
+    return onValue(balanceRef, (snapshot) => {
+      const data = snapshot.val()
+      if (data) setBalances({ coins: data.coins || 0, diamonds: data.diamonds || 0 })
+    })
+  }, [rtdb, user?.uid])
+
+  const diamondBalance = balances.diamonds
   
   // Rates
-  const coinRate = 0.09 // 1000 = 90
-  const cashRate = 0.08 // 1 = 0.08 KES
+  const coinRate = 0.09 
+  const cashRate = 0.08 
   const minCashWithdrawalKes = 1000
   const minDiamondsForCash = 12500
 
@@ -58,19 +67,20 @@ export default function IncomePage() {
       toast({ variant: "destructive", title: "Insufficient Balance" })
       return
     }
-    if (!userRef) return
 
     setIsProcessing(true)
     try {
-      await updateDoc(userRef, {
-        diamonds: increment(-amount),
-        coins: increment(expectedCoins),
-        updatedAt: serverTimestamp()
+      // Update RTDB Balance (Optimization)
+      const balRef = ref(rtdb, `balances/${user?.uid}`)
+      await update(balRef, {
+        diamonds: rtdbIncrement(-amount),
+        coins: rtdbIncrement(expectedCoins),
+        updatedAt: Date.now()
       })
       toast({ title: "Success!", description: `Converted to ${expectedCoins} coins.` })
       setDiamondsToConvert("")
     } catch (err) {
-      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: userRef.path, operation: 'update' }))
+      toast({ variant: "destructive", title: "Error", description: "Conversion failed." })
     } finally {
       setIsProcessing(false)
     }
@@ -79,11 +89,11 @@ export default function IncomePage() {
   const handleWithdraw = async () => {
     const amount = Number(diamondsToConvert)
     if (isNaN(amount) || amount < minDiamondsForCash) {
-      toast({ variant: "destructive", title: "Invalid Amount", description: `Minimum withdrawal is ${minDiamondsForCash} diamonds (Ksh 1000).` })
+      toast({ variant: "destructive", title: "Invalid Amount", description: `Min withdrawal: ${minDiamondsForCash} diamonds.` })
       return
     }
     if (!profile?.agencyId || profile.agencyStatus !== 'approved') {
-      toast({ variant: "destructive", title: "Agency Required", description: "You must be an approved member of an agency to withdraw cash." })
+      toast({ variant: "destructive", title: "Agency Required", description: "You must be an approved member of an agency." })
       return
     }
     if (amount > diamondBalance) {
@@ -94,7 +104,7 @@ export default function IncomePage() {
     setIsProcessing(true)
     const res = await requestWithdrawalAction(profile.uid, amount, Number(expectedKes), profile.agencyId)
     if (res.success) {
-      toast({ title: "Request Sent", description: "Your agency agent will review and process your payment." })
+      toast({ title: "Request Sent", description: "Your agency agent will review your payment." })
       setDiamondsToConvert("")
     } else {
       toast({ variant: "destructive", title: "Error", description: res.error })
@@ -158,7 +168,7 @@ export default function IncomePage() {
             </div>
 
             {Number(diamondsToConvert) > 0 && (
-              <div className={cn("p-5 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2", activeTab === 'convert' ? "bg-blue-50 border-blue-100" : "bg-green-50 border-green-100")}>
+              <div className={cn("p-5 rounded-2xl border flex items-center justify-between", activeTab === 'convert' ? "bg-blue-50 border-blue-100" : "bg-green-50 border-green-100")}>
                 <div className="flex items-center gap-3">
                   {activeTab === 'convert' ? <Coins className="w-5 h-5 text-yellow-500" /> : <Banknote className="w-5 h-5 text-green-600" />}
                   <span className="text-sm font-bold text-black">{activeTab === 'convert' ? 'Estimated Coins' : 'Estimated Payout'}</span>
@@ -173,7 +183,7 @@ export default function IncomePage() {
               <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 flex gap-3">
                 <AlertCircle className="w-5 h-5 text-orange-500 shrink-0" />
                 <p className="text-[10px] font-bold text-orange-700 leading-relaxed uppercase">
-                  You must join an agency to withdraw cash. Go to your profile to join.
+                  Join an agency to withdraw cash. Go to your profile to join.
                 </p>
               </div>
             )}
@@ -189,10 +199,6 @@ export default function IncomePage() {
               {isProcessing ? "Processing..." : activeTab === 'convert' ? "Convert to Coins" : "Withdraw to M-Pesa"}
             </Button>
           </div>
-
-          <p className="text-[10px] font-medium text-gray-300 text-center mt-6">
-            Minimum withdrawal: 12,500 Diamonds (Ksh 1,000). Payments processed weekly.
-          </p>
         </div>
       </main>
     </div>
