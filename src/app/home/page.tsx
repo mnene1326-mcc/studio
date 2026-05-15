@@ -48,6 +48,28 @@ export default function HomePage() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
+  // Scroll Restoration Logic
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('home_scroll_pos', window.scrollY.toString())
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Restore scroll when data is ready
+  useEffect(() => {
+    if (isMounted && !authLoading) {
+      const savedPos = sessionStorage.getItem('home_scroll_pos')
+      if (savedPos) {
+        // We delay slightly to ensure DOM has rendered
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedPos))
+        }, 100)
+      }
+    }
+  }, [isMounted, authLoading])
+
   // Check authentication and onboarding status
   useEffect(() => {
     if (!authLoading) {
@@ -69,8 +91,6 @@ export default function HomePage() {
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  // Economical Query: Limit the total pool to 60 users, then paginate locally.
-  // The useCollection hook handles the offline-first caching logic.
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
@@ -83,7 +103,6 @@ export default function HomePage() {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
     setDisplayLimit(10)
-    // Clear home scroll pos to reset view
     sessionStorage.removeItem('home_scroll_pos')
     setTimeout(() => {
       setIsRefreshing(false)
@@ -108,7 +127,6 @@ export default function HomePage() {
       return true;
     })
     
-    // Deterministic randomization using a seed to keep it "static" until refresh
     const sorted = [...baseList].sort((a, b) => {
       const aVal = Math.sin(a.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       const bVal = Math.sin(b.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)

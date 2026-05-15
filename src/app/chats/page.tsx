@@ -182,6 +182,7 @@ function GiftDrawer({ onSend, userBalance, open, onOpenChange }: { onSend: (gift
         </div>
       </DialogContent>
     </Dialog>
+  )
 }
 
 function ChatsContent() {
