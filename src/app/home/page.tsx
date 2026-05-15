@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
@@ -70,7 +69,8 @@ export default function HomePage() {
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserProfileRef)
 
-  // Economical Query: Limit the total pool to 60 users, then paginate locally
+  // Economical Query: Limit the total pool to 60 users, then paginate locally.
+  // The useCollection hook handles the offline-first caching logic.
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
@@ -83,6 +83,7 @@ export default function HomePage() {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
     setDisplayLimit(10)
+    // Clear home scroll pos to reset view
     sessionStorage.removeItem('home_scroll_pos')
     setTimeout(() => {
       setIsRefreshing(false)
@@ -107,7 +108,7 @@ export default function HomePage() {
       return true;
     })
     
-    // Randomize for variety using the seed
+    // Deterministic randomization using a seed to keep it "static" until refresh
     const sorted = [...baseList].sort((a, b) => {
       const aVal = Math.sin(a.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       const bVal = Math.sin(b.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
@@ -117,7 +118,6 @@ export default function HomePage() {
     return sorted
   }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
-  // Pagination Logic
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(0, displayLimit);
   }, [filteredUsers, displayLimit]);

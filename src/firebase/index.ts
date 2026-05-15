@@ -1,13 +1,13 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { initializeFirestore, getFirestore, Firestore, terminate } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, Firestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 import { getDatabase, Database } from 'firebase/database';
 import { firebaseConfig } from './config';
 
 /**
  * Initializes Firebase services with optimizations for connectivity and performance.
- * - Firestore is configured with long polling to fix issues in restricted network environments.
- * - RTDB is configured with the project-specific database URL.
+ * - Firestore is configured with offline persistence to reduce reads and support offline use.
+ * - experimentalForceLongPolling is used for compatibility in restricted environments.
  */
 export function initializeFirebase(): {
   app: FirebaseApp;
@@ -20,13 +20,21 @@ export function initializeFirebase(): {
   let firestore: Firestore;
   
   if (typeof window !== 'undefined') {
-    // On the client, we ensure we only initialize firestore once with the correct settings
     const existingApps = getApps();
     if (existingApps.length > 0) {
       firestore = getFirestore(app);
     } else {
       firestore = initializeFirestore(app, {
         experimentalForceLongPolling: true,
+      });
+
+      // Enable Offline Persistence for Economy and Offline Mode
+      enableIndexedDbPersistence(firestore).catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn('Persistence failed: Multiple tabs open');
+        } else if (err.code === 'unimplemented') {
+          console.warn('Persistence failed: Browser not supported');
+        }
       });
     }
   } else {
