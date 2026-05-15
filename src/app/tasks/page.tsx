@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react"
@@ -6,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore"
 import { useFirestore, useUser, useDoc } from "@/firebase"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, X, Coins, Gift, Zap, Star, CheckCircle2, Trophy, Flame } from "lucide-react"
+import { ChevronLeft, X, Coins, Trophy, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { errorEmitter } from "@/firebase/error-emitter"
@@ -37,21 +36,9 @@ export default function TaskCenterPage() {
     { day: "7th", reward: 10 },
   ]
 
-  const newcomerTasks = [
-    { title: "Complete Profile", reward: "10", icon: Star, color: "text-yellow-500", done: true },
-    { title: "Upload 3 Photos", reward: "20", icon: Gift, color: "text-pink-500", done: false },
-    { title: "First Match Chat", reward: "5", icon: Zap, color: "text-purple-500", done: false },
-  ]
-
-  const dailyTasks = [
-    { title: "Send 3 Gifts", reward: "15", icon: Flame, color: "text-orange-500", progress: "0/3" },
-    { title: "Daily Login", reward: "2", icon: CheckCircle2, color: "text-green-500", progress: "1/1" },
-  ]
-
   const hasCheckedInToday = useMemo(() => {
     if (!profile?.lastCheckInDate) return false
     
-    // Safety check for Firestore Timestamp which might be serialized in cache
     const rawDate = profile.lastCheckInDate;
     let lastDate: Date;
     
@@ -140,49 +127,11 @@ export default function TaskCenterPage() {
           </Button>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-            <div className="w-1 h-4 bg-pink-500 rounded-full" />
-            <h2 className="text-xs font-bold text-black uppercase tracking-widest">Newcomer tasks</h2>
-          </div>
-          <div className="space-y-3">
-            {newcomerTasks.map((task, i) => (
-              <div key={i} className="bg-white p-5 flex items-center justify-between rounded-2xl border border-black/5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}><task.icon className="w-6 h-6" /></div>
-                  <div>
-                    <p className="text-sm font-semibold text-black">{task.title}</p>
-                    <p className="text-xs font-medium text-yellow-500">+{task.reward} Coins</p>
-                  </div>
-                </div>
-                <Button variant={task.done ? "ghost" : "outline"} disabled={task.done} className={cn("rounded-full px-6 h-10 text-[10px] font-bold uppercase tracking-widest", task.done ? "text-green-500" : "border-pink-200 text-pink-500 hover:bg-pink-50")}>
-                  {task.done ? "Done" : "Go"}
-                </Button>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-            <div className="w-1 h-4 bg-blue-500 rounded-full" />
-            <h2 className="text-xs font-bold text-black uppercase tracking-widest">Daily tasks</h2>
-          </div>
-          <div className="space-y-3">
-            {dailyTasks.map((task, i) => (
-              <div key={i} className="bg-white p-5 flex items-center justify-between rounded-2xl border border-black/5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}><task.icon className="w-6 h-6" /></div>
-                  <div>
-                    <p className="text-sm font-semibold text-black">{task.title}</p>
-                    <p className="text-xs font-medium text-yellow-500">+{task.reward} Coins • {task.progress}</p>
-                  </div>
-                </div>
-                <Button variant="outline" className="rounded-full px-6 h-10 text-[10px] font-bold uppercase tracking-widest border-blue-200 text-blue-500 hover:bg-blue-50">Go</Button>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="text-center py-10 px-6 opacity-30">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+            More tasks coming soon! Check in daily to grow your streak.
+          </p>
+        </div>
       </main>
     </div>
   )
