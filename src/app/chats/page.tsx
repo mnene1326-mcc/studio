@@ -1,10 +1,9 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { doc, getDocs, collection, query, where, updateDoc, getDoc, serverTimestamp, orderBy, limit, addDoc } from "firebase/firestore"
-import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get, onDisconnect } from "firebase/database"
+import { ref, onValue, push, set, update, increment as rtdbIncrement, limitToLast, query as rtdbQuery, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useCollection, useMemoFirebase, useDatabase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,16 +17,11 @@ import {
   Send, 
   ChevronLeft, 
   ShoppingBag, 
-  Loader2, 
   Circle,
   BadgeCheck,
   Gift as GiftIcon,
   Coins,
-  ChevronRight,
-  Phone,
-  Mic,
-  MicOff,
-  PhoneOff
+  ChevronRight
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -77,171 +71,6 @@ const GIFTS = [
   { id: 'dress', name: 'Dress', price: 800, icon: '👗' },
   { id: 'phone', name: 'Antique Telephone', price: 400, icon: '☎️' },
 ]
-
-const RTC_CONFIG = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-}
-
-function CallInterface({ 
-  chatId, 
-  currentUser, 
-  partner, 
-  onClose 
-}: { 
-  chatId: string, 
-  currentUser: any, 
-  partner: UserProfile, 
-  onClose: () => void 
-}) {
-  const rtdb = useDatabase()
-  const { toast } = useToast()
-  const [callState, setCallState] = useState<'initiating' | 'ringing' | 'connected' | 'ended'>('initiating')
-  const [isMuted, setIsMuted] = useState(false)
-  
-  const peerConnection = useRef<RTCPeerConnection | null>(null)
-  const localStream = useRef<MediaStream | null>(null)
-
-  useEffect(() => {
-    const startCall = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: false,
-          audio: true
-        })
-        localStream.current = stream
-
-        peerConnection.current = new RTCPeerConnection(RTC_CONFIG)
-        
-        stream.getTracks().forEach(track => {
-          peerConnection.current?.addTrack(track, stream)
-        })
-
-        peerConnection.current.ontrack = (event) => {
-          setCallState('connected')
-          // Standard audio handling: attach to a hidden audio element
-          const remoteAudio = new Audio()
-          remoteAudio.srcObject = event.streams[0]
-          remoteAudio.play()
-        }
-
-        const callRef = ref(rtdb, `calls/${chatId}`)
-        
-        const snapshot = await get(callRef)
-        const callData = snapshot.val()
-
-        if (callData && callData.callerId !== currentUser.uid && callData.status === 'initiating') {
-          setCallState('ringing')
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(callData.offer))
-          const answer = await peerConnection.current.createAnswer()
-          await peerConnection.current.setLocalDescription(answer)
-          await update(callRef, { answer, status: 'connected' })
-        } else {
-          const offer = await peerConnection.current.createOffer()
-          await peerConnection.current.setLocalDescription(offer)
-          await set(callRef, {
-            offer,
-            callerId: currentUser.uid,
-            type: 'voice',
-            status: 'initiating',
-            timestamp: serverTimestamp()
-          })
-          
-          onValue(callRef, (snap) => {
-            const data = snap.val()
-            if (data?.answer && callState === 'initiating') {
-              peerConnection.current?.setRemoteDescription(new RTCSessionDescription(data.answer))
-            }
-            if (data?.status === 'ended') endCall()
-          })
-        }
-
-        peerConnection.current.onicecandidate = (event) => {
-          if (event.candidate) {
-            const candidatesRef = ref(rtdb, `calls/${chatId}/candidates/${currentUser.uid}`)
-            push(candidatesRef, event.candidate.toJSON())
-          }
-        }
-
-        const otherUserId = partner.uid
-        onValue(ref(rtdb, `calls/${chatId}/candidates/${otherUserId}`), (snap) => {
-          snap.forEach((child) => {
-            peerConnection.current?.addIceCandidate(new RTCIceCandidate(child.val()))
-          })
-        })
-
-        onDisconnect(callRef).update({ status: 'ended' })
-
-      } catch (err) {
-        toast({ variant: "destructive", title: "Call Error", description: "Microphone access denied." })
-        onClose()
-      }
-    }
-
-    startCall()
-
-    return () => {
-      endCall()
-    }
-  }, [])
-
-  const endCall = () => {
-    localStream.current?.getTracks().forEach(track => track.stop())
-    peerConnection.current?.close()
-    update(ref(rtdb, `calls/${chatId}`), { status: 'ended' })
-    onClose()
-  }
-
-  const toggleMute = () => {
-    if (localStream.current) {
-      const audioTrack = localStream.current.getAudioTracks()[0]
-      audioTrack.enabled = !audioTrack.enabled
-      setIsMuted(!audioTrack.enabled)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-[100] bg-[#00A2FF] flex flex-col items-center justify-between p-8 text-white">
-      <div className="w-full flex flex-col items-center gap-6 mt-20">
-        <div className="relative">
-          <Avatar className="w-32 h-32 border-4 border-white/20 shadow-2xl">
-            <AvatarImage src={partner.photoURL} className="object-cover" />
-            <AvatarFallback>{partner.name[0]}</AvatarFallback>
-          </Avatar>
-          <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-ping opacity-20" />
-        </div>
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">{partner.name}</h2>
-          <p className="text-xs font-black uppercase tracking-[0.3em] mt-2 opacity-60">
-            {callState === 'initiating' ? 'Connecting...' : (callState === 'ringing' ? 'Ringing...' : 'Voice Call')}
-          </p>
-        </div>
-      </div>
-
-      <div className="w-full max-w-sm flex items-center justify-center pb-20 gap-8">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleMute}
-          className={cn("w-16 h-16 rounded-full border border-white/10 transition-all", isMuted ? "bg-red-500 text-white" : "bg-white/10 text-white")}
-        >
-          {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-        </Button>
-
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={endCall}
-          className="w-20 h-20 rounded-full bg-red-600 text-white shadow-2xl active:scale-95 transition-all"
-        >
-          <PhoneOff className="w-8 h-8" />
-        </Button>
-      </div>
-    </div>
-  )
-}
 
 function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: { chat: Chat, currentUserUid: string, blocking: string[], blockedBy: string[], onDelete: (chat: Chat) => void }) {
   const router = useRouter()
@@ -353,7 +182,6 @@ function GiftDrawer({ onSend, userBalance, open, onOpenChange }: { onSend: (gift
         </div>
       </DialogContent>
     </Dialog>
-  )
 }
 
 function ChatsContent() {
@@ -373,7 +201,6 @@ function ChatsContent() {
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [userBalances, setUserBalances] = useState({ coins: 0, diamonds: 0 })
-  const [isCalling, setIsCalling] = useState(false)
 
   const currentUserRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile } = useDoc<UserProfile>(currentUserRef)
@@ -389,17 +216,6 @@ function ChatsContent() {
     }
     fetchBalance()
   }, [rtdb, currentUser?.uid])
-
-  useEffect(() => {
-    if (!chatId) return
-    const callRef = ref(rtdb, `calls/${chatId}`)
-    return onValue(callRef, (snap) => {
-      const data = snap.val()
-      if (data && data.status === 'initiating' && data.callerId !== currentUser?.uid) {
-        setIsCalling(true)
-      }
-    })
-  }, [chatId, currentUser?.uid, rtdb])
 
   const chatListQuery = useMemoFirebase(() => {
     if (!currentUser?.uid) return null
@@ -549,9 +365,6 @@ function ChatsContent() {
         </div>
         
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setIsCalling(true)} className="text-[#00A2FF]">
-            <Phone className="w-5 h-5" />
-          </Button>
           <Avatar className="w-8 h-8 cursor-pointer ml-1" onClick={() => router.push(`/users/${chatPartner?.uid}`)}>
             <AvatarImage src={chatPartner?.photoURL} />
             <AvatarFallback>{chatPartner?.name?.[0]}</AvatarFallback>
@@ -581,15 +394,6 @@ function ChatsContent() {
       </footer>
 
       <GiftDrawer open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen} userBalance={userBalances.coins} onSend={handleSendGift} />
-      
-      {isCalling && chatPartner && chatId && (
-        <CallInterface 
-          chatId={chatId} 
-          currentUser={currentUser} 
-          partner={chatPartner} 
-          onClose={() => setIsCalling(false)} 
-        />
-      )}
     </div>
   )
 }
