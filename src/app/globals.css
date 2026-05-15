@@ -33,7 +33,7 @@
     @apply border-border;
   }
   html, body {
-    @apply bg-background text-foreground select-none;
+    @apply bg-background text-foreground;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -41,6 +41,7 @@
     -webkit-overflow-scrolling: touch;
     min-height: 100%;
     overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   /* Hide scrollbar but allow scrolling */
