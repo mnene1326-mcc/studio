@@ -1,9 +1,27 @@
 {
   "rules": {
     "status": {
+      ".read": "auth != null",
       "$uid": {
-        ".read": "auth != null",
         ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "balances": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "chat_messages": {
+      "$chatId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "unreads": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null"
       }
     }
   }
