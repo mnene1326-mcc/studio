@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -30,6 +31,8 @@ export function InstallPrompt() {
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    
+    // Check frequently to see if user has installed and opened
     const interval = setInterval(checkStandalone, 2000)
 
     return () => {
@@ -41,11 +44,20 @@ export function InstallPrompt() {
   const handleInstallClick = async () => {
     if (!deferredPrompt) return
     setIsInstalling(true)
+    
+    // Show the native install prompt
     deferredPrompt.prompt()
+    
+    // Wait for the user to respond to the prompt
     const { outcome } = await deferredPrompt.userChoice
+    
     if (outcome === 'accepted') {
+      console.log('User accepted the install prompt')
       setDeferredPrompt(null)
+    } else {
+      console.log('User dismissed the install prompt')
     }
+    
     setIsInstalling(false)
   }
 
@@ -53,6 +65,7 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-700">
+      {/* Cinematic Background */}
       <div className="absolute inset-0 z-0 opacity-40">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#00A2FF] rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[120px]" />
@@ -74,36 +87,43 @@ export function InstallPrompt() {
         </div>
 
         <div className="space-y-6 bg-white/5 backdrop-blur-2xl p-8 rounded-[3rem] border border-white/10 shadow-2xl">
-          <p className="text-sm font-medium text-white/80 leading-relaxed">
+          <div className="text-sm font-medium text-white/80 leading-relaxed">
             MatchFlow is optimized for native use. Please install the app to access your profile and chats.
-          </p>
+          </div>
 
           {deferredPrompt ? (
-            <Button 
-              onClick={handleInstallClick}
-              disabled={isInstalling}
-              className="w-full h-16 rounded-2xl bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all"
-            >
-              {isInstalling ? <Loader2 className="animate-spin" /> : <Download className="w-5 h-5" />}
-              Install MatchFlow Now
-            </Button>
+            <div className="space-y-4">
+              <Button 
+                onClick={handleInstallClick}
+                disabled={isInstalling}
+                className="w-full h-16 rounded-2xl bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all"
+              >
+                {isInstalling ? <Loader2 className="animate-spin" /> : <Download className="w-5 h-5" />}
+                Install MatchFlow Now
+              </Button>
+              <div className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
+                One-tap installation available
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
+              {/* iOS Manual Instructions - Only shown if deferredPrompt is not available */}
               <div className="text-left space-y-3 p-4 bg-white/5 rounded-2xl border border-white/5">
                 <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400" /> iOS Setup
                 </div>
-                <p className="text-[11px] text-white/60">
+                <div className="text-[11px] text-white/60">
                   Tap <Share className="w-3 h-3 inline mx-1 text-blue-400" /> "Share" then <PlusSquare className="w-3 h-3 inline mx-1 text-blue-400" /> "Add to Home Screen"
-                </p>
+                </div>
               </div>
+              
               <div className="text-left space-y-3 p-4 bg-white/5 rounded-2xl border border-white/5">
                 <div className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400" /> Android Setup
                 </div>
-                <p className="text-[11px] text-white/60">
+                <div className="text-[11px] text-white/60">
                   Tap the browser menu (three dots) and select "Install App" or "Add to Home Screen".
-                </p>
+                </div>
               </div>
             </div>
           )}
