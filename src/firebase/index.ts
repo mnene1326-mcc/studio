@@ -1,16 +1,15 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { initializeFirestore, getFirestore, Firestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
+import { initializeFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 import { getDatabase, Database } from 'firebase/database';
 import { firebaseConfig } from './config';
 
-// Global singletons to prevent multiple initializations and persistence errors
+// Global singletons to prevent multiple initializations
 let firestoreInstance: Firestore | null = null;
-let persistenceStarted = false;
 
 /**
- * Initializes Firebase services with robust offline persistence.
- * Ensures persistence is enabled before any other Firestore operations.
+ * Initializes Firebase services with modern persistent cache settings.
+ * This resolves the "enableIndexedDbPersistence is deprecated" warning.
  */
 export function initializeFirebase(): {
   app: FirebaseApp;
@@ -22,24 +21,15 @@ export function initializeFirebase(): {
   
   if (typeof window !== 'undefined') {
     if (!firestoreInstance) {
+      // Use the modern persistentLocalCache instead of deprecated enableIndexedDbPersistence
       firestoreInstance = initializeFirestore(app, {
-        cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        })
       });
-
-      if (!persistenceStarted) {
-        persistenceStarted = true;
-        // Persistence must be enabled BEFORE any other firestore calls
-        enableIndexedDbPersistence(firestoreInstance).catch((err) => {
-          if (err.code === 'failed-precondition') {
-            console.warn('Persistence failed: Multiple tabs open');
-          } else if (err.code === 'unimplemented') {
-            console.warn('Persistence failed: Browser not supported');
-          }
-        });
-      }
     }
   } else {
-    firestoreInstance = getFirestore(app);
+    firestoreInstance = initializeFirestore(app, {});
   }
 
   const auth = getAuth(app);
