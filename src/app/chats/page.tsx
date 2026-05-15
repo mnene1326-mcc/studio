@@ -104,7 +104,7 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
     timerRef.current = setTimeout(() => {
       isLongPress.current = true
       onDelete(chat)
-    }, 400) // Reduced from 600ms for snappier feel
+    }, 400)
   }
 
   const handleTouchEnd = () => {
@@ -229,7 +229,6 @@ function ChatsContent() {
     return blocking.includes(chatPartner.uid) || blockedBy.includes(chatPartner.uid)
   }, [chatPartner, currentUserProfile])
 
-  // Clear unread count when opening chat
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       const chatRef = doc(db, "chats", chatId);
@@ -303,7 +302,6 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !currentUserProfile || isBlocked) return
     
-    // Check if free messaging applies (Admin or CoinSeller involved)
     const isFree = currentUserProfile.isAdmin || currentUserProfile.isCoinSeller || chatPartner?.isAdmin || chatPartner?.isCoinSeller;
 
     if (!isFree && currentUserProfile.gender === 'male') {
@@ -369,14 +367,7 @@ function ChatsContent() {
       <div className="flex-1 flex flex-col bg-white min-h-[100dvh] pb-20">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-logo text-[#00A2FF] tracking-tight">Chat</h1>
-          <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#00A2FF] hover:bg-blue-50" onClick={() => router.push('/recharge')}>
-                <ShoppingBag className="w-6 h-6" />
-             </Button>
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-full text-[#00A2FF] hover:bg-blue-50" onClick={() => router.push('/me')}>
-                <UserIcon className="w-6 h-6" />
-             </Button>
-          </div>
+          <div className="w-10" />
         </header>
 
         <main className="flex-1">
