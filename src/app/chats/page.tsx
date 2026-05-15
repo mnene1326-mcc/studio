@@ -139,6 +139,7 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
+  // All hooks must be at the top level
   const partnerPresence = useUserPresence(startWithId || undefined)
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
@@ -160,6 +161,7 @@ function ChatsContent() {
   })
   const [summariesLoading, setSummariesLoading] = useState(!chatSummaries.length)
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
+  const [selectedGift, setSelectedGift] = useState<any>(null)
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeChatSummary, setActiveChatSummary] = useState<ChatSummary | null>(null)
 
@@ -278,6 +280,7 @@ function ChatsContent() {
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
+    updates[`user_chats/${currentUser.uid}/${chatId}/deletedAt`] = 0
 
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "MatchFlow User"
@@ -302,6 +305,7 @@ function ChatsContent() {
       const text = `Sent a gift: ${gift.icon} ${gift.name}`
       await handleSendMessage(text)
       setIsGiftDrawerOpen(false)
+      setSelectedGift(null)
     } catch (err) { toast({ variant: "destructive", title: "Gift Error" }) }
   }
 
@@ -326,7 +330,7 @@ function ChatsContent() {
 
   if (!startWithId) {
     return (
-      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 overflow-y-auto">
+      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 overflow-y-auto no-scrollbar">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
@@ -409,20 +413,44 @@ function ChatsContent() {
         <Button variant="ghost" onClick={() => handleSendMessage(newMessage)}><Send className="w-6 h-6 text-[#00A2FF]" /></Button>
       </footer>
 
-      <Dialog open={isGiftDrawerOpen} onOpenChange={setIsGiftDrawerOpen}>
+      <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
         <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-6 border-none">
           <DialogTitle className="sr-only">Send a Gift</DialogTitle>
-          <div className="grid grid-cols-4 gap-y-8 gap-x-4">
+          <div className="flex justify-between items-center mb-6 px-2">
+            <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
+              <Coins className="w-4 h-4 text-yellow-500" />
+              <span className="text-xs font-bold">{userBalances.coins}</span>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Select a Gift</p>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-y-6 gap-x-2 mb-8">
             {GIFTS.map(gift => (
-              <div key={gift.id} onClick={() => handleSendGift(gift)} className="flex flex-col items-center gap-2 cursor-pointer active:scale-95">
+              <div 
+                key={gift.id} 
+                onClick={() => setSelectedGift(gift)} 
+                className={cn(
+                  "flex flex-col items-center gap-2 p-2 rounded-2xl transition-all active:scale-95 cursor-pointer border-2",
+                  selectedGift?.id === gift.id ? "border-[#00A2FF] bg-[#00A2FF]/10" : "border-transparent"
+                )}
+              >
                 <span className="text-3xl">{gift.icon}</span>
                 <div className="flex items-center gap-1">
-                  <Coins className="w-2 h-2 text-yellow-500" />
+                  <Coins className="w-2.5 h-2.5 text-yellow-500" />
                   <span className="text-[10px] font-bold">{gift.price}</span>
                 </div>
               </div>
             ))}
           </div>
+
+          {selectedGift && (
+            <Button 
+              onClick={() => handleSendGift(selectedGift)}
+              className="w-full h-14 bg-[#00A2FF] hover:bg-[#0081CC] rounded-full font-bold uppercase tracking-widest text-sm animate-in slide-in-from-bottom-4"
+            >
+              Send {selectedGift.name}
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
     </div>

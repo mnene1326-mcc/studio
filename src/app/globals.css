@@ -33,26 +33,20 @@
     @apply border-border;
   }
   html, body {
-    @apply bg-background text-foreground select-none;
+    @apply bg-background text-foreground;
     -webkit-overflow-scrolling: touch;
     min-height: 100%;
     overflow-x: hidden;
-    /* Prevent selection for app-like feel */
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
   }
 
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar,
-  *::-webkit-scrollbar {
+  /* Hide scrollbar but allow scrolling */
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
 
-  input, textarea, [contenteditable="true"] {
-    @apply select-text;
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -76,13 +70,4 @@
 
 .text-balance {
   text-wrap: balance;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
