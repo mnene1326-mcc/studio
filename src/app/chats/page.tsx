@@ -106,14 +106,14 @@ function ChatListItem({ summary, onClick, onDelete }: { summary: ChatSummary, on
     >
       <div className="relative">
         <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
-          <AvatarImage src={summary.partnerPhoto} className="object-cover" />
+          <AvatarImage src={summary.partnerPhoto || ""} className="object-cover" />
           <AvatarFallback className="bg-[#00A2FF] text-white font-semibold text-sm">{summary.partnerName?.[0] || '?'}</AvatarFallback>
         </Avatar>
         {presence?.state === 'online' && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <h4 className="font-semibold text-sm text-black truncate max-w-[70%]">{summary.partnerName}</h4>
+          <h4 className="font-semibold text-sm text-black truncate max-w-[70%]">{summary.partnerName || "Unknown"}</h4>
           <span className="text-[10px] text-gray-400 font-medium">{format(lastAt, "HH:mm")}</span>
         </div>
         <div className="flex justify-between items-center">
@@ -137,8 +137,9 @@ function ChatsContent() {
   const rtdb = useDatabase()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  // Hooks at the top
+  // Presence hook must be at top level
   const partnerPresence = useUserPresence(startWithId || undefined)
+  
   const currentUserDocRef = useMemo(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const partnerDocRef = useMemo(() => startWithId ? doc(db, "users", startWithId) : null, [db, startWithId])
   
@@ -156,7 +157,7 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
-  // 1. Sync Summaries
+  // Sync Summaries & Load Initial deletedAt
   useEffect(() => {
     if (!currentUser?.uid) return
     const summariesRef = ref(rtdb, `user_chats/${currentUser.uid}`)
@@ -169,9 +170,13 @@ function ChatsContent() {
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
         
         setChatSummaries(list)
+        
+        // If we are currently in a room, update the deletion marker instantly
         if (chatId) {
           const current = list.find(s => s.id === chatId)
-          if (current) setActiveDeletedAt(current.deletedAt || 0)
+          if (current) {
+            setActiveDeletedAt(current.deletedAt || 0)
+          }
         }
       } else {
         setChatSummaries([])
@@ -181,20 +186,25 @@ function ChatsContent() {
     return () => off(summariesRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid, chatId])
 
-  // 2. Clear Unreads & Get Deleted Marker
+  // Clear Unreads & Ensure activeDeletedAt is fresh
   useEffect(() => {
     if (chatId && currentUser?.uid) {
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
       get(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}/deletedAt`)).then((snap) => {
         setActiveDeletedAt(snap.val() || 0)
       })
+    } else {
+      setActiveDeletedAt(0)
     }
   }, [chatId, currentUser?.uid, rtdb])
 
-  // 3. Listen to Messages
+  // Listen to Messages with Strict Deletion Filtering
   useEffect(() => {
-    if (!chatId) return
-    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(40))
+    if (!chatId) {
+      setMessages([])
+      return
+    }
+    const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(100))
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
@@ -210,7 +220,7 @@ function ChatsContent() {
     return () => off(messagesRef, 'value', unsubscribe)
   }, [chatId, rtdb, activeDeletedAt])
 
-  // 4. Balances
+  // Balances
   useEffect(() => {
     if (!currentUser?.uid) return
     const balRef = ref(rtdb, `balances/${currentUser.uid}`)
@@ -223,7 +233,7 @@ function ChatsContent() {
     return () => off(balRef, 'value', unsubscribe)
   }, [rtdb, currentUser?.uid])
 
-  // 5. Initialize Chat ID
+  // Find or Create Room
   useEffect(() => {
     if (!currentUser?.uid || !startWithId) return
     const findOrCreate = async () => {
@@ -264,17 +274,23 @@ function ChatsContent() {
 
     const timestamp = Date.now()
     const msgData = { text: text.trim(), senderId: currentUser.uid, timestamp }
-    await set(push(ref(rtdb, `chat_messages/${chatId}`), msgData))
+    
+    // 1. Send Message
+    await set(push(ref(rtdb, `chat_messages/${chatId}`)), msgData)
 
+    // 2. Update Summaries (Sanitize all RTDB values to avoid 'undefined')
     const updates: any = {}
-    updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid
-    updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name
-    updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL
+    
+    // My Summary
+    updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid || ""
+    updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name || "Unknown"
+    updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL || ""
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = text.trim()
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
 
-    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid
+    // Partner Summary
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid || ""
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "User"
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerPhoto`] = currentUserProfile?.photoURL || ""
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = text.trim()
@@ -303,11 +319,18 @@ function ChatsContent() {
     if (!currentUser?.uid || !chatToDelete) return
     try {
       const now = Date.now()
+      // Soft delete for current user only
       await update(ref(rtdb, `user_chats/${currentUser.uid}/${chatToDelete.id}`), {
         lastMessage: "",
         unreadCount: 0,
         deletedAt: now
       })
+      
+      // If we are currently in this chat room, update activeDeletedAt to reflect blank state immediately
+      if (chatId === chatToDelete.id) {
+        setActiveDeletedAt(now)
+      }
+      
       toast({ title: "Conversation removed" })
     } catch (err) {
       toast({ variant: "destructive", title: "Delete Error" })
@@ -321,11 +344,11 @@ function ChatsContent() {
   // LIST VIEW
   if (!startWithId) {
     return (
-      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 select-none">
+      <div className="flex-1 flex flex-col bg-white min-h-screen pb-20 select-none overflow-y-auto no-scrollbar">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md px-4 pt-8 pb-3 flex items-center justify-between border-b">
           <h1 className="text-2xl font-bold text-[#00A2FF] tracking-tight">Chat</h1>
         </header>
-        <main className="flex-1 overflow-y-auto no-scrollbar">
+        <main className="flex-1">
           {summariesLoading ? (
             <div className="flex items-center justify-center py-20 opacity-20"><Loader2 className="animate-spin" /></div>
           ) : chatSummaries.length === 0 ? (
@@ -371,8 +394,8 @@ function ChatsContent() {
           {partnerPresence?.state === 'online' && <span className="text-[9px] font-bold text-green-500 uppercase">Online</span>}
         </div>
         <Avatar className="w-8 h-8 cursor-pointer" onClick={() => router.push(`/users/${startWithId}`)}>
-          <AvatarImage src={partnerProfile?.photoURL} />
-          <AvatarFallback>{partnerProfile?.name?.[0]}</AvatarFallback>
+          <AvatarImage src={partnerProfile?.photoURL || ""} />
+          <AvatarFallback>{partnerProfile?.name?.[0] || "?"}</AvatarFallback>
         </Avatar>
       </header>
 

@@ -62,8 +62,6 @@ export async function awardCoinsAction(callerUid: string, targetMatchFlowId: str
     const targetQuery = query(collection(db, "users"), where("matchFlowId", "==", targetMatchFlowId.trim()));
     const targetSnap = await getDocs(targetQuery);
     if (targetSnap.empty) {
-      // If we deducted from a seller but the target is wrong, we should ideally refund, 
-      // but for this flow we assume IDs are verified before submission.
       return { success: false, error: "User with this MatchFlow ID not found." };
     }
 
