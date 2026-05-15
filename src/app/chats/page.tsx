@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy, getDoc } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, limit, updateDoc, increment, orderBy, getDoc, Timestamp } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { BottomNav } from "@/components/layout/BottomNav"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,6 +20,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { 
   Send, 
   ChevronLeft, 
   ShoppingBag, 
@@ -28,7 +36,11 @@ import {
   Lock,
   Trash2,
   Circle,
-  BadgeCheck
+  BadgeCheck,
+  Gift as GiftIcon,
+  Coins,
+  Gem,
+  ChevronRight
 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -57,12 +69,28 @@ interface UserProfile {
   photoURL: string
   gender?: string
   coins?: number
+  diamonds?: number
   blocking?: string[]
   blockedBy?: string[]
   isAdmin?: boolean
   isCoinSeller?: boolean
   isVerified?: boolean
 }
+
+const GIFTS = [
+  { id: '2026', name: '2026', price: 20, icon: '🎆' },
+  { id: 'heart', name: 'Heart', price: 150, icon: '❤️' },
+  { id: 'e-heart', name: 'Electric heart', price: 500, icon: '⚡' },
+  { id: 'flower', name: 'Flower diamond', price: 25990, icon: '💎' },
+  { id: 'nigeria', name: 'Nigeria', price: 300, icon: '🇳🇬' },
+  { id: 'butterfly', name: 'Shiny Butterfly', price: 500, icon: '🦋' },
+  { id: 'necklace', name: 'Gold Necklace', price: 1500, icon: '📿' },
+  { id: 'parrot', name: 'Flying Parrot', price: 500, icon: '🦜' },
+  { id: 'drum', name: 'African drum', price: 300, icon: '🪘' },
+  { id: 'harley', name: 'Harley Motors', price: 3000, icon: '🏍️' },
+  { id: 'dress', name: 'Dress', price: 800, icon: '👗' },
+  { id: 'phone', name: 'Antique Telephone', price: 400, icon: '☎️' },
+]
 
 const toMillisSafe = (ts: any): number => {
   if (!ts) return Date.now();
@@ -163,6 +191,81 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   )
 }
 
+function GiftDrawer({ 
+  onSend, 
+  userBalance, 
+  open, 
+  onOpenChange 
+}: { 
+  onSend: (gift: typeof GIFTS[0]) => void, 
+  userBalance: number,
+  open: boolean,
+  onOpenChange: (open: boolean) => void
+}) {
+  const [selectedGiftId, setSelectedGiftId] = useState(GIFTS[0].id)
+  const selectedGift = GIFTS.find(g => g.id === selectedGiftId)!
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="p-0 border-none bg-[#1A1C21] text-white rounded-t-[2.5rem] sm:rounded-t-[2.5rem] max-w-md mx-auto fixed bottom-0 top-auto translate-y-0">
+        <div className="p-4 space-y-4">
+          <div className="flex items-center gap-6 px-2 overflow-x-auto no-scrollbar py-2 border-b border-white/5">
+            {['HOT EVENTS', 'Gift', 'Privilege'].map(tab => (
+              <span key={tab} className={cn(
+                "text-xs font-bold uppercase tracking-widest cursor-pointer whitespace-nowrap",
+                tab === 'Gift' ? "text-white border-b-2 border-[#D4FF00] pb-1" : "text-gray-500"
+              )}>
+                {tab}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 max-h-[40vh] overflow-y-auto no-scrollbar px-2">
+            {GIFTS.map(gift => (
+              <div 
+                key={gift.id}
+                onClick={() => setSelectedGiftId(gift.id)}
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all cursor-pointer aspect-square",
+                  selectedGiftId === gift.id ? "border-[#D4FF00] bg-white/5" : "border-transparent"
+                )}
+              >
+                <span className="text-3xl mb-1">{gift.icon}</span>
+                <div className="flex items-center gap-0.5 mt-1">
+                  <Coins className="w-2.5 h-2.5 text-yellow-500 fill-current" />
+                  <span className="text-[10px] font-bold">{gift.price}</span>
+                </div>
+                <span className="text-[8px] text-gray-500 truncate w-full text-center mt-0.5">{gift.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between pt-4 pb-6 px-4">
+            <div className="flex items-center gap-1.5 cursor-pointer">
+              <Coins className="w-5 h-5 text-yellow-500 fill-current" />
+              <span className="text-lg font-bold">{userBalance}</span>
+              <ChevronRight className="w-4 h-4 text-gray-500" />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="bg-white/10 px-3 py-2 rounded-full flex items-center gap-2">
+                <span className="text-sm font-bold">1</span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </div>
+              <Button 
+                onClick={() => onSend(selectedGift)}
+                className="bg-[#D4FF00] text-black font-bold h-12 px-8 rounded-full hover:bg-[#c4eb00] active:scale-95 transition-all"
+              >
+                Send
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ChatsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -177,6 +280,7 @@ function ChatsContent() {
   const [newMessage, setNewMessage] = useState("")
   const [isInitializingChat, setIsInitializingChat] = useState(false)
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null)
+  const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   
   const [chatListLimit, setChatListLimit] = useState(20)
   const [messagesLimit, setMessagesLimit] = useState(20)
@@ -303,6 +407,27 @@ function ChatsContent() {
     
     const isFree = currentUserProfile.isAdmin || currentUserProfile.isCoinSeller || chatPartner?.isAdmin || chatPartner?.isCoinSeller;
 
+    // Speedy Reply Logic & Reward
+    // If male replies to female within 60s -> Female gets 5 diamonds
+    // Else -> Female gets 2 coins
+    if (currentUserProfile.gender === 'male' && chatPartner?.gender === 'female' && messagesRaw.length > 0) {
+      const lastMsg = messagesRaw[0]
+      if (lastMsg.senderId === chatPartner.uid) {
+        const lastTime = toMillisSafe(lastMsg.timestamp)
+        const nowTime = Date.now()
+        const diffSeconds = (nowTime - lastTime) / 1000
+        
+        const partnerRef = doc(db, "users", chatPartner.uid)
+        if (diffSeconds < 60) {
+          await updateDoc(partnerRef, { diamonds: increment(5) })
+          toast({ title: "Quick Reply Bonus!", description: `${chatPartner.name} earned 5 Diamonds.` })
+        } else {
+          await updateDoc(partnerRef, { coins: increment(2) })
+          toast({ title: "Reply Reward", description: `${chatPartner.name} earned 2 Coins.` })
+        }
+      }
+    }
+
     if (!isFree && currentUserProfile.gender === 'male') {
       const currentCoins = currentUserProfile.coins || 0
       if (currentCoins < 15) {
@@ -340,6 +465,47 @@ function ChatsContent() {
       await updateDoc(doc(db, "chats", chatId), chatUpdate)
     } catch (err: any) {
       toast({ variant: "destructive", title: "Error", description: err.message })
+    }
+  }
+
+  const handleSendGift = async (gift: typeof GIFTS[0]) => {
+    if (!currentUser?.uid || !currentUserProfile || !chatPartner || !chatId) return
+    
+    const balance = currentUserProfile.coins || 0
+    if (balance < gift.price) {
+      toast({ variant: "destructive", title: "Insufficient Coins", description: "Please recharge to send this gift." })
+      return
+    }
+
+    try {
+      // 1. Deduct from sender
+      await updateDoc(doc(db, "users", currentUser.uid), { coins: increment(-gift.price) })
+
+      // 2. Credit to recipient as diamonds
+      // Male -> 40%, Female -> 50%
+      const share = chatPartner.gender === 'female' ? 0.5 : 0.4
+      const diamondReward = Math.floor(gift.price * share)
+      await updateDoc(doc(db, "users", chatPartner.uid), { diamonds: increment(diamondReward) })
+
+      // 3. Send system message
+      const text = `Sent a gift: ${gift.icon} ${gift.name}`
+      await addDoc(collection(db, "chats", chatId, "messages"), {
+        text,
+        senderId: currentUser.uid,
+        timestamp: serverTimestamp(),
+        isGift: true
+      })
+      
+      await updateDoc(doc(db, "chats", chatId), {
+        lastMessage: text,
+        lastMessageAt: serverTimestamp(),
+        [`unreadCount.${chatPartner.uid}`]: increment(1)
+      })
+
+      setIsGiftDrawerOpen(false)
+      toast({ title: "Gift Sent!", description: `You sent a ${gift.name} to ${chatPartner.name}.` })
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Gift Error", description: err.message })
     }
   }
 
@@ -538,6 +704,14 @@ function ChatsContent() {
       {!isBlocked && (
         <footer className="shrink-0 bg-white border-t z-50 pb-safe sticky bottom-0">
           <div className="px-4 py-3 flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsGiftDrawerOpen(true)}
+              className="text-[#00A2FF] hover:bg-blue-50 rounded-full w-11 h-11"
+            >
+              <GiftIcon className="w-6 h-6" />
+            </Button>
             <div className="flex-1 bg-gray-100 rounded-full h-11 px-5 flex items-center">
               <input 
                 ref={inputRef}
@@ -567,6 +741,13 @@ function ChatsContent() {
           </div>
         </footer>
       )}
+
+      <GiftDrawer 
+        open={isGiftDrawerOpen} 
+        onOpenChange={setIsGiftDrawerOpen}
+        userBalance={currentUserProfile?.coins || 0}
+        onSend={handleSendGift}
+      />
     </div>
   )
 }
