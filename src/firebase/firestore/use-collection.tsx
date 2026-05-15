@@ -36,9 +36,9 @@ export function useCollection<T = any>(q: Query | null) {
       return;
     }
 
+    // Optimization: disable metadata changes to reduce noise and costs
     const unsubscribe = onSnapshot(
       q,
-      { includeMetadataChanges: true },
       (snapshot) => {
         const items = snapshot.docs.map((doc) => ({
           id: doc.id,

@@ -28,6 +28,7 @@ export function initializeFirebase(): {
 
       if (!persistenceStarted) {
         persistenceStarted = true;
+        // Persistence must be enabled BEFORE any other firestore calls
         enableIndexedDbPersistence(firestoreInstance).catch((err) => {
           if (err.code === 'failed-precondition') {
             console.warn('Persistence failed: Multiple tabs open');

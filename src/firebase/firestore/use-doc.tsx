@@ -12,7 +12,6 @@ const getCacheKey = (ref: DocumentReference | null) => {
 
 /**
  * Optimized cache-first document hook.
- * Uses local storage for instant rendering and background synchronization.
  */
 export function useDoc<T = any>(ref: DocumentReference | null) {
   const queryKey = useMemo(() => getCacheKey(ref), [ref]);
@@ -36,10 +35,9 @@ export function useDoc<T = any>(ref: DocumentReference | null) {
       return;
     }
 
-    // Single listener for background sync
+    // Optimization: disable metadata changes to reduce noise and costs
     const unsubscribe = onSnapshot(
       ref,
-      { includeMetadataChanges: true },
       (snapshot) => {
         const docData = snapshot.exists() ? (snapshot.data() as T) : null;
         
@@ -48,7 +46,6 @@ export function useDoc<T = any>(ref: DocumentReference | null) {
             const currentStr = JSON.stringify(docData);
             const cachedStr = localStorage.getItem(queryKey);
             
-            // Only trigger state update if data actually changed to stop "double loading"
             if (currentStr !== cachedStr || isInitialMount.current) {
               localStorage.setItem(queryKey, currentStr);
               setData(docData);

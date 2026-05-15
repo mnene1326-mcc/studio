@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -28,7 +27,7 @@ export default function CoinHistoryPage() {
   useEffect(() => {
     if (!user?.uid) return
 
-    // Economical Limit: Only load the last 50 coin events using RTDB query
+    // Optimized: Only fetch last 50 entries using a scoped RTDB query
     const historyRef = rtdbQuery(ref(rtdb, `coin_history/${user.uid}`), limitToLast(50))
     
     const unsubscribe = onValue(historyRef, (snapshot) => {
