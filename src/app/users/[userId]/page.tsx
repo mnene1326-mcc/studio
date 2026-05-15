@@ -151,7 +151,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
 
         {/* Online Badge on Image */}
         {presence?.state === 'online' && (
-          <div className="absolute bottom-6 left-8 bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-500">
+          <div className="absolute bottom-6 left-8 bg-green-500 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg flex items-center gap-1.5 animate-in slide-in-from-left-4 duration-500">
             <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
             Online Now
           </div>
@@ -162,15 +162,15 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       <div className="relative z-10 bg-white px-8 pt-8 space-y-8">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-black text-black tracking-tight leading-none">{profile.name}</h1>
+            <h1 className="text-3xl font-bold text-black tracking-tight leading-none">{profile.name}</h1>
             {profile.isVerified && <BadgeCheck className="w-6 h-6 text-[#00A2FF] fill-white" />}
           </div>
           
           <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-[#006400] text-white px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest shadow-sm">
+            <span className="bg-[#006400] text-white px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-sm">
               {profile.gender === 'female' ? '♀' : '♂'} {age}
             </span>
-            <span className="bg-blue-50 text-[#00A2FF] px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-blue-100">
+            <span className="bg-blue-50 text-[#00A2FF] px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest border border-blue-100">
               ID: {profile.matchFlowId || "---"}
             </span>
           </div>
@@ -179,7 +179,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
         {profile.interests && (
           <section className="space-y-3">
             <div className="flex items-center gap-2 text-gray-400">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">About Me</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">About Me</span>
             </div>
             <p className="text-sm font-medium text-gray-600 leading-relaxed italic border-l-4 border-blue-100 pl-4">
               "{profile.interests}"
@@ -245,7 +245,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ userId: s
       {/* Sticky Action Button */}
       <div className="fixed bottom-0 inset-x-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent z-50">
         <Button 
-          className="w-full h-16 rounded-full bg-[#00A2FF] text-white text-sm font-black flex items-center justify-center gap-3 shadow-2xl premium-shadow uppercase tracking-widest active:scale-95 transition-all"
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white text-sm font-bold flex items-center justify-center gap-3 shadow-2xl premium-shadow uppercase tracking-widest active:scale-95 transition-all"
           onClick={() => router.push(`/chats?startWith=${profile.uid}`)}
         >
           <MessageSquare className="w-5 h-5 fill-current" />
@@ -263,8 +263,8 @@ function DetailItem({ icon: Icon, label, value }: { icon: any, label: string, va
         <Icon className="w-5 h-5 text-[#00A2FF]" />
       </div>
       <div>
-        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</p>
-        <p className="text-sm font-black text-black">{value}</p>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{label}</p>
+        <p className="text-sm font-semibold text-black">{value}</p>
       </div>
     </div>
   )

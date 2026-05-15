@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, Suspense, useEffect } from "react"
@@ -21,7 +20,7 @@ interface UserProfile {
 function CoinIcon({ className }: { className?: string }) {
   return (
     <div className={cn("w-10 h-10 rounded-full bg-[#FFD600] flex items-center justify-center shadow-sm", className)}>
-      <span className="text-white font-black text-xl italic drop-shadow-sm">S</span>
+      <span className="text-white font-bold text-xl italic drop-shadow-sm">S</span>
     </div>
   )
 }
@@ -115,7 +114,7 @@ function RechargeContent() {
         >
           <ChevronLeft className="w-6 h-6 text-black" />
         </Button>
-        <h1 className="text-base font-black text-black">Wallet</h1>
+        <h1 className="text-base font-semibold text-black">Wallet</h1>
         <Button variant="ghost" size="icon" className="rounded-full border border-black/20 w-8 h-8 p-1.5">
            <Menu className="w-full h-full text-black" />
         </Button>
@@ -124,17 +123,17 @@ function RechargeContent() {
       <main className="flex-1 px-6 pt-8 pb-32">
         <div className="space-y-6">
           <div className="space-y-1">
-             <h2 className="text-sm font-black text-black">My Balance</h2>
+             <h2 className="text-sm font-semibold text-black">My Balance</h2>
              <div className="flex items-center gap-4 py-4">
                 <CoinIcon className="w-14 h-14" />
-                <span className="text-5xl font-black text-black tracking-tight">{profile?.coins || 0}</span>
+                <span className="text-5xl font-bold text-black tracking-tight">{profile?.coins || 0}</span>
              </div>
           </div>
 
           <div className="flex items-center justify-between">
-             <h3 className="text-sm font-black text-black">Top Up Packages</h3>
+             <h3 className="text-sm font-semibold text-black">Top Up Packages</h3>
              <div className="bg-black text-white px-2.5 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all cursor-pointer">
-                <span className="text-[10px] font-black uppercase">Kenya</span>
+                <span className="text-[10px] font-bold uppercase">Kenya</span>
              </div>
           </div>
 
@@ -151,13 +150,13 @@ function RechargeContent() {
                 )}
               >
                 <CoinIcon className="w-8 h-8 mb-2" />
-                <span className={cn("text-xs font-black", selectedPackage === p.amount ? "text-[#00AEFF]" : "text-black")}>
+                <span className={cn("text-xs font-semibold", selectedPackage === p.amount ? "text-[#00AEFF]" : "text-black")}>
                   {p.amount}
                 </span>
-                <span className="text-[8px] font-bold text-gray-400 mt-1">KES {p.price}</span>
+                <span className="text-[8px] font-medium text-gray-400 mt-1">KES {p.price}</span>
                 {selectedPackage === p.amount && (
                   <div className="absolute bottom-1 right-1 w-4 h-4 bg-[#00AEFF] rounded-full flex items-center justify-center">
-                     <Check className="w-2.5 h-2.5 text-white stroke-[4]" />
+                     <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                   </div>
                 )}
               </div>
@@ -169,7 +168,7 @@ function RechargeContent() {
       <footer className="fixed bottom-0 inset-x-0 bg-white p-6 border-t z-50">
         <Button 
           disabled={loading || !selectedPackage}
-          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-black text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
+          className="w-full h-16 rounded-full bg-[#00A2FF] text-white font-bold text-base active:scale-95 transition-all shadow-xl shadow-blue-100 uppercase tracking-widest flex items-center justify-center gap-3 disabled:opacity-50"
           onClick={handlePayment}
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}

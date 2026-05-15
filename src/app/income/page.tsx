@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo, useState } from "react"
@@ -94,7 +93,7 @@ export default function IncomePage() {
         >
           <ChevronLeft className="w-7 h-7" />
         </Button>
-        <h1 className="text-xl font-black text-white tracking-tight">Income</h1>
+        <h1 className="text-xl font-bold text-white tracking-tight">Income</h1>
         <Button 
           variant="ghost" 
           size="icon" 
@@ -106,13 +105,13 @@ export default function IncomePage() {
 
       <main className="relative z-10 flex-1 flex flex-col">
         <div className="px-8 pt-10 pb-12 flex flex-col items-center text-center">
-          <h2 className="text-2xl font-black text-white mb-6">Balance</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">Balance</h2>
           
           <div className="flex items-center gap-4">
             <div className="relative">
               <Gem className="w-12 h-12 text-white fill-blue-400/30 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
             </div>
-            <span className="text-6xl font-black text-white tracking-tighter">
+            <span className="text-6xl font-bold text-white tracking-tighter">
               {diamondBalance.toFixed(1)}
             </span>
           </div>
@@ -122,7 +121,7 @@ export default function IncomePage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <RefreshCw className="w-4 h-4 text-[#00A2FF]" />
-              <h3 className="text-xs font-black text-black uppercase tracking-widest">Convert to Coins</h3>
+              <h3 className="text-xs font-bold text-black uppercase tracking-widest">Convert to Coins</h3>
             </div>
             
             <div className="space-y-2">
@@ -132,11 +131,11 @@ export default function IncomePage() {
                   placeholder="Min 1000 diamonds"
                   value={diamondsToConvert}
                   onChange={(e) => setDiamondsToConvert(e.target.value)}
-                  className="rounded-2xl h-16 pl-12 border-gray-100 bg-gray-50 focus:bg-white transition-colors text-lg font-black"
+                  className="rounded-2xl h-16 pl-12 border-gray-100 bg-gray-50 focus:bg-white transition-colors text-lg font-bold"
                 />
                 <Gem className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
               </div>
-              <p className="text-[10px] font-bold text-gray-400 px-1">
+              <p className="text-[10px] font-semibold text-gray-400 px-1">
                 Rate: 1000 Diamonds = 90 Coins
               </p>
             </div>
@@ -145,14 +144,14 @@ export default function IncomePage() {
               <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Coins className="w-5 h-5 text-yellow-500" />
-                  <span className="text-sm font-black text-black">Estimated Return</span>
+                  <span className="text-sm font-bold text-black">Estimated Return</span>
                 </div>
-                <span className="text-xl font-black text-[#00A2FF]">+{expectedCoins}</span>
+                <span className="text-xl font-bold text-[#00A2FF]">+{expectedCoins}</span>
               </div>
             )}
 
             <Button
-              className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50"
+              className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-bold uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all disabled:opacity-50"
               onClick={handleConvert}
               disabled={isConverting || !diamondsToConvert || Number(diamondsToConvert) < 1000}
             >
@@ -163,7 +162,7 @@ export default function IncomePage() {
           <div className="pt-4 border-t border-gray-100">
             <div className="flex items-center gap-3 text-gray-400">
               <Star className="w-5 h-5 fill-current opacity-20" />
-              <p className="text-[10px] font-bold leading-relaxed">
+              <p className="text-[10px] font-semibold leading-relaxed">
                 Diamonds are earned through interactions and gifts. You can convert them to coins to send more messages or buy premium virtual items.
               </p>
             </div>

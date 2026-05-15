@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -77,16 +76,16 @@ export default function WelcomePage() {
             <h1 className="text-4xl font-logo text-white drop-shadow-2xl tracking-tight">
               MatchFlow
             </h1>
-            <p className="text-white/70 font-black text-[9px] uppercase tracking-[0.6em] ml-2">
+            <p className="text-white/70 font-bold text-[9px] uppercase tracking-[0.6em] ml-2">
               Connect with Heart
             </p>
           </div>
         </div>
 
-        <div className="w-full max-w-sm space-y-5 mb-6">
+        <div className="w-full max-sm space-y-5 mb-6">
           <Button 
             onClick={() => router.push("/login")}
-            className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-black text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
+            className="w-full h-16 rounded-full bg-[#00A2FF] hover:bg-[#0081CC] text-white font-bold text-sm tracking-widest uppercase shadow-2xl active:scale-95 transition-all"
           >
             <div className="flex items-center justify-center gap-3">
               <Mail className="w-5 h-5" />
@@ -98,7 +97,7 @@ export default function WelcomePage() {
             disabled={loading}
             onClick={handleFastLogin}
             variant="outline"
-            className="w-full h-16 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-black text-sm tracking-widest uppercase active:scale-95 transition-all"
+            className="w-full h-16 rounded-full border-2 border-white/20 bg-white/5 backdrop-blur-xl text-white hover:bg-white/20 font-bold text-sm tracking-widest uppercase active:scale-95 transition-all"
           >
             <div className="flex items-center justify-center gap-3">
               {loading ? (
@@ -111,7 +110,7 @@ export default function WelcomePage() {
           </Button>
 
           <div className="pt-8">
-            <p className="text-[10px] text-white/40 font-bold px-6 leading-relaxed">
+            <p className="text-[10px] text-white/40 font-semibold px-6 leading-relaxed">
               By entering, you confirm you are 18+ and agree to our <span className="underline text-white/60">Terms</span> and <span className="underline text-white/60">Privacy Policy</span>.
             </p>
           </div>

@@ -83,7 +83,7 @@ export default function TaskCenterPage() {
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-white rounded-full hover:bg-white/20">
             <ChevronLeft className="w-6 h-6" />
           </Button>
-          <h1 className="text-xl font-black text-white tracking-tight uppercase">Task Center</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight uppercase">Task Center</h1>
           <Button variant="ghost" size="icon" onClick={() => router.push('/home')} className="text-white rounded-full hover:bg-white/20">
             <X className="w-6 h-6" />
           </Button>
@@ -95,9 +95,9 @@ export default function TaskCenterPage() {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-yellow-500" />
-              <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily Check-in</h2>
+              <h2 className="text-xs font-bold text-black uppercase tracking-widest">Daily Check-in</h2>
             </div>
-            <span className="text-[10px] font-black text-gray-400">Total: {currentStreak} Days</span>
+            <span className="text-[10px] font-semibold text-gray-400">Total: {currentStreak} Days</span>
           </div>
           
           <div className="grid grid-cols-4 gap-3">
@@ -109,10 +109,10 @@ export default function TaskCenterPage() {
                   {(isChecked || isToday) ? <CheckCircle2 className="w-6 h-6 text-green-500" /> : (
                     <>
                       <Coins className="w-5 h-5 text-yellow-500 mb-1" />
-                      <span className="text-[10px] font-black text-gray-500">+{d.reward}</span>
+                      <span className="text-[10px] font-semibold text-gray-500">+{d.reward}</span>
                     </>
                   )}
-                  <span className="text-[8px] font-bold text-gray-400 uppercase mt-1">{d.day}</span>
+                  <span className="text-[8px] font-medium text-gray-400 uppercase mt-1">{d.day}</span>
                 </div>
               )
             })}
@@ -121,7 +121,7 @@ export default function TaskCenterPage() {
           <Button 
             onClick={handleCheckIn}
             disabled={hasCheckedInToday}
-            className={cn("w-full mt-6 h-14 rounded-full text-white font-black uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all", hasCheckedInToday ? "bg-gray-300 shadow-none cursor-default" : "bg-[#00A2FF] shadow-blue-100")}
+            className={cn("w-full mt-6 h-14 rounded-full text-white font-bold uppercase tracking-widest text-sm shadow-lg active:scale-95 transition-all", hasCheckedInToday ? "bg-gray-300 shadow-none cursor-default" : "bg-[#00A2FF] shadow-blue-100")}
           >
             {hasCheckedInToday ? "Already Checked-in" : "Check-in Now"}
           </Button>
@@ -130,7 +130,7 @@ export default function TaskCenterPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 px-2">
             <div className="w-1 h-4 bg-pink-500 rounded-full" />
-            <h2 className="text-xs font-black text-black uppercase tracking-widest">Newcomer tasks</h2>
+            <h2 className="text-xs font-bold text-black uppercase tracking-widest">Newcomer tasks</h2>
           </div>
           <div className="space-y-3">
             {newcomerTasks.map((task, i) => (
@@ -138,11 +138,11 @@ export default function TaskCenterPage() {
                 <div className="flex items-center gap-4">
                   <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}><task.icon className="w-6 h-6" /></div>
                   <div>
-                    <p className="text-sm font-black text-black">{task.title}</p>
-                    <p className="text-xs font-bold text-yellow-500">+{task.reward} Coins</p>
+                    <p className="text-sm font-semibold text-black">{task.title}</p>
+                    <p className="text-xs font-medium text-yellow-500">+{task.reward} Coins</p>
                   </div>
                 </div>
-                <Button variant={task.done ? "ghost" : "outline"} disabled={task.done} className={cn("rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest", task.done ? "text-green-500" : "border-pink-200 text-pink-500 hover:bg-pink-50")}>
+                <Button variant={task.done ? "ghost" : "outline"} disabled={task.done} className={cn("rounded-full px-6 h-10 text-[10px] font-bold uppercase tracking-widest", task.done ? "text-green-500" : "border-pink-200 text-pink-500 hover:bg-pink-50")}>
                   {task.done ? "Done" : "Go"}
                 </Button>
               </div>
@@ -153,7 +153,7 @@ export default function TaskCenterPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 px-2">
             <div className="w-1 h-4 bg-blue-500 rounded-full" />
-            <h2 className="text-xs font-black text-black uppercase tracking-widest">Daily tasks</h2>
+            <h2 className="text-xs font-bold text-black uppercase tracking-widest">Daily tasks</h2>
           </div>
           <div className="space-y-3">
             {dailyTasks.map((task, i) => (
@@ -161,11 +161,11 @@ export default function TaskCenterPage() {
                 <div className="flex items-center gap-4">
                   <div className={cn("p-3 rounded-2xl bg-gray-50", task.color)}><task.icon className="w-6 h-6" /></div>
                   <div>
-                    <p className="text-sm font-black text-black">{task.title}</p>
-                    <p className="text-xs font-bold text-yellow-500">+{task.reward} Coins • {task.progress}</p>
+                    <p className="text-sm font-semibold text-black">{task.title}</p>
+                    <p className="text-xs font-medium text-yellow-500">+{task.reward} Coins • {task.progress}</p>
                   </div>
                 </div>
-                <Button variant="outline" className="rounded-full px-6 h-10 text-[10px] font-black uppercase tracking-widest border-blue-200 text-blue-500 hover:bg-blue-50">Go</Button>
+                <Button variant="outline" className="rounded-full px-6 h-10 text-[10px] font-bold uppercase tracking-widest border-blue-200 text-blue-500 hover:bg-blue-50">Go</Button>
               </div>
             ))}
           </div>

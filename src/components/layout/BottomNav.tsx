@@ -52,14 +52,14 @@ export function BottomNav() {
             )}>
               <item.icon className={cn("w-6 h-6", isActive ? "text-black fill-current" : "text-gray-400")} />
               {item.badge !== undefined && item.badge > 0 && (
-                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
                   {item.badge > 9 ? '9+' : item.badge}
                 </div>
               )}
             </div>
             
             <span className={cn(
-              "text-[9px] font-black tracking-tight mt-0.5",
+              "text-[9px] font-bold tracking-tight mt-0.5",
               isActive ? "text-black" : "text-gray-400"
             )}>
               {item.label}

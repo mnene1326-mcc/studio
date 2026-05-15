@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, Suspense, useMemo, useRef } from "react"
@@ -131,7 +130,7 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
       <div className="relative">
         <Avatar className="w-14 h-14 rounded-full border-none shadow-sm">
           <AvatarImage src={partner.photoURL} className="object-cover" />
-          <AvatarFallback className="bg-[#00A2FF] text-white font-black text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
+          <AvatarFallback className="bg-[#00A2FF] text-white font-semibold text-sm">{partner.name?.[0] || '?'}</AvatarFallback>
         </Avatar>
         {presence?.state === 'online' && (
           <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
@@ -141,20 +140,20 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
           <div className="flex items-center gap-1 max-w-[70%]">
-            <h4 className="font-black text-sm text-black truncate">{partner.name}</h4>
+            <h4 className="font-semibold text-sm text-black truncate">{partner.name}</h4>
             {partner.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
             {partner.isAdmin && <Circle className="w-2 h-2 fill-[#00A2FF] text-[#00A2FF] shrink-0" />}
           </div>
-          <span className="text-[10px] text-gray-400 font-bold">
+          <span className="text-[10px] text-gray-400 font-medium">
             {chat.lastMessageAt ? format(toDateSafe(chat.lastMessageAt), "HH:mm") : "..."}
           </span>
         </div>
         <div className="flex justify-between items-center">
-          <p className={cn("text-xs truncate font-bold flex-1 pr-2", unread > 0 ? "text-black font-black" : "text-gray-500")}>
+          <p className={cn("text-xs truncate flex-1 pr-2", unread > 0 ? "text-black font-semibold" : "text-gray-500 font-medium")}>
             {chat.lastMessage || "Start talking..."}
           </p>
           {unread > 0 && (
-            <div className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+            <div className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
               {unread}
             </div>
           )}
@@ -386,7 +385,7 @@ function ChatsContent() {
           ) : userChats.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-32 px-12 space-y-4 opacity-40">
               <ShoppingBag className="w-16 h-16 mb-4" />
-              <p className="font-black text-xl text-black">No chats yet...</p>
+              <p className="font-semibold text-xl text-black">No chats yet...</p>
             </div>
           ) : (
             <div className="bg-white">
@@ -405,7 +404,7 @@ function ChatsContent() {
                 <div className="p-4 flex justify-center">
                    <Button 
                     variant="ghost" 
-                    className="text-[10px] font-black uppercase text-gray-400 gap-2"
+                    className="text-[10px] font-bold uppercase text-gray-400 gap-2"
                     onClick={() => setChatListLimit(prev => prev + 20)}
                    >
                      <ChevronDown className="w-4 h-4" />
@@ -423,16 +422,16 @@ function ChatsContent() {
               <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
                 <Trash2 className="w-8 h-8 text-[#00A2FF]" />
               </div>
-              <AlertDialogTitle className="text-xl font-black text-black">Delete Chat?</AlertDialogTitle>
+              <AlertDialogTitle className="text-xl font-semibold text-black">Delete Chat?</AlertDialogTitle>
               <AlertDialogDescription />
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-row gap-3 mt-6">
-              <AlertDialogCancel className="flex-1 rounded-full h-14 border-2 border-gray-100 font-black text-gray-400 uppercase tracking-widest text-[10px] mt-0">
+              <AlertDialogCancel className="flex-1 rounded-full h-14 border-2 border-gray-100 font-bold text-gray-400 uppercase tracking-widest text-[10px] mt-0">
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleSoftDelete}
-                className="flex-1 rounded-full h-14 bg-[#00A2FF] hover:bg-[#0081CC] font-black text-white uppercase tracking-widest text-[10px]"
+                className="flex-1 rounded-full h-14 bg-[#00A2FF] hover:bg-[#0081CC] font-bold text-white uppercase tracking-widest text-[10px]"
               >
                 Delete
               </AlertDialogAction>
@@ -453,7 +452,7 @@ function ChatsContent() {
             variant="ghost" 
             size="sm" 
             onClick={() => router.push("/chats")} 
-            className="rounded-full text-[#00A2FF] font-black px-2 hover:bg-blue-50"
+            className="rounded-full text-[#00A2FF] font-semibold px-2 hover:bg-blue-50"
           >
             <ChevronLeft className="w-6 h-6 mr-0.5" />
           </Button>
@@ -461,7 +460,7 @@ function ChatsContent() {
         
         <div className="flex flex-col items-center justify-center flex-1 min-w-0 px-2">
           <div className="flex items-center justify-center gap-1 w-full">
-            <h3 className="font-black text-sm tracking-tight text-black uppercase truncate max-w-[80%]">
+            <h3 className="font-semibold text-sm tracking-tight text-black uppercase truncate max-w-[80%]">
               {chatPartner?.name || '...'}
             </h3>
             {chatPartner?.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-[#00A2FF] fill-white shrink-0" />}
@@ -469,7 +468,7 @@ function ChatsContent() {
           {partnerPresence?.state === 'online' && (
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">Online</span>
+              <span className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Online</span>
             </div>
           )}
         </div>
@@ -477,7 +476,7 @@ function ChatsContent() {
         <div className="flex items-center gap-3">
           <Avatar className="w-8 h-8 rounded-full border border-gray-100">
             <AvatarImage src={chatPartner?.photoURL} />
-            <AvatarFallback className="font-black text-[10px]">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
+            <AvatarFallback className="font-semibold text-[10px]">{chatPartner?.name?.[0] || '?'}</AvatarFallback>
           </Avatar>
         </div>
       </header>
@@ -491,11 +490,11 @@ function ChatsContent() {
               {msg.senderId !== currentUser.uid && (
                 <Avatar className="w-8 h-8 shrink-0">
                   <AvatarImage src={chatPartner?.photoURL} />
-                  <AvatarFallback className="text-[8px]">{chatPartner?.name?.[0]}</AvatarFallback>
+                  <AvatarFallback className="text-[8px] font-medium">{chatPartner?.name?.[0]}</AvatarFallback>
                 </Avatar>
               )}
               <div className={cn(
-                "max-w-[75%] p-3.5 text-xs font-bold shadow-sm",
+                "max-w-[75%] p-3.5 text-xs font-medium shadow-sm",
                 msg.senderId === currentUser.uid 
                   ? 'bg-[#00A2FF] text-white rounded-[1.2rem] rounded-br-none' 
                   : 'bg-gray-100 text-black rounded-[1.2rem] rounded-bl-none border border-gray-100'
@@ -516,7 +515,7 @@ function ChatsContent() {
                <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-[10px] font-black text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
+                className="text-[10px] font-bold text-[#00A2FF] uppercase tracking-widest gap-2 hover:bg-blue-50 rounded-full h-8"
                 onClick={() => setMessagesLimit(prev => prev + 20)}
                >
                  <ChevronDown className="w-3.5 h-3.5" />
@@ -530,7 +529,7 @@ function ChatsContent() {
                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                   <Lock className="w-6 h-6 text-gray-400" />
                </div>
-               <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Messaging disabled</p>
+               <p className="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Messaging disabled</p>
             </div>
           )}
         </div>
@@ -543,7 +542,7 @@ function ChatsContent() {
               <input 
                 ref={inputRef}
                 placeholder="Start chatting..." 
-                className="bg-transparent border-none flex-1 outline-none text-sm font-bold placeholder:text-gray-400 text-black" 
+                className="bg-transparent border-none flex-1 outline-none text-sm font-medium placeholder:text-gray-400 text-black" 
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {
