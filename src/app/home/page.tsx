@@ -3,15 +3,14 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { collection, query, where, limit, doc, getDoc } from "firebase/firestore"
-import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase, useDatabase } from "@/firebase"
+import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { BottomNav } from "@/components/layout/BottomNav"
-import { Target, RotateCw, FileText, ChevronDown, BadgeCheck, Circle } from "lucide-react"
+import { Target, RotateCw, FileText, ChevronDown, BadgeCheck } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ref, onValue } from "firebase/database"
 
 interface UserProfile {
   id: string
@@ -42,31 +41,13 @@ export default function HomePage() {
   const router = useRouter()
   const { user: currentUser, loading: authLoading } = useUser()
   const db = useFirestore()
-  const rtdb = useDatabase()
   const [activeTab, setActiveTab] = useState<'Recommend' | 'Nearby'>('Recommend')
   const [isMounted, setIsMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshSeed, setRefreshSeed] = useState(0)
   const [displayLimit, setDisplayLimit] = useState(10)
-  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({})
 
   useEffect(() => { setIsMounted(true) }, [])
-
-  // Listen to presence for all users to enable "Online First" sorting
-  useEffect(() => {
-    if (!rtdb) return
-    const statusRef = ref(rtdb, 'status')
-    return onValue(statusRef, (snapshot) => {
-      const data = snapshot.val() || {}
-      const onlineMap: Record<string, boolean> = {}
-      Object.keys(data).forEach(uid => {
-        if (data[uid]?.state === 'online') {
-          onlineMap[uid] = true
-        }
-      })
-      setOnlineUsers(onlineMap)
-    })
-  }, [rtdb])
 
   // Check authentication and onboarding status
   useEffect(() => {
@@ -92,32 +73,10 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(100) 
+    limit(60) 
   ), [db])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
-
-  // --- Scroll Restoration Logic ---
-  useEffect(() => {
-    if (!isMounted) return
-    const handleScroll = () => {
-      sessionStorage.setItem('home_scroll_pos', window.scrollY.toString())
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [isMounted])
-
-  useEffect(() => {
-    if (!loading && users.length > 0 && isMounted) {
-      const savedPos = sessionStorage.getItem('home_scroll_pos')
-      if (savedPos) {
-        const timer = setTimeout(() => {
-          window.scrollTo({ top: parseInt(savedPos), behavior: 'instant' })
-        }, 100)
-        return () => clearTimeout(timer)
-      }
-    }
-  }, [loading, users.length, isMounted])
 
   const handleRefresh = () => {
     setIsRefreshing(true)
@@ -132,7 +91,6 @@ export default function HomePage() {
     if (!users || !currentUserProfile) return []
     const blockedList = [...(currentUserProfile.blocking || []), ...(currentUserProfile.blockedBy || [])]
     
-    // 1. Initial Filtering
     const baseList = users.filter(u => {
       if (u.uid === currentUser?.uid) return false
       if (blockedList.includes(u.uid)) return false
@@ -147,23 +105,15 @@ export default function HomePage() {
       return true;
     })
     
-    // 2. Sorting Logic: Online First, then Randomized reshuffle for variety
+    // Randomize for variety using the seed
     const sorted = [...baseList].sort((a, b) => {
-      const aOnline = onlineUsers[a.uid] ? 1 : 0
-      const bOnline = onlineUsers[b.uid] ? 1 : 0
-      
-      if (aOnline !== bOnline) {
-        return bOnline - aOnline 
-      }
-      
-      // Secondary sort to randomize within the online/offline groups
       const aVal = Math.sin(a.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       const bVal = Math.sin(b.uid.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + refreshSeed)
       return aVal - bVal
     })
     
     return sorted
-  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed, onlineUsers])
+  }, [users, currentUser?.uid, currentUserProfile, activeTab, refreshSeed])
 
   const paginatedUsers = useMemo(() => {
     return filteredUsers.slice(0, displayLimit);
@@ -238,10 +188,6 @@ export default function HomePage() {
                     <Image src={user.photoURL} alt={user.name} fill className="object-cover" data-ai-hint="person profile" />
                     <div className="absolute top-2.5 right-2.5 bg-[#00A2FF] px-4 py-1.5 rounded-full z-30 text-white font-bold text-[12px] uppercase shadow-md active:scale-95 transition-all" onClick={(e) => { e.stopPropagation(); router.push(`/chats?startWith=${user.uid}`); }}>CHAT</div>
                     
-                    {onlineUsers[user.uid] && (
-                      <div className="absolute top-2.5 left-2.5 bg-green-500 w-3 h-3 rounded-full border-2 border-white z-30 shadow-sm" />
-                    )}
-
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
                     <div className="absolute inset-x-0 bottom-0 p-3">
                       <div className="flex items-center gap-1.5">
