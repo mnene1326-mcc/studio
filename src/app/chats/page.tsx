@@ -80,10 +80,10 @@ function ChatListItem({ chat, currentUserUid, blocking, blockedBy, onDelete }: {
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const isLongPress = useRef(false)
   
-  const partnerId = chat.participants.find(id => id !== currentUserUid)
+  const partnerId = useMemo(() => chat.participants.find(id => id !== currentUserUid), [chat.participants, currentUserUid])
   const partnerRef = useMemo(() => partnerId ? doc(db, "users", partnerId) : null, [db, partnerId])
   
-  // Use useDoc which has built-in localStorage caching for instant UI
+  // useDoc uses the localStorage cache, ensuring names/photos appear instantly
   const { data: partner } = useDoc<UserProfile>(partnerRef)
   
   const [unreadCount, setUnreadCount] = useState(0)
