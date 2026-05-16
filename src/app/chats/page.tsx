@@ -43,7 +43,6 @@ interface Message {
   text: string
   senderId: string
   timestamp: number
-  isGift?: boolean
 }
 
 interface ChatSummary {
@@ -65,7 +64,6 @@ interface UserProfile {
   blocking?: string[]
   blockedBy?: string[]
   isAdmin?: boolean
-  isVerified?: boolean
 }
 
 const GIFTS = [
@@ -157,7 +155,6 @@ function ChatsContent() {
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
   const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
 
-  // Blocking logic: Check both ways
   const isBlocked = useMemo(() => {
     if (!startWithId || !currentUserProfile || !partnerProfile) return false
     const blockedByMe = currentUserProfile.blocking?.includes(startWithId)
@@ -206,7 +203,7 @@ function ChatsContent() {
       return
     }
     const messagesRef = rtdbQuery(ref(rtdb, `chat_messages/${chatId}`), limitToLast(100))
-    const unsubscribe = onSnapshot(messagesRef, (snapshot) => {
+    const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
         const msgs = Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val }))
@@ -375,7 +372,7 @@ function ChatsContent() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-white overflow-hidden relative select-none">
-      <header className="shrink-0 h-14 bg-white/80 backdrop-blur-xl px-4 flex items-center justify-between border-b shadow-sm z-50 sticky top-0">
+      <header className="shrink-0 h-16 bg-white px-4 flex items-center justify-between border-b shadow-sm z-[100] sticky top-0">
         <Button variant="ghost" size="sm" onClick={() => router.push("/chats")} className="text-[#00A2FF]"><ChevronLeft className="w-6 h-6" /></Button>
         <div className="flex flex-col items-center flex-1 mx-2">
           <h3 className="font-semibold text-sm text-black truncate max-w-[120px]">{partnerProfile?.name || '...'}</h3>
@@ -400,7 +397,7 @@ function ChatsContent() {
         </div>
       </main>
 
-      <footer className="bg-white border-t p-4 flex items-center gap-3">
+      <footer className="shrink-0 bg-white border-t p-4 flex items-center gap-3 z-50">
         {isBlocked ? (
           <div className="flex-1 py-3 px-6 bg-red-50 text-red-500 rounded-full text-center flex items-center justify-center gap-2">
             <Ban className="w-4 h-4" />
@@ -424,7 +421,7 @@ function ChatsContent() {
       </footer>
 
       <Dialog open={isGiftDrawerOpen} onOpenChange={(open) => { setIsGiftDrawerOpen(open); if(!open) setSelectedGift(null); }}>
-        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-8 pb-10 border-none [&>button]:hidden select-none">
+        <DialogContent className="bg-[#1A1C21] text-white rounded-t-[2.5rem] bottom-0 top-auto translate-y-0 max-w-md mx-auto p-8 pb-10 border-none [&>button]:hidden select-none z-[200]">
           <DialogTitle className="sr-only">Send a Gift</DialogTitle>
           <div className="flex justify-between items-center mb-6 px-2">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">

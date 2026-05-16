@@ -45,6 +45,8 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
   input, textarea {
