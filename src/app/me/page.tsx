@@ -25,8 +25,7 @@ import {
   Users,
   Briefcase,
   UserPlus,
-  Wallet,
-  Sparkles
+  Wallet
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -38,7 +37,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { createAgencyAction, joinAgencyAction } from "@/app/actions/agency"
@@ -309,11 +307,7 @@ export default function MePage() {
                     <Wallet className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base font-black uppercase tracking-widest">Agency Wallet</span>
-                      <Sparkles className="w-3.5 h-3.5 text-blue-200 fill-blue-200" />
-                    </div>
-                    <span className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em] opacity-80">Payout • Exchange • History</span>
+                    <span className="text-base font-black uppercase tracking-widest">Agency Wallet</span>
                   </div>
                 </div>
               </Button>

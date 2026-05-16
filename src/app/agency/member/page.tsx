@@ -4,12 +4,12 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { doc } from "firebase/firestore"
-import { ref, update, increment as rtdbIncrement, push, set, get } from "firebase/database"
+import { ref, push, set, get } from "firebase/database"
 import { useFirestore, useUser, useDoc, useDatabase } from "@/firebase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, Gem, Coins, Banknote, History, Wallet, ArrowRightLeft } from "lucide-react"
+import { ChevronLeft, Gem, Banknote, History, Wallet, ArrowRightLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { requestWithdrawalAction } from "@/app/actions/agency"
 import { cn } from "@/lib/utils"
@@ -28,7 +28,6 @@ export default function AgencyMemberPage() {
   const rtdb = useDatabase()
   const { toast } = useToast()
   
-  const [activeTab, setActiveTab] = useState<'withdraw' | 'convert'>('withdraw')
   const [diamondsToUse, setDiamondsToUse] = useState<string>("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [balances, setBalances] = useState(() => {
@@ -63,59 +62,11 @@ export default function AgencyMemberPage() {
 
   const diamondBalance = balances.diamonds
   
-  // Rates
-  const coinRate = 0.09 
+  // Rate
   const cashRate = 0.08 
   const minDiamondsForCash = 12500
-  const minDiamondsForCoins = 1000
 
-  const expectedCoins = Math.floor(Number(diamondsToUse) * coinRate)
   const expectedKes = (Number(diamondsToUse) * cashRate).toFixed(2)
-
-  const handleConvert = async () => {
-    const amount = Number(diamondsToUse)
-    if (isNaN(amount) || amount < minDiamondsForCoins) {
-      toast({ variant: "destructive", title: "Invalid Amount", description: `Minimum: ${minDiamondsForCoins} diamonds.` })
-      return
-    }
-    if (amount > diamondBalance) {
-      toast({ variant: "destructive", title: "Insufficient Balance" })
-      return
-    }
-
-    setIsProcessing(true)
-    try {
-      const timestamp = Date.now()
-      const balRef = ref(rtdb, `balances/${user?.uid}`)
-      
-      await update(balRef, {
-        diamonds: rtdbIncrement(-amount),
-        coins: rtdbIncrement(expectedCoins),
-        updatedAt: timestamp
-      })
-
-      const newBal = {
-        coins: balances.coins + expectedCoins,
-        diamonds: balances.diamonds - amount
-      }
-      setBalances(newBal)
-      if (user?.uid) localStorage.setItem(`balance_cache_${user.uid}`, JSON.stringify(newBal))
-
-      await set(push(ref(rtdb, `diamond_history/${user?.uid}`)), {
-        amount: -amount,
-        type: 'conversion',
-        description: `Converted to ${expectedCoins} coins`,
-        timestamp
-      })
-
-      toast({ title: "Success!", description: "Coins added to balance." })
-      setDiamondsToUse("")
-    } catch (err) {
-      toast({ variant: "destructive", title: "Error", description: "Operation failed." })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
 
   const handleWithdraw = async () => {
     const amount = Number(diamondsToUse)
@@ -156,7 +107,7 @@ export default function AgencyMemberPage() {
   }
 
   return (
-    <div className="flex-1 bg-white min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col select-none">
       <header className="px-4 h-16 flex items-center justify-between border-b bg-white sticky top-0 z-50">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
           <ChevronLeft className="w-6 h-6 text-black" />
@@ -192,19 +143,8 @@ export default function AgencyMemberPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="flex bg-gray-100 p-1 rounded-full">
-            <button 
-              onClick={() => setActiveTab('withdraw')}
-              className={cn("flex-1 py-3 rounded-full text-[10px] font-bold transition-all uppercase tracking-widest", activeTab === 'withdraw' ? "bg-white text-green-600 shadow-sm" : "text-gray-400")}
-            >
-              Convert to Cash
-            </button>
-            <button 
-              onClick={() => setActiveTab('convert')}
-              className={cn("flex-1 py-3 rounded-full text-[10px] font-bold transition-all uppercase tracking-widest", activeTab === 'convert' ? "bg-white text-purple-600 shadow-sm" : "text-gray-400")}
-            >
-              Convert to Coins
-            </button>
+          <div className="bg-gray-100 p-4 rounded-2xl text-center">
+            <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Convert Diamonds to Cash</p>
           </div>
 
           <div className="space-y-4">
@@ -213,39 +153,36 @@ export default function AgencyMemberPage() {
               <div className="relative">
                 <Input
                   type="number"
-                  placeholder={activeTab === 'withdraw' ? `Min ${minDiamondsForCash}` : `Min ${minDiamondsForCoins}`}
+                  placeholder={`Min ${minDiamondsForCash}`}
                   value={diamondsToUse}
                   onChange={(e) => setDiamondsToUse(e.target.value)}
                   className="rounded-2xl h-16 pl-12 border-gray-100 bg-gray-50 text-lg font-bold"
                 />
-                <Gem className={cn("absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5", activeTab === 'withdraw' ? "text-green-500" : "text-purple-400")} />
+                <Gem className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
               </div>
             </div>
 
             {Number(diamondsToUse) > 0 && (
-              <div className={cn("p-5 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2", activeTab === 'withdraw' ? "bg-green-50 border-green-100" : "bg-purple-50 border-purple-100")}>
+              <div className="p-5 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2 bg-green-50 border-green-100">
                 <div className="flex items-center gap-3">
-                  {activeTab === 'withdraw' ? <Banknote className="w-5 h-5 text-green-600" /> : <Coins className="w-5 h-5 text-yellow-500" />}
-                  <span className="text-[10px] font-bold text-black uppercase tracking-widest">{activeTab === 'withdraw' ? 'Estimated Payout' : 'Estimated Coins'}</span>
+                  <Banknote className="w-5 h-5 text-green-600" />
+                  <span className="text-[10px] font-bold text-black uppercase tracking-widest">Estimated Payout</span>
                 </div>
-                <span className={cn("text-xl font-bold", activeTab === 'withdraw' ? "text-green-600" : "text-purple-600")}>
-                  {activeTab === 'withdraw' ? `Ksh ${expectedKes}` : `+${expectedCoins}`}
+                <span className="text-xl font-bold text-green-600">
+                  Ksh {expectedKes}
                 </span>
               </div>
             )}
 
             <Button
-              className={cn(
-                "w-full h-16 rounded-full text-white font-bold uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all",
-                activeTab === 'withdraw' ? "bg-green-600" : "bg-purple-600"
-              )}
-              onClick={activeTab === 'withdraw' ? handleWithdraw : handleConvert}
+              className="w-full h-16 rounded-full bg-green-600 text-white font-bold uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all"
+              onClick={handleWithdraw}
               disabled={isProcessing || !diamondsToUse}
             >
               {isProcessing ? "Processing..." : (
                 <div className="flex items-center gap-2">
                   <ArrowRightLeft className="w-5 h-5" />
-                  {activeTab === 'withdraw' ? "Request Cash Payout" : "Convert to Coins"}
+                  Request Cash Payout
                 </div>
               )}
             </Button>
@@ -255,9 +192,7 @@ export default function AgencyMemberPage() {
 
       <footer className="p-8 text-center bg-gray-50/50">
         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em] leading-relaxed">
-          {activeTab === 'withdraw' 
-            ? "Cash Payout: 1 Diamond = Ksh 0.08. Minimum 12,500 diamonds (Ksh 1,000). Paid via M-Pesa by your agent."
-            : "Coin Conversion: 1,000 Diamonds = 90 Coins. Coins are added instantly to your balance."}
+          Cash Payout: 1 Diamond = Ksh 0.08. Minimum 12,500 diamonds (Ksh 1,000). Paid via M-Pesa by your agent.
         </p>
       </footer>
     </div>
