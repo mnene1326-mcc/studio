@@ -1,4 +1,3 @@
-
 "use client"
 
 /**
@@ -21,23 +20,30 @@ class TRTCService {
   async init(config: TRTCConfig) {
     if (this.client) return;
 
-    this.client = TRTC.createClient({
-      mode: 'rtc',
-      sdkAppId: config.sdkAppId,
-      userId: config.userId,
-      userSig: config.userSig,
-    });
+    try {
+      this.client = TRTC.createClient({
+        mode: 'rtc',
+        sdkAppId: config.sdkAppId,
+        userId: config.userId,
+        userSig: config.userSig,
+      });
 
-    // Handle remote streams
-    this.client.on('stream-added', (event: any) => {
-      const remoteStream = event.stream;
-      this.client.subscribe(remoteStream);
-    });
+      // Handle remote streams
+      this.client.on('stream-added', (event: any) => {
+        const remoteStream = event.stream;
+        this.client.subscribe(remoteStream);
+      });
 
-    this.client.on('stream-subscribed', (event: any) => {
-      const remoteStream = event.stream;
-      remoteStream.play('remote-container'); // Container for remote audio
-    });
+      this.client.on('stream-subscribed', (event: any) => {
+        const remoteStream = event.stream;
+        // In a real app, you'd append an <audio> element to the DOM here
+        remoteStream.play('remote-audio-container'); 
+      });
+      
+      console.log('TRTC Client Initialized');
+    } catch (err) {
+      console.error('TRTC Init Failed:', err);
+    }
   }
 
   async join(roomId: number) {
@@ -57,7 +63,7 @@ class TRTCService {
       await this.localStream.initialize();
       await this.client.publish(this.localStream);
       
-      console.log('Successfully joined and published voice to room:', roomId);
+      console.log('Joined and published to room:', roomId);
     } catch (error) {
       console.error('Failed to join TRTC room:', error);
     }
@@ -74,6 +80,7 @@ class TRTCService {
       }
       await this.client.leave();
       this.isJoined = false;
+      console.log('Left TRTC room');
     } catch (error) {
       console.error('Failed to leave TRTC room:', error);
     }
