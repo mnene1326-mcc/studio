@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { initializeFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
@@ -9,7 +10,6 @@ let firestoreInstance: Firestore | null = null;
 
 /**
  * Initializes Firebase services with modern persistent cache settings.
- * This resolves the "enableIndexedDbPersistence is deprecated" warning.
  */
 export function initializeFirebase(): {
   app: FirebaseApp;
@@ -21,7 +21,6 @@ export function initializeFirebase(): {
   
   if (typeof window !== 'undefined') {
     if (!firestoreInstance) {
-      // Use the modern persistentLocalCache instead of deprecated enableIndexedDbPersistence
       firestoreInstance = initializeFirestore(app, {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager()

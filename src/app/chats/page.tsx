@@ -153,7 +153,8 @@ function ChatsContent() {
   const [isGiftDrawerOpen, setIsGiftDrawerOpen] = useState(false)
   const [selectedGift, setSelectedGift] = useState<any>(null)
   const [chatToDelete, setChatToDelete] = useState<ChatSummary | null>(null)
-  const [activeDeletedAt, setActiveDeletedAt] = useState<number>(0)
+  const [activeDeletedAt, setActiveDeletedAt] = useState<number | null>(null)
+  const [metadataLoading, setMetadataLoading] = useState(true)
 
   const isBlocked = useMemo(() => {
     if (!startWithId || !currentUserProfile || !partnerProfile) return false
@@ -172,33 +173,31 @@ function ChatsContent() {
           .map(([id, val]: [string, any]) => ({ id, ...val }))
           .filter(summary => !!summary.lastMessage)
           .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
-        
         setChatSummaries(list)
-        if (chatId) {
-          const current = list.find(s => s.id === chatId)
-          if (current) setActiveDeletedAt(current.deletedAt || 0)
-        }
       } else {
         setChatSummaries([])
       }
       setSummariesLoading(false)
     })
     return () => off(summariesRef, 'value', unsubscribe)
-  }, [rtdb, currentUser?.uid, chatId])
+  }, [rtdb, currentUser?.uid])
 
   useEffect(() => {
     if (chatId && currentUser?.uid) {
+      setMetadataLoading(true)
       update(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}`), { unreadCount: 0 })
       get(ref(rtdb, `user_chats/${currentUser.uid}/${chatId}/deletedAt`)).then((snap) => {
         setActiveDeletedAt(snap.val() || 0)
+        setMetadataLoading(false)
       })
     } else {
-      setActiveDeletedAt(0)
+      setActiveDeletedAt(null)
+      setMetadataLoading(false)
     }
   }, [chatId, currentUser?.uid, rtdb])
 
   useEffect(() => {
-    if (!chatId) {
+    if (!chatId || metadataLoading || activeDeletedAt === null) {
       setMessages([])
       return
     }
@@ -208,7 +207,7 @@ function ChatsContent() {
       if (data) {
         const msgs = Object.entries(data).map(([id, val]: [string, any]) => ({ id, ...val }))
         const filtered = msgs
-          .filter(m => !activeDeletedAt || m.timestamp > activeDeletedAt)
+          .filter(m => m.timestamp > (activeDeletedAt || 0))
           .sort((a, b) => b.timestamp - a.timestamp)
         setMessages(filtered)
       } else {
@@ -216,7 +215,7 @@ function ChatsContent() {
       }
     })
     return () => off(messagesRef, 'value', unsubscribe)
-  }, [chatId, rtdb, activeDeletedAt])
+  }, [chatId, rtdb, activeDeletedAt, metadataLoading])
 
   useEffect(() => {
     if (!currentUser?.uid) return
@@ -256,6 +255,9 @@ function ChatsContent() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || !chatId || !currentUser?.uid || !partnerProfile || isBlocked) return
     
+    const sentText = text.trim()
+    setNewMessage("") // Clear instantly
+
     if (currentUserProfile?.gender === 'male' && !currentUserProfile?.isAdmin) {
       if (userBalances.coins < 15) {
         toast({ variant: "destructive", title: "Insufficient Coins" })
@@ -264,11 +266,9 @@ function ChatsContent() {
       await update(ref(rtdb, `balances/${currentUser.uid}`), { coins: rtdbIncrement(-15) })
     }
 
-    setNewMessage("")
-
     const timestamp = Date.now()
     const msgData = { 
-      text: text.trim(), 
+      text: sentText, 
       senderId: currentUser.uid, 
       timestamp 
     }
@@ -279,14 +279,14 @@ function ChatsContent() {
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerId`] = partnerProfile.uid || ""
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerName`] = partnerProfile.name || "Unknown"
     updates[`user_chats/${currentUser.uid}/${chatId}/partnerPhoto`] = partnerProfile.photoURL || ""
-    updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = text.trim()
+    updates[`user_chats/${currentUser.uid}/${chatId}/lastMessage`] = sentText
     updates[`user_chats/${currentUser.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${currentUser.uid}/${chatId}/unreadCount`] = 0
 
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerId`] = currentUser.uid || ""
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerName`] = currentUserProfile?.name || "User"
     updates[`user_chats/${partnerProfile.uid}/${chatId}/partnerPhoto`] = currentUserProfile?.photoURL || ""
-    updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = text.trim()
+    updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessage`] = sentText
     updates[`user_chats/${partnerProfile.uid}/${chatId}/lastMessageAt`] = timestamp
     updates[`user_chats/${partnerProfile.uid}/${chatId}/unreadCount`] = rtdbIncrement(1)
 
@@ -387,7 +387,9 @@ function ChatsContent() {
       <main className="flex-1 overflow-y-auto no-scrollbar flex flex-col-reverse p-4">
         <div className="flex flex-col-reverse space-y-4 space-y-reverse">
           <div ref={messagesEndRef} />
-          {messages.map((msg) => (
+          {metadataLoading ? (
+            <div className="flex items-center justify-center py-10 opacity-10"><Loader2 className="animate-spin" /></div>
+          ) : messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.uid ? 'flex-row-reverse' : 'flex-row')}>
               <div className={cn("max-w-[75%] p-3.5 text-xs font-medium rounded-[1.2rem]", msg.senderId === currentUser.uid ? 'bg-[#00A2FF] text-white rounded-br-none' : 'bg-gray-100 text-black rounded-bl-none')}>
                 {msg.text}
