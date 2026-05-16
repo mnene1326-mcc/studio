@@ -3,9 +3,9 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, MessageSquare, User } from "lucide-react"
+import { Home, MessageSquare, User, Mic2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useMemo, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { ref, onValue } from "firebase/database"
 import { useUser, useDatabase } from "@/firebase"
 
@@ -15,7 +15,6 @@ export function BottomNav() {
   const rtdb = useDatabase()
   const [totalUnread, setTotalUnread] = useState(0)
 
-  // Listen to RTDB for unread counts (Optimization)
   useEffect(() => {
     if (!user?.uid) return
     const unreadRef = ref(rtdb, `unreads/${user.uid}`)
@@ -32,9 +31,13 @@ export function BottomNav() {
 
   const navItems = [
     { label: "Home", icon: Home, href: "/home" },
+    { label: "Party", icon: Mic2, href: "/party" },
     { label: "Chat", icon: MessageSquare, href: "/chats", badge: totalUnread },
     { label: "Me", icon: User, href: "/me" },
   ]
+
+  // Hide nav on party room pages to allow full screen immersion
+  if (pathname?.startsWith('/party/')) return null
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t h-16 flex items-center justify-around px-2 pb-safe shadow-[0_-2px_20px_rgba(0,0,0,0.05)]">
