@@ -277,7 +277,7 @@ export default function PartyRoomPage({ params }: { params: Promise<{ roomId: st
           onClick={() => setIsMicOn(!isMicOn)}
           className={cn(
             "w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95 border border-white/5 backdrop-blur-md shadow-lg",
-            isMicOn ? "bg-white/10 text-white" : "bg-red-500 text-white"
+            isMicOn ? "bg-white/10 text-white" : "bg-red-50 text-white"
           )}
         >
           {isMicOn ? <Mic className="w-5.5 h-5.5" /> : <MicOff className="w-5.5 h-5.5" />}
