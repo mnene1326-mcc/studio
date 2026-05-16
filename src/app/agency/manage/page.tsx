@@ -1,11 +1,12 @@
+
 "use client"
 
 import { useMemo, useState } from "react"
-import { collection, query, where, doc, getDoc, limit } from "firebase/firestore"
+import { collection, query, where, doc, limit } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Check, X, Loader2, User, Users, Briefcase, Banknote } from "lucide-react"
+import { ChevronLeft, Check, X, Loader2, User, Users, Briefcase, Banknote, MessageSquare, ChevronDown } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { reviewRecruitmentAction, updateWithdrawalStatusAction } from "@/app/actions/agency"
@@ -38,10 +39,10 @@ export default function AgencyManagePage() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'members' | 'withdrawals' | 'recruitment'>('members')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [memberLimit, setMemberLimit] = useState(20)
   
   const { data: profile } = useDoc<UserProfile>(user?.uid ? doc(db, "users", user.uid) : null)
   
-  // Queries with strict limits (50 max results)
   const applicantsQuery = useMemo(() => {
     if (!profile?.agencyId) return null
     return query(
@@ -58,7 +59,7 @@ export default function AgencyManagePage() {
       collection(db, "users"), 
       where("agencyId", "==", profile.agencyId), 
       where("agencyStatus", "==", "approved"),
-      limit(50)
+      limit(100) // Fetch many for caching, paginate in UI
     )
   }, [db, profile?.agencyId])
 
@@ -74,6 +75,12 @@ export default function AgencyManagePage() {
   const { data: applicants } = useCollection<UserProfile>(applicantsQuery)
   const { data: members } = useCollection<UserProfile>(membersQuery)
   const { data: withdrawals } = useCollection<WithdrawalRequest>(withdrawalsQuery)
+
+  const paginatedMembers = useMemo(() => {
+    return members.slice(0, memberLimit)
+  }, [members, memberLimit])
+
+  const hasMoreMembers = paginatedMembers.length < members.length
 
   const handleReview = async (applicantUid: string, status: 'approved' | 'rejected') => {
     if (!user) return
@@ -98,20 +105,20 @@ export default function AgencyManagePage() {
   };
 
   return (
-    <div className="flex-1 bg-white min-h-screen flex flex-col">
-      <header className="px-4 h-16 flex items-center justify-between border-b">
+    <div className="flex-1 bg-white min-h-screen flex flex-col select-none">
+      <header className="px-4 h-16 flex items-center justify-between border-b bg-white sticky top-0 z-50">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
           <ChevronLeft className="w-6 h-6 text-black" />
         </Button>
-        <h1 className="text-sm font-bold text-black uppercase tracking-widest">Agency Center</h1>
+        <h1 className="text-sm font-black text-black uppercase tracking-widest">Agency Center</h1>
         <div className="w-10" />
       </header>
 
-      <div className="flex border-b">
+      <div className="flex border-b sticky top-16 bg-white z-40">
         {[
           { id: 'members', label: 'Members', icon: Users },
           { id: 'withdrawals', label: 'Payouts', icon: Banknote },
-          { id: 'recruitment', label: 'Join Requests', icon: Briefcase }
+          { id: 'recruitment', label: 'Requests', icon: Briefcase }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -122,7 +129,7 @@ export default function AgencyManagePage() {
             )}
           >
             <tab.icon className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase">{tab.label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-tighter">{tab.label}</span>
           </button>
         ))}
       </div>
@@ -154,22 +161,47 @@ export default function AgencyManagePage() {
             <h2 className="text-[10px] font-bold uppercase text-gray-400 tracking-widest px-1">Agency Owner</h2>
             <div className="flex items-center gap-3 p-4 bg-[#00A2FF]/5 border border-[#00A2FF]/10 rounded-2xl">
               <Avatar className="w-12 h-12 border-2 border-[#00A2FF]"><AvatarImage src={profile?.photoURL} /><AvatarFallback><User /></AvatarFallback></Avatar>
-              <div>
+              <div className="flex-1">
                 <span className="font-bold text-sm block">{profile?.name}</span>
                 <span className="text-[9px] font-bold text-[#00A2FF] uppercase tracking-widest">Agent / Owner</span>
               </div>
             </div>
 
             <h2 className="text-[10px] font-bold uppercase text-gray-400 tracking-widest px-1 mt-6">Team Members ({members.length})</h2>
-            {members.length === 0 ? (
-              <div className="p-12 text-center text-gray-300 text-xs font-bold uppercase tracking-widest">No members yet</div>
-            ) : (
-              members.map(member => (
-                <div key={member.uid} className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
-                  <Avatar className="w-10 h-10"><AvatarImage src={member.photoURL} /><AvatarFallback><User /></AvatarFallback></Avatar>
-                  <span className="font-bold text-sm">{member.name}</span>
-                </div>
-              ))
+            <div className="space-y-3">
+              {paginatedMembers.length === 0 ? (
+                <div className="p-12 text-center text-gray-300 text-xs font-bold uppercase tracking-widest">No members yet</div>
+              ) : (
+                paginatedMembers.map(member => (
+                  <div key={member.uid} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-black/5 hover:bg-gray-100/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 border border-white"><AvatarImage src={member.photoURL} /><AvatarFallback><User /></AvatarFallback></Avatar>
+                      <span className="font-bold text-sm text-black">{member.name}</span>
+                    </div>
+                    <Button 
+                      size="icon" 
+                      variant="ghost"
+                      onClick={() => router.push(`/chats?startWith=${member.uid}`)}
+                      className="rounded-full bg-white shadow-sm text-[#00A2FF] border border-blue-50"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {hasMoreMembers && (
+              <div className="flex justify-center pt-4">
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-400 font-bold text-[9px] uppercase tracking-widest gap-2"
+                  onClick={() => setMemberLimit(prev => prev + 20)}
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  Load More Members
+                </Button>
+              </div>
             )}
           </div>
         )}

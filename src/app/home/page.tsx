@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { collection, query, where, limit, doc, getDoc } from "firebase/firestore"
+import { collection, query, where, limit, doc } from "firebase/firestore"
 import { useFirestore, useUser, useCollection, useDoc, useMemoFirebase } from "@/firebase"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
@@ -46,11 +46,23 @@ export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshSeed, setRefreshSeed] = useState(0)
-  const [displayLimit, setDisplayLimit] = useState(10)
+  
+  // Persistence Logic: Load display limit from sessionStorage
+  const [displayLimit, setDisplayLimit] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('home_display_limit')
+      return saved ? parseInt(saved) : 10
+    }
+    return 10
+  })
 
   useEffect(() => { setIsMounted(true) }, [])
 
-  // Optimized Onboarding Check: Use Profile Cache
+  // Sync display limit to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('home_display_limit', displayLimit.toString())
+  }, [displayLimit])
+
   const currentUserProfileRef = useMemoFirebase(() => currentUser?.uid ? doc(db, "users", currentUser.uid) : null, [db, currentUser?.uid])
   const { data: currentUserProfile, loading: profileLoading } = useDoc<UserProfile>(currentUserProfileRef)
 
@@ -64,7 +76,7 @@ export default function HomePage() {
     }
   }, [currentUser, authLoading, currentUserProfile, profileLoading, router])
 
-  // Scroll Restoration Logic
+  // Scroll Restoration
   useEffect(() => {
     const handleScroll = () => {
       sessionStorage.setItem('home_scroll_pos', window.scrollY.toString())
@@ -87,7 +99,7 @@ export default function HomePage() {
   const usersQuery = useMemoFirebase(() => query(
     collection(db, "users"), 
     where("onboardingComplete", "==", true),
-    limit(60) 
+    limit(100) // Fetch more for caching
   ), [db])
   
   const { data: users, loading } = useCollection<UserProfile>(usersQuery)
@@ -95,8 +107,9 @@ export default function HomePage() {
   const handleRefresh = () => {
     setIsRefreshing(true)
     setRefreshSeed(prev => prev + 1)
-    setDisplayLimit(10)
+    setDisplayLimit(10) // Reset to default on fresh refresh
     sessionStorage.removeItem('home_scroll_pos')
+    sessionStorage.setItem('home_display_limit', '10')
     setTimeout(() => {
       setIsRefreshing(false)
     }, 800)
@@ -138,7 +151,7 @@ export default function HomePage() {
   if (!isMounted || authLoading || !currentUser) return null
 
   return (
-    <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative">
+    <div className="flex-1 pb-24 bg-[#F9FAFB] min-h-screen relative select-none">
       <div className="absolute top-0 left-0 right-0 z-0 flex flex-col">
         <div className="h-[72px] bg-[#00A2FF] relative overflow-hidden">
           <div className="absolute -right-4 -top-10 rotate-[-12deg] opacity-20 select-none pointer-events-none">
@@ -172,8 +185,8 @@ export default function HomePage() {
         <div className="sticky top-0 z-40 bg-[#F9FAFB]/90 backdrop-blur-md px-5 pt-3 pb-3 border-b border-black/5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <button onClick={() => { setActiveTab('Recommend'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
-              <button onClick={() => { setActiveTab('Nearby'); setDisplayLimit(10); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
+              <button onClick={() => { setActiveTab('Recommend'); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Recommend' ? "text-[#00A2FF]" : "text-gray-400")}>Recommend</button>
+              <button onClick={() => { setActiveTab('Nearby'); }} className={cn("text-sm font-semibold transition-all", activeTab === 'Nearby' ? "text-[#00A2FF]" : "text-gray-400")}>Nearby</button>
             </div>
             <button onClick={handleRefresh} disabled={isRefreshing} className={cn("p-1.5 text-[#00A2FF] hover:bg-blue-50 rounded-full transition-colors", isRefreshing && "animate-spin opacity-50")}>
               <RotateCw className="w-5 h-5" />
