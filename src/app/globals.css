@@ -47,6 +47,7 @@
     -webkit-tap-highlight-color: transparent;
     min-height: 100vh;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   input, textarea {
